@@ -1,15 +1,7 @@
 <x-layouts.app>
 <div id="react-home-app" aria-label="Início"></div>
 
-    @php($brand = \App\Models\Setting::where('key','brand')->first())
-    @if(($brand?->value['logo'] ?? null))
-        <section class="bg-white">
-            <div class="max-w-7xl mx-auto px-4 py-8 md:py-12 flex items-center justify-center">
-                <img src="{{ asset('storage/'.$brand->value['logo']) }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-xl p-2"
-                     loading="lazy" decoding="async" sizes="(max-width:768px) 80vw, 800px" />
-            </div>
-        </section>
-    @endif
+    
 
     <!-- Features Section -->
     <section class="py-16 bg-gray-50">
