@@ -1,0 +1,70 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../**/*.jsx';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-emerald-800: #065f46;
+    --color-emerald-700: #0b7a48;
+    --color-emerald-600: #059669;
+    --color-emerald-50: #ecfdf5;
+    --color-gold: #c9a043;
+    --shadow-soft: 0 10px 25px rgba(0,0,0,0.06);
+}
+
+/* Base typography and smoothing */
+html { scroll-behavior: smooth; }
+body { font-feature-settings: 'liga' on, 'kern' on; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Components */
+.btn { @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium transition-colors; }
+.btn-primary { @apply bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/30; }
+.btn-outline { @apply border border-emerald-600 text-emerald-700 hover:bg-emerald-50; }
+.btn-lg { @apply px-6 py-3 text-base; }
+.btn-sm { @apply px-3 py-1.5 text-sm; }
+.btn-gold { background-color: var(--color-gold); color: #fff; box-shadow: var(--shadow-soft); }
+
+.card { @apply rounded-2xl border bg-white shadow-sm; box-shadow: var(--shadow-soft); }
+
+/* Logo container and image responsiveness */
+.site-logo-wrap { @apply flex items-center gap-3; }
+.site-logo { @apply block h-16 md:h-20 lg:h-24 w-auto; object-fit: contain; }
+.site-logo-contrast { @apply bg-white; box-shadow: var(--shadow-soft); }
+.site-logo-ring { @apply ring-1 ring-emerald-100; }
+.card-hover { @apply transition-transform hover:-translate-y-0.5 hover:shadow; }
+.card-section { @apply p-6 md:p-8; }
+
+/* Footer */
+.site-footer { @apply border-t bg-white; }
+.site-footer .footer-inner { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid md:grid-cols-3 gap-8; }
+.site-footer h4 { @apply text-lg font-semibold text-emerald-700; }
+.site-footer a { @apply text-sm text-gray-700 hover:text-emerald-700; }
+.site-footer .copyright { @apply p-4 text-center text-xs text-gray-500; }
+
+/* Filament Admin accents */
+.fi-topbar { @apply border-b bg-white/80 backdrop-blur; }
+.fi-sidebar { @apply bg-white; }
+.fi-logo img { @apply rounded-md; }
+.fi-ta-header { @apply bg-emerald-50; }
+.fi-ta-container { @apply rounded-xl border; }
+.fi-ac-container { @apply bg-emerald-50; }
+
+.input { @apply p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-600; }
+.label { @apply text-sm font-medium text-gray-700; }
+.input-lg { @apply p-4 text-base; }
+.input-icon-left { @apply pl-10; }
+
+/* Subtle animations */
+.fade-in { animation: fadeIn 300ms ease-out both; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: .0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.slide-up { animation: slideUp 300ms ease-out both; }
+
+/* Accessibility helpers */
+.sr-only { @apply sr-only; }
+.focus-ring { @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600; }

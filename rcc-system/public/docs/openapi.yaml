@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+  title: RCC System API
+  version: 1.0.0
+  description: APIs de cadastro e autenticação.
+servers:
+  - url: http://127.0.0.1:8090
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: Cadastro de usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  user_id:
+                    type: integer
+        '422':
+          description: Erro de validação
+  /api/v1/auth/login:
+    post:
+      summary: Login de usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '401':
+          description: Não autorizado
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        whatsapp:
+          type: string
+        birth_date:
+          type: string
+          format: date
+        cpf:
+          type: string
+        cep:
+          type: string
+        address:
+          type: string
+        number:
+          type: string
+        complement:
+          type: string
+        district:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        gender:
+          type: string
+        group_id:
+          type: integer
+        is_servo:
+          type: boolean
+        ministries:
+          type: array
+          items:
+            type: integer
+        password:
+          type: string
+        consent:
+          type: string
+      required: [name, email, phone, whatsapp, password, consent]
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
