@@ -43,7 +43,7 @@ export interface Activity {
   userId: string
   type: 'login' | 'profile_update' | 'settings_change' | 'admin_action'
   description: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   createdAt: Date
 }
 

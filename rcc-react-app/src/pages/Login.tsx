@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
@@ -19,7 +19,7 @@ export default function Login() {
     try {
       await login(email, password)
       navigate('/')
-    } catch (err) {
+    } catch {
       setError('Invalid credentials. Try user@rcc.com or admin@rcc.com with any password.')
     }
   }

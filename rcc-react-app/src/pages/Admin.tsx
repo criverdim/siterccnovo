@@ -2,14 +2,10 @@ import { useState } from 'react'
 import { 
   Users, 
   Search, 
-  Filter, 
-  MoreVertical, 
   Shield, 
   UserPlus,
   Edit,
   Trash2,
-  Mail,
-  Calendar,
   CheckCircle,
   XCircle
 } from 'lucide-react'

@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@import '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
@@ -25,15 +25,17 @@ body { font-feature-settings: 'liga' on, 'kern' on; -webkit-font-smoothing: anti
 .btn { @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium transition-colors; }
 .btn-primary { @apply bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/30; }
 .btn-outline { @apply border border-emerald-600 text-emerald-700 hover:bg-emerald-50; }
-.btn-lg { @apply px-6 py-3 text-base; }
+.btn-lg { padding: 0.75rem 1.5rem; font-size: 1rem; }
 .btn-sm { @apply px-3 py-1.5 text-sm; }
 .btn-gold { background-color: var(--color-gold); color: #fff; box-shadow: var(--shadow-soft); }
 
 .card { @apply rounded-2xl border bg-white shadow-sm; box-shadow: var(--shadow-soft); }
 
 /* Logo container and image responsiveness */
-.site-logo-wrap { @apply flex items-center gap-3; }
-.site-logo { @apply block h-10 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto; object-fit: contain; }
+.site-logo-wrap { @apply flex items-center gap-3; min-height: 2.5rem; }
+.site-logo { @apply block w-auto; object-fit: contain; image-rendering: -webkit-optimize-contrast; }
+.site-logo { height: clamp(2.5rem, 6vw, 6rem); }
+.site-logo { aspect-ratio: auto; }
 .site-logo-contrast { @apply bg-white; box-shadow: var(--shadow-soft); }
 .site-logo-ring { @apply ring-1 ring-emerald-100; }
 .card-hover { @apply transition-transform hover:-translate-y-0.5 hover:shadow; }
@@ -48,7 +50,14 @@ body { font-feature-settings: 'liga' on, 'kern' on; -webkit-font-smoothing: anti
 
 /* Filament Admin accents */
 .fi-topbar { @apply border-b bg-white/80 backdrop-blur; }
-.fi-sidebar { @apply bg-white; }
+.fi-sidebar { @apply bg-white; position: sticky; top: 0; height: 100vh; min-width: 280px; box-shadow: var(--shadow-soft); }
+.fi-sidebar nav a { padding: 15px; border-radius: 10px; transition: background-color 200ms ease, color 200ms ease, box-shadow 200ms ease; }
+.fi-sidebar nav a:hover { background-color: #ecfdf5; color: var(--color-emerald-700); box-shadow: var(--shadow-soft); }
+.fi-sidebar .fi-logo { padding: 15px; }
+.fi-sidebar .fi-nav-group, .fi-sidebar .fi-nav-group-header { padding: 10px 15px; }
+.fi-sidebar .fi-nav-group-header { font-weight: 600; color: var(--color-emerald-700); }
+.fi-sidebar .fi-nav { gap: 6px; }
+.fi-simple-layout, .fi-body { font-family: var(--font-sans); }
 .fi-logo img { @apply rounded-md; }
 .fi-ta-header { @apply bg-emerald-50; }
 .fi-ta-container { @apply rounded-xl border; }
@@ -66,5 +75,15 @@ body { font-feature-settings: 'liga' on, 'kern' on; -webkit-font-smoothing: anti
 .slide-up { animation: slideUp 300ms ease-out both; }
 
 /* Accessibility helpers */
-.sr-only { @apply sr-only; }
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
 .focus-ring { @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600; }

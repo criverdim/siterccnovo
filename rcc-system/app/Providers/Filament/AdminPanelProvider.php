@@ -29,23 +29,28 @@ class AdminPanelProvider extends PanelProvider
             $brandSetting = Setting::where('key', 'brand')->first();
         }
         $brandLogoPath = $brandSetting?->value['logo'] ?? null;
-        $brandLogoUrl = $brandLogoPath ? asset('storage/'.$brandLogoPath) : null;
+        $brandLogoUrl = $brandLogoPath ? \Illuminate\Support\Facades\Storage::disk('public')->url($brandLogoPath) : null;
 
         return $panel
             ->default()
             ->id('admin')
             ->path('admin')
             ->login()
+            ->sidebarCollapsibleOnDesktop(false)
             ->brandName('RCC Admin')
             ->brandLogo($brandLogoUrl)
             ->brandLogoHeight('3rem')
             ->colors([
-                'primary' => Color::Emerald,
+                'primary' => Color::Cyan,
             ])
+            ->viteTheme(['resources/css/filament/admin.css'])
+            ->collapsibleNavigationGroups(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 \App\Filament\Pages\Dashboard::class,
+                \App\Filament\Pages\PastoreioHistory::class,
+                \App\Filament\Pages\PresencaRapida::class,
             ])
             ->favicon(asset('favicon.ico'))
             ->navigationGroups([

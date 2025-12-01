@@ -162,7 +162,7 @@ class EventResource extends Resource
                 Tables\Columns\TextColumn::make('price')
                     ->label('Valor')
                     ->money('BRL')
-                    ->visible(fn ($record) => $record->is_paid),
+                    ->visible(fn ($record) => $record && $record->is_paid),
                 Tables\Columns\TextColumn::make('capacity')
                     ->label('Capacidade'),
                 Tables\Columns\TextColumn::make('participations_count')

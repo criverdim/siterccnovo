@@ -57,7 +57,17 @@ class PaymentLogResource extends Resource
                     }),
             ])
             ->actions([
-                // Somente leitura
+                Tables\Actions\Action::make('recibo_pdf')
+                    ->label('Gerar Recibo PDF')
+                    ->icon('heroicon-o-document-text')
+                    ->action(function (\App\Models\EventParticipation $record) {
+                        $html = view('pdf.receipt', ['p' => $record])->render();
+                        $pdf = \PDF::loadHTML($html);
+                        return response($pdf->output(), 200, [
+                            'Content-Type' => 'application/pdf',
+                            'Content-Disposition' => 'attachment; filename="recibo-'.$record->id.'.pdf"',
+                        ]);
+                    })
             ])
             ->bulkActions([
                 //
@@ -71,4 +81,3 @@ class PaymentLogResource extends Resource
         ];
     }
 }
-

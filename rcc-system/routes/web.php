@@ -6,7 +6,7 @@ Route::get('/', function () {
     return view('home');
 });
 
-Route::get('/events', [\App\Http\Controllers\PublicEventController::class, 'index']);
+Route::get('/events', [\App\Http\Controllers\PublicEventController::class, 'index'])->name('events.index');
 Route::get('/api/events', function () {
     $q = request()->string('q')->toString();
     $paid = request()->input('paid');
@@ -27,7 +27,7 @@ Route::get('/api/events', function () {
 
     return response()->json($events);
 });
-Route::get('/events/{event}', [\App\Http\Controllers\PublicEventController::class, 'show']);
+Route::get('/events/{event}', [\App\Http\Controllers\PublicEventController::class, 'show'])->name('events.show');
 
 Route::get('/groups', [\App\Http\Controllers\PublicGroupController::class, 'index']);
 Route::get('/groups/{group}', [\App\Http\Controllers\PublicGroupController::class, 'show']);
@@ -53,7 +53,7 @@ Route::get('/calendar', function () {
 
 Route::get('/register', [\App\Http\Controllers\RegistrationController::class, 'create']);
 Route::post('/register', [\App\Http\Controllers\RegistrationController::class, 'register']);
-Route::post('/events/{event}/participate', [\App\Http\Controllers\EventParticipationController::class, 'participate']);
+Route::post('/events/{event}/participate', [\App\Http\Controllers\EventParticipationController::class, 'participate'])->name('events.participate');
 Route::post('/checkout', [\App\Http\Controllers\CheckoutController::class, 'checkout']);
 Route::post('/webhooks/mercadopago', [\App\Http\Controllers\MercadoPagoWebhookController::class, 'handle']);
 
@@ -79,6 +79,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard', function () {
         return view('admin.dashboard');
     });
+    Route::get('/admin/settings/logo-editor', function () {
+        return view('admin.logo-editor');
+    });
+    Route::get('/admin/logo', [\App\Http\Controllers\AdminLogoController::class, 'show']);
+    Route::post('/admin/logo', [\App\Http\Controllers\AdminLogoController::class, 'save']);
     Route::get('/admin/api/stats', function () {
         $members = \App\Models\User::count();
         $groups = \App\Models\Group::count();
@@ -111,7 +116,13 @@ Route::middleware('auth')->group(function () {
         return response()->json($items);
     });
 });
+
+// Demo route (no auth) for editor UI testing only
+Route::get('/editor/logo-demo', function () {
+    return view('admin.logo-editor');
+});
 // Safe landing for admin dashboard link in public layout
 Route::get('/admin/dashboard', function () {
     return redirect('/admin');
 });
+// trailing accidental PHP open tag removed

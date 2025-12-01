@@ -12,12 +12,12 @@ class LinkCrawlerTest extends TestCase
      */
     public function test_internal_links_are_not_broken(): void
     {
-        $base = rtrim(getenv('TEST_BASE_URL') ?: 'http://127.0.0.1', '/');
+        $base = rtrim(getenv('TEST_BASE_URL') ?: 'http://127.0.0.1:8000', '/');
         $host = parse_url($base, PHP_URL_HOST);
-        $queue = [$base . '/'];
+        $queue = [$base . '/admin'];
         $visited = [];
         $broken = [];
-        $maxPages = 200;
+        $maxPages = 300;
 
         while ($queue && count($visited) < $maxPages) {
             $url = array_shift($queue);

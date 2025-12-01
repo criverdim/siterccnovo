@@ -40,6 +40,7 @@ class User extends Authenticatable implements FilamentUser
         'profile_completed_at',
         'consent_at',
         'status',
+        'role',
     ];
 
     /**
@@ -66,12 +67,13 @@ class User extends Authenticatable implements FilamentUser
             'profile_completed_at' => 'datetime',
             'consent_at' => 'datetime',
             'is_servo' => 'boolean',
+            'role' => 'string',
         ];
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return ($this->status === 'active') && (bool) $this->is_servo;
+        return ($this->status === 'active') && ((bool) $this->is_servo || ($this->role === 'admin'));
     }
 
     public function group()

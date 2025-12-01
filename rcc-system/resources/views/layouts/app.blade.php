@@ -20,13 +20,13 @@
             <a href="/" class="site-logo-wrap">
                 @php($brand = \App\Models\Setting::where('key','brand')->first())
                 @if(($brand?->value['logo'] ?? null))
-                    <img src="{{ asset('storage/'.$brand->value['logo']) }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1"
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brand->value['logo']) }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1"
                          loading="eager" decoding="async" fetchpriority="high" />
                 @else
                     <img src="{{ asset('favicon.ico') }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1" />
                 @endif
                 <div class="flex flex-col">
-                    <div class="text-xl md:text-2xl font-bold text-emerald-700">RCC</div>
+                    <div class="text-xl md:text-2xl font-bold text-emerald-700">Grupo de Oração</div>
                     <div class="text-xs text-emerald-600 font-medium">Renovação Carismática Católica</div>
                 </div>
             </a>

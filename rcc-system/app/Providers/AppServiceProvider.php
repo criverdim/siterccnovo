@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,9 +23,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (app()->environment('testing')) {
-            return;
-        }
+        Gate::define('manage_pastoreio', function (?User $user) {
+            if (! $user) return false;
+            return ($user->status === 'active') && in_array($user->role, ['servo','admin'], true);
+        });
         if (Schema::hasTable('settings')) {
             $cfg = Setting::where('key', 'email')->first();
             if ($cfg && is_array($cfg->value)) {

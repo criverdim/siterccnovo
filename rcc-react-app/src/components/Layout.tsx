@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, Navigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { 
   Home, 
   BarChart3, 
@@ -53,13 +53,7 @@ export default function Layout() {
                     <Link
                       key={item.to}
                       to={item.to}
-                      className={({ isActive }) =>
-                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                          isActive
-                            ? 'border-rcc-cyan text-rcc-gray-900'
-                            : 'border-transparent text-rcc-gray-500 hover:text-rcc-gray-700 hover:border-rcc-gray-300'
-                        }`
-                      }
+                      className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 border-transparent text-rcc-gray-500 hover:text-rcc-gray-700 hover:border-rcc-gray-300`}
                     >
                       <Icon className="w-4 h-4 mr-2" />
                       {item.label}
@@ -112,13 +106,7 @@ export default function Layout() {
                   <Link
                     key={item.to}
                     to={item.to}
-                    className={({ isActive }) =>
-                      `flex items-center px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
-                        isActive
-                          ? 'text-rcc-cyan bg-rcc-cyan bg-opacity-10'
-                          : 'text-rcc-gray-600 hover:text-rcc-gray-900 hover:bg-rcc-gray-50'
-                      }`
-                    }
+                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 text-rcc-gray-600 hover:text-rcc-gray-900 hover:bg-rcc-gray-50`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Icon className="w-5 h-5 mr-3" />

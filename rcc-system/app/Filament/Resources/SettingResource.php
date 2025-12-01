@@ -15,10 +15,9 @@ class SettingResource extends Resource
     protected static ?string $model = Setting::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationGroup = 'Configurações';
     protected static ?string $navigationLabel = 'Configurações';
-    protected static ?string $modelLabel = 'Configuração';
-    protected static ?string $pluralModelLabel = 'Configurações';
+    protected static ?string $navigationGroup = 'Configurações';
+    protected static ?int $navigationSort = 10;
 
     public static function form(Form $form): Form
     {
@@ -30,8 +29,10 @@ class SettingResource extends Resource
                             ->label('Logotipo')
                             ->directory('brand')
                             ->image()
-                            ->avatar()
                             ->imageEditor()
+                            ->imageEditorAspectRatios([null, '4:1', '3:1', '1:1'])
+                            ->imageEditorViewportWidth(1024)
+                            ->imageEditorViewportHeight(512)
                             ->maxSize(2048)
                             ->acceptedFileTypes(['image/png','image/svg+xml','image/jpeg'])
                             ->helperText('Formatos: PNG, SVG, JPG • Máx: 2MB • Mín: 200x50px')
@@ -39,7 +40,10 @@ class SettingResource extends Resource
                                 'maxSize' => 'Tamanho máximo 2MB',
                                 'acceptedFileTypes' => 'Somente PNG, SVG ou JPG',
                             ])
-                            ->imageCropAspectRatio('4:1')
+                            ->imageResizeMode('contain')
+                            ->imageResizeTargetWidth(1024)
+                            ->imageResizeTargetHeight(256)
+                            ->imageResizeUpscale(false)
                             ->downloadable()
                             ->previewable(true),
                     ])
@@ -108,6 +112,13 @@ class SettingResource extends Resource
                         Forms\Components\Toggle::make('value.enabled')->label('Habilitado'),
                     ])->columns(2)->visible(fn(Forms\Get $get) => $get('key') === 'whatsapp'),
 
+                Forms\Components\Section::make('Templates de Automação')
+                    ->schema([
+                        Forms\Components\RichEditor::make('value.template_saudades')->label('Template Saudades')->columnSpanFull(),
+                        Forms\Components\RichEditor::make('value.template_aniversario')->label('Template Aniversário')->columnSpanFull(),
+                        Forms\Components\RichEditor::make('value.template_confirmacao')->label('Template Confirmação')->columnSpanFull(),
+                    ])->visible(fn(Forms\Get $get) => $get('key') === 'templates'),
+
                 Forms\Components\Select::make('key')
                     ->label('Chave')
                     ->options([
@@ -118,6 +129,7 @@ class SettingResource extends Resource
                         'social' => 'Redes Sociais',
                         'mercadopago' => 'Mercado Pago',
                         'whatsapp' => 'WhatsApp',
+                        'templates' => 'Templates de Automação',
                     ])
                     ->required(),
             ]);

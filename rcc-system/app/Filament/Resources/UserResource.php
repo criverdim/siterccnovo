@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Schema;
 
 class UserResource extends Resource
 {
@@ -21,6 +22,30 @@ class UserResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $groupField = Schema::hasTable('groups')
+            ? Forms\Components\Select::make('group_id')
+                ->label('Grupo de Oração')
+                ->relationship('group', 'name')
+                ->searchable()
+                ->preload()
+            : Forms\Components\TextInput::make('group_name')
+                ->label('Grupo de Oração')
+                ->disabled()
+                ->placeholder('Tabela de grupos ausente');
+
+        $ministriesField = Schema::hasTable('ministries')
+            ? Forms\Components\Select::make('ministries')
+                ->label('Ministérios')
+                ->relationship('ministries', 'name')
+                ->multiple()
+                ->preload()
+                ->searchable()
+                ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('is_servo'))
+            : Forms\Components\TextInput::make('ministries_info')
+                ->label('Ministérios')
+                ->disabled()
+                ->placeholder('Tabela de ministérios ausente');
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Informações Básicas')
@@ -50,7 +75,8 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('cpf')
                             ->label('CPF')
                             ->maxLength(14)
-                            ->rule('cpf'),
+                            ->regex('/^\d{11}$/')
+                            ->helperText('Digite somente números (11 dígitos).'),
                     ])
                     ->columns(2),
 
@@ -89,21 +115,20 @@ class UserResource extends Resource
                                 'female' => 'Feminino',
                                 'other' => 'Outro',
                             ]),
-                        Forms\Components\Select::make('group_id')
-                            ->label('Grupo de Oração')
-                            ->relationship('group', 'name')
-                            ->searchable()
-                            ->preload(),
+                        Forms\Components\Select::make('role')
+                            ->label('Nível de Acesso')
+                            ->options([
+                                'fiel' => 'Fiel',
+                                'servo' => 'Servo',
+                                'admin' => 'Administrador',
+                            ])
+                            ->default('fiel')
+                            ->required(),
+                        $groupField,
                         Forms\Components\Toggle::make('is_servo')
                             ->label('É Servo?')
                             ->inline(false),
-                        Forms\Components\Select::make('ministries')
-                            ->label('Ministérios')
-                            ->relationship('ministries', 'name')
-                            ->multiple()
-                            ->preload()
-                            ->searchable()
-                            ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('is_servo')),
+                        $ministriesField,
                         Forms\Components\Select::make('status')
                             ->label('Status')
                             ->options([
@@ -142,12 +167,20 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('group.name')
                     ->label('Grupo')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('role')
+                    ->label('Nível')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'admin' => 'danger',
+                        'servo' => 'primary',
+                        default => 'gray',
+                    }),
                 Tables\Columns\IconColumn::make('is_servo')
                     ->label('Servo')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn ($state) => match ($state) {
                         'active' => 'success',
                         'inactive' => 'warning',
                         'blocked' => 'danger',

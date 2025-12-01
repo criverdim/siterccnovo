@@ -1,17 +1,15 @@
 import { useState } from 'react'
 import { 
-  Bell, 
   Mail, 
   Smartphone, 
   Shield, 
-  Eye, 
-  EyeOff,
-  User,
   Globe,
   Moon,
   Sun,
   Save,
-  RefreshCw
+  RefreshCw,
+  User as UserIcon,
+  Activity as ActivityIcon
 } from 'lucide-react'
 
 export default function Settings() {
@@ -272,7 +270,7 @@ export default function Settings() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <User className="w-5 h-5 text-rcc-gray-400 mr-3" />
+              <UserIcon className="w-5 h-5 text-rcc-gray-400 mr-3" />
               <div>
                 <p className="text-sm font-medium text-rcc-gray-900">Profile Visibility</p>
                 <p className="text-sm text-rcc-gray-500">Make your profile visible to other users</p>
@@ -294,7 +292,7 @@ export default function Settings() {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Activity className="w-5 h-5 text-rcc-gray-400 mr-3" />
+              <ActivityIcon className="w-5 h-5 text-rcc-gray-400 mr-3" />
               <div>
                 <p className="text-sm font-medium text-rcc-gray-900">Activity Visibility</p>
                 <p className="text-sm text-rcc-gray-500">Show your recent activity to other users</p>

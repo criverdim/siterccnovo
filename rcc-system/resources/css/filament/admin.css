@@ -1,0 +1,17 @@
+@import "../../../vendor/filament/filament/dist/theme.css";
+.fi-topbar{background-color:#ffffffcc;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid #e5e7eb}
+.fi-sidebar{position:sticky;top:0;height:100vh;min-width:280px;background:#fff;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+.fi-sidebar .fi-logo{padding:15px}
+.fi-sidebar-nav{padding:10px 15px}
+.fi-sidebar a.fi-sidebar-item-button{display:flex;align-items:center;gap:.5rem;padding:15px !important;border-radius:10px;transition:background-color .2s ease,color .2s ease,box-shadow .2s ease}
+.fi-sidebar a.fi-sidebar-item-button:hover{background:#ecfdf5 !important;color:#0b7a48 !important;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+.fi-sidebar-group{padding:10px 15px}
+.fi-sidebar-group-label{font-weight:600;color:#0b7a48}
+.fi-simple-layout,.fi-body{font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+.fi-main{padding:20px}
+.fi-breadcrumbs li{padding:0 6px}
+.fi-form-actions{gap:.75rem}
+.fi-sidebar-item-icon{width:20px;height:20px}
+.fi-icon-btn-icon{width:20px;height:20px}
+.fi-sidebar-item-icon svg,.fi-icon-btn-icon svg{width:100%;height:100%}
+.fi-simple-layout,.fi-body{font-size:15px;line-height:1.5;color:#111827}

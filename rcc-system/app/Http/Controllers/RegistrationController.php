@@ -41,33 +41,41 @@ class RegistrationController extends Controller
             'ministries.*' => ['integer', 'exists:ministries,id'],
         ]);
 
-        $user = User::query()
-            ->where(function ($q) use ($data) {
-                $q->when($data['cpf'] ?? null, fn ($q, $cpf) => $q->orWhere('cpf', $cpf))
-                    ->orWhere('email', $data['email'])
-                    ->orWhere('phone', $data['phone'])
-                    ->orWhere('whatsapp', $data['whatsapp']);
-            })
-            ->first();
+        // Normalização básica para melhor índice e busca
+        $data['cpf'] = isset($data['cpf']) ? preg_replace('/\D+/', '', $data['cpf']) : null;
+        $data['phone'] = preg_replace('/\D+/', '', $data['phone']);
+        $data['whatsapp'] = preg_replace('/\D+/', '', $data['whatsapp']);
 
-        if (! $user) {
-            $user = new User;
-        }
+        $user = \DB::transaction(function () use ($data) {
+            $existing = User::query()
+                ->where(function ($q) use ($data) {
+                    $q->when($data['cpf'] ?? null, fn ($q, $cpf) => $q->orWhere('cpf', $cpf))
+                        ->orWhere('email', $data['email'])
+                        ->orWhere('phone', $data['phone'])
+                        ->orWhere('whatsapp', $data['whatsapp']);
+                })
+                ->first();
 
-        $user->fill(collect($data)->except(['password', 'consent'])->toArray());
-        $user->password = Hash::make($data['password']);
-        if ($data['consent'] ?? false) {
-            $user->consent_at = now();
-        }
-        if ($user->wasRecentlyCreated === false) {
-            $user->profile_completed_at = now();
-        }
-        $user->is_servo = (bool) ($data['is_servo'] ?? false);
-        $user->save();
+            $user = $existing ?: new User;
+            $payload = collect($data)->except(['password', 'consent'])->toArray();
+            $user->fill($payload);
+            $user->password = Hash::make($data['password']);
+            $user->role = $user->role ?: 'fiel';
+            if ($data['consent'] ?? false) {
+                $user->consent_at = now();
+            }
+            if ($existing) {
+                $user->profile_completed_at = $user->profile_completed_at ?: now();
+            }
+            $user->is_servo = (bool) ($data['is_servo'] ?? false);
+            $user->save();
 
-        if ($user->is_servo && ! empty($data['ministries'])) {
-            $user->ministries()->sync($data['ministries']);
-        }
+            if ($user->is_servo && ! empty($data['ministries'])) {
+                $user->ministries()->sync($data['ministries']);
+            }
+
+            return $user;
+        });
 
         if (
             $request->expectsJson() ||

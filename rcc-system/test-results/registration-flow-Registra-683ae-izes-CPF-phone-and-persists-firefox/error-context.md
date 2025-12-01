@@ -1,0 +1,131 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Ir para conteúdo principal" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "Logo RCC Grupo de Oração" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img "Logo RCC" [ref=e6]
+        - generic [ref=e7]: Grupo de Oração
+      - navigation [ref=e8]:
+        - link "Início" [ref=e9] [cursor=pointer]:
+          - /url: /
+        - link "Eventos" [ref=e10] [cursor=pointer]:
+          - /url: /events
+        - link "Grupos" [ref=e11] [cursor=pointer]:
+          - /url: /groups
+        - link "Calendário" [ref=e12] [cursor=pointer]:
+          - /url: /calendar
+        - button "Pastoreio " [ref=e14]:
+          - text: Pastoreio
+          - generic [ref=e15]: 
+        - link "Cadastro" [ref=e16] [cursor=pointer]:
+          - /url: /register
+        - link "Área do Servo/Membro" [ref=e17] [cursor=pointer]:
+          - /url: /login
+      - text: 
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - heading "Cadastro Único" [level=1] [ref=e20]
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - generic [ref=e25]: Nome completo
+            - textbox "Nome completo" [ref=e26]
+          - generic [ref=e27]:
+            - generic [ref=e28]: Email
+            - textbox "Email" [ref=e29]
+          - generic [ref=e30]:
+            - generic [ref=e31]: Telefone
+            - textbox "Telefone" [ref=e32]
+          - generic [ref=e33]:
+            - generic [ref=e34]: WhatsApp
+            - textbox "WhatsApp" [ref=e35]
+          - generic [ref=e36]:
+            - generic [ref=e37]: Data de nascimento
+            - textbox "Data de nascimento" [ref=e38]
+          - generic [ref=e39]:
+            - generic [ref=e40]: CPF (opcional)
+            - textbox "CPF (opcional)" [ref=e41]
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - generic [ref=e44]: CEP
+            - textbox "CEP" [ref=e45]
+          - generic [ref=e46]:
+            - generic [ref=e47]: Endereço
+            - textbox "Endereço" [ref=e48]
+          - generic [ref=e49]:
+            - generic [ref=e50]: Número
+            - textbox "Número" [ref=e51]
+          - generic [ref=e52]:
+            - generic [ref=e53]: Complemento
+            - textbox "Complemento" [ref=e54]
+          - generic [ref=e55]:
+            - generic [ref=e56]: Bairro
+            - textbox "Bairro" [ref=e57]
+          - generic [ref=e58]:
+            - generic [ref=e59]: Cidade
+            - textbox "Cidade" [ref=e60]
+          - generic [ref=e61]:
+            - generic [ref=e62]: Estado
+            - textbox "Estado" [ref=e63]
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - generic [ref=e66]: Gênero (opcional)
+            - combobox "Gênero (opcional)" [ref=e67]:
+              - option "Selecione" [selected]
+              - option "Masculino"
+              - option "Feminino"
+              - option "Outro"
+          - generic [ref=e68]:
+            - generic [ref=e69]: Grupo de oração
+            - combobox "Grupo de oração" [ref=e70]:
+              - option "Selecione" [selected]
+              - option "Grupo Chagas de Amor"
+              - option "Grupo Nossa Senhora das Graças"
+        - generic [ref=e72]:
+          - checkbox "Sou servo" [ref=e73]
+          - generic [ref=e74]: Sou servo
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - generic [ref=e77]: Senha
+            - textbox "Senha" [ref=e78]
+          - generic [ref=e79]:
+            - generic [ref=e80]: Consentimento LGPD
+            - generic [ref=e81]:
+              - checkbox "Consentimento LGPD Concordo com o uso dos meus dados conforme a LGPD" [ref=e82]
+              - generic [ref=e83]: Concordo com o uso dos meus dados conforme a LGPD
+        - button "Cadastrar" [ref=e84]
+  - contentinfo [ref=e85]:
+    - generic [ref=e86]:
+      - generic [ref=e87]:
+        - generic [ref=e88]: Contato
+        - generic [ref=e89]: "Endereço: Rua Exemplo, 123 - Cidade/UF"
+        - generic [ref=e90]: "Telefone: (00) 0000-0000"
+        - generic [ref=e91]: "WhatsApp: (00) 90000-0000"
+      - generic [ref=e92]:
+        - generic [ref=e93]: Redes
+        - generic [ref=e94]:
+          - link "Instagram" [ref=e95] [cursor=pointer]:
+            - /url: "#"
+            - generic "Instagram" [ref=e96]: 
+          - link "Facebook" [ref=e97] [cursor=pointer]:
+            - /url: "#"
+            - generic "Facebook" [ref=e98]: 
+          - link "YouTube" [ref=e99] [cursor=pointer]:
+            - /url: "#"
+            - generic "YouTube" [ref=e100]: 
+      - generic [ref=e101]:
+        - generic [ref=e102]: Links Rápidos
+        - generic [ref=e103]:
+          - link "Próximos Eventos" [ref=e104] [cursor=pointer]:
+            - /url: /events
+          - link "Grupos de Oração" [ref=e105] [cursor=pointer]:
+            - /url: /groups
+          - link "Cadastro" [ref=e106] [cursor=pointer]:
+            - /url: /register
+    - generic [ref=e107]: © 2025 RCC • Excelência visual e simplicidade
+```

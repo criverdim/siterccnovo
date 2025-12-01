@@ -10,7 +10,7 @@ test.describe('Logo visibility and responsiveness', () => {
     const logo = page.locator('header img.site-logo')
     await expect(logo).toBeVisible()
     const box = await logo.boundingBox()
-    expect(box?.height ?? 0).toBeGreaterThan(60) // h-16 minimum
+    expect(box?.height ?? 0).toBeGreaterThan(40) // clamp minimum
   })
 
   test('home hero shows logo section when configured', async ({ page, browserName }) => {
@@ -35,5 +35,16 @@ test.describe('Logo visibility and responsiveness', () => {
     const large = await logo.boundingBox()
 
     expect((large?.height ?? 0)).toBeGreaterThan((small?.height ?? 0))
+  })
+
+  test('logo mounts consistently on all pages', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'Only Chrome/Firefox')
+    for (const path of ['/', '/events', '/groups', '/calendar', '/pastoreio']) {
+      await page.goto(`${baseURL}${path}`, { waitUntil: 'domcontentloaded' })
+      const logo = page.locator('header img.site-logo')
+      await expect(logo).toBeVisible()
+      const box = await logo.boundingBox()
+      expect(box?.height ?? 0).toBeGreaterThan(40)
+    }
   })
 })

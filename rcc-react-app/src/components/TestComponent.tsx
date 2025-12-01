@@ -10,7 +10,7 @@ export default function TestComponent() {
     // Test 1: Basic component rendering
     try {
       results.push('✅ Component rendering test passed')
-    } catch (error) {
+    } catch {
       results.push('❌ Component rendering test failed')
     }
     
@@ -19,7 +19,7 @@ export default function TestComponent() {
       const testElement = document.createElement('div')
       testElement.className = 'bg-rcc-red text-white p-4 rounded-lg'
       results.push('✅ Tailwind CSS classes test passed')
-    } catch (error) {
+    } catch {
       results.push('❌ Tailwind CSS classes test failed')
     }
     
@@ -33,7 +33,7 @@ export default function TestComponent() {
       } else {
         results.push('❌ Local storage test failed')
       }
-    } catch (error) {
+    } catch {
       results.push('❌ Local storage test failed')
     }
     

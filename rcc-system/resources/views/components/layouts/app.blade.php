@@ -21,8 +21,13 @@
     <a href="#main" class="sr-only focus-ring">Ir para conteúdo principal</a>
     <header class="p-4 md:p-6 border-b bg-white/80 backdrop-blur sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="/" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold">R</div>
+            <a href="/" class="site-logo-wrap">
+                @php($brand = \App\Models\Setting::where('key','brand')->first())
+                @if(($brand?->value['logo'] ?? null))
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brand->value['logo']) }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1" loading="eager" decoding="async" fetchpriority="high" />
+                @else
+                    <img src="{{ asset('favicon.ico') }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1" />
+                @endif
                 <div class="text-xl md:text-2xl font-semibold text-emerald-700">Grupo de Oração</div>
             </a>
             <nav class="hidden md:flex items-center gap-6">

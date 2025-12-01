@@ -22,7 +22,27 @@
             </div>
         @endif
         <div class="grid md:grid-cols-2 gap-8">
-            <div id="react-event-show-app"></div>
+            <div class="p-4 rounded-xl border bg-white">
+                <div class="flex items-end justify-between mb-3">
+                    <div class="font-semibold">Participar do evento</div>
+                    <form id="participateForm" method="post" action="{{ route('events.participate', $event) }}">
+                        @csrf
+                        <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
+                        <button type="submit" class="px-4 py-2 rounded-md bg-emerald-600 text-white">Participar</button>
+                    </form>
+                </div>
+                <div class="flex items-center gap-2">
+                    <form id="payForm" method="get" action="{{ url('/checkout') }}">
+                        <select name="method" class="rounded-md border px-3 py-2">
+                            <option value="pix">PIX</option>
+                            <option value="card">Cartão</option>
+                            <option value="boleto">Boleto</option>
+                        </select>
+                        <input type="hidden" name="event" value="{{ $event->id }}" />
+                        <button type="submit" class="px-4 py-2 rounded-md bg-emerald-600 text-white">Pagar</button>
+                    </form>
+                </div>
+            </div>
             <div>
                 <div class="mt-6">
                     <div class="relative overflow-hidden rounded-2xl border" role="region" aria-roledescription="carousel" aria-label="Galeria de fotos do evento">
@@ -72,6 +92,16 @@
         </div>
     </div>
     <script>
+        const participateForm = document.getElementById('participateForm');
+        if (participateForm) {
+            participateForm.addEventListener('submit', function (e) {
+                const loggedIn = !!document.querySelector('[data-user-email]')?.getAttribute('data-user-email');
+                if (!loggedIn) {
+                    e.preventDefault();
+                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                }
+            });
+        }
         const eventCarousel = document.getElementById('eventCarousel');
         const eventPrev = document.getElementById('eventPrev');
         const eventNext = document.getElementById('eventNext');

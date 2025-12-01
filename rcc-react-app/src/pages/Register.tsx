@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
 export default function Register() {
@@ -32,7 +32,7 @@ export default function Register() {
     try {
       await register(email, password, name)
       navigate('/')
-    } catch (err) {
+    } catch {
       setError('Registration failed. Please try again.')
     }
   }

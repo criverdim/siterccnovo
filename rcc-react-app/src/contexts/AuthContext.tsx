@@ -1,34 +1,20 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { User, AuthContextType } from '../types'
+import { useState, ReactNode } from 'react'
+import { loadStoredUser } from './auth-utils'
+import { User } from '../types'
+import { AuthContext } from './auth-context'
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+// useAuth moved to hooks/useAuth.ts to satisfy react-refresh lint rule
 
 interface AuthProviderProps {
   children: ReactNode
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const initialUser = loadStoredUser() as User | null
+  const [user, setUser] = useState<User | null>(initialUser)
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    // Check for stored user data on mount
-    const storedUser = localStorage.getItem('rcc_user')
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
-    }
-    setIsLoading(false)
-  }, [])
-
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string): Promise<void> => {
     setIsLoading(true)
     
     // Simulate API call
@@ -49,7 +35,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(false)
   }
 
-  const register = async (email: string, password: string, name: string): Promise<void> => {
+  const register = async (email: string, name?: string): Promise<void> => {
     setIsLoading(true)
     
     // Simulate API call
@@ -58,7 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const mockUser: User = {
       id: Date.now().toString(),
       email,
-      name,
+      name: name ?? email.split('@')[0],
       role: 'user',
       createdAt: new Date(),
       updatedAt: new Date()
