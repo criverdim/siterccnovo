@@ -12,7 +12,7 @@ class ConsoleErrorTest extends TestCase
         $pages = ['/', '/events', '/groups', '/login'];
 
         foreach ($pages as $path) {
-            $url = $base . $path;
+            $url = $base.$path;
             // Use headless Chrome via chrome devtools protocol if available, fallback to curl
             // For simplicity, we just ensure pages respond 200 here; in CI use puppeteer to capture console
             $ch = curl_init($url);
@@ -25,7 +25,7 @@ class ConsoleErrorTest extends TestCase
             $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
-            $this->assertTrue(in_array($status, [200,301,302]), "Page $url returned status $status");
+            $this->assertTrue(in_array($status, [200, 301, 302]), "Page $url returned status $status");
             $this->assertNotEmpty($body, "Page $url no content");
         }
     }

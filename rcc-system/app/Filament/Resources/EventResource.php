@@ -19,8 +19,11 @@ class EventResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 
     protected static ?string $navigationGroup = 'Eventos';
+
     protected static ?string $navigationLabel = 'Eventos';
+
     protected static ?string $modelLabel = 'Evento';
+
     protected static ?string $pluralModelLabel = 'Eventos';
 
     public static function form(Form $form): Form
@@ -91,7 +94,7 @@ class EventResource extends Resource
                             ->prefix('R$')
                             ->visible(fn (Forms\Get $get): bool => $get('is_paid')),
                         Forms\Components\Toggle::make('parceling_enabled')->label('Parcelamento')->inline(false),
-                        Forms\Components\TextInput::make('parceling_max')->label('Máx. parcelas')->numeric()->visible(fn(Forms\Get $get)=> (bool) $get('parceling_enabled')),
+                        Forms\Components\TextInput::make('parceling_max')->label('Máx. parcelas')->numeric()->visible(fn (Forms\Get $get) => (bool) $get('parceling_enabled')),
                         Forms\Components\Toggle::make('coupons_enabled')->label('Cupons de desconto')->inline(false),
                         Forms\Components\Toggle::make('has_coffee')
                             ->label('Inclui Café?')
@@ -214,9 +217,11 @@ class EventResource extends Resource
                 Tables\Actions\ExportAction::make()->label('Exportar CSV'),
                 Tables\Actions\Action::make('reenviar_ingressos')
                     ->label('Reenviar ingressos')
-                    ->action(function(){
+                    ->action(function () {
                         $parts = \App\Models\EventParticipation::whereNotNull('ticket_uuid')->get();
-                        foreach ($parts as $p) { app(\App\Services\TicketService::class)->sendTicketEmail($p); }
+                        foreach ($parts as $p) {
+                            app(\App\Services\TicketService::class)->sendTicketEmail($p);
+                        }
                         \Filament\Notifications\Notification::make()->title('Ingressos reenviados')->success()->send();
                     }),
             ])

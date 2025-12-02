@@ -32,8 +32,8 @@ class Setting extends Model
             ];
             if ($key && isset($sensitive[$key])) {
                 foreach ($sensitive[$key] as $f) {
-                    if (isset($value[$f]) && $value[$f] !== null && !str_starts_with((string) $value[$f], 'ENC::')) {
-                        $value[$f] = 'ENC::' . base64_encode(Crypt::encryptString((string) $value[$f]));
+                    if (isset($value[$f]) && $value[$f] !== null && ! str_starts_with((string) $value[$f], 'ENC::')) {
+                        $value[$f] = 'ENC::'.base64_encode(Crypt::encryptString((string) $value[$f]));
                     }
                 }
             }
@@ -63,6 +63,23 @@ class Setting extends Model
                 }
             }
         }
+
         return $arr;
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (Setting $setting) {
+            try {
+                app(\App\Services\SiteSettings::class)->invalidate($setting->key);
+            } catch (\Throwable $e) {
+            }
+        });
+        static::deleted(function (Setting $setting) {
+            try {
+                app(\App\Services\SiteSettings::class)->invalidate($setting->key);
+            } catch (\Throwable $e) {
+            }
+        });
     }
 }

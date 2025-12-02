@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class GroupAttendance extends Model
 {
     use HasFactory;
+
     protected $table = 'group_attendance';
 
     protected $fillable = [

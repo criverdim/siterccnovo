@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EventParticipation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Models\EventParticipation;
 
 class AuthController extends Controller
 {
     public function showLogin(Request $request)
     {
         $area = $request->query('area');
+
         return view('auth.login', compact('area'));
     }
 
@@ -27,6 +28,7 @@ class AuthController extends Controller
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['status' => 'error', 'message' => 'Credenciais inválidas'], 422);
             }
+
             return back()->withErrors(['email' => 'Credenciais inválidas'])->withInput();
         }
 
@@ -36,6 +38,7 @@ class AuthController extends Controller
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['status' => 'error', 'message' => 'Usuário inativo ou bloqueado'], 403);
             }
+
             return back()->withErrors(['email' => 'Usuário inativo ou bloqueado'])->withInput();
         }
 
@@ -44,17 +47,20 @@ class AuthController extends Controller
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['status' => 'error', 'message' => 'Acesso restrito a servos'], 403);
             }
+
             return back()->withErrors(['area' => 'Acesso restrito a servos'])->withInput();
         }
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json(['status' => 'ok', 'redirect' => ($data['area'] === 'servo' ? '/area/servo' : '/area/membro')]);
         }
+
         return redirect($data['area'] === 'servo' ? '/area/servo' : '/area/membro');
     }
 
     public function logout()
     {
         Auth::logout();
+
         return redirect('/');
     }
 
@@ -83,7 +89,7 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt(['email' => $data['email'], 'password' => $data['password']], true)) {
+        if (! Auth::attempt(['email' => $data['email'], 'password' => $data['password']], true)) {
             return response()->json(['status' => 'error'], 401);
         }
 
@@ -98,11 +104,11 @@ class AuthController extends Controller
 
         abort_unless($participation->user_id === Auth::id(), 403);
 
-        $path = Storage::disk('local')->path('tickets/ticket_' . $uuid . '.pdf');
+        $path = Storage::disk('local')->path('tickets/ticket_'.$uuid.'.pdf');
 
         abort_unless(file_exists($path), 404);
 
-        $filename = 'ingresso-' . ($participation->event?->name ?? 'evento') . '.pdf';
+        $filename = 'ingresso-'.($participation->event?->name ?? 'evento').'.pdf';
 
         return response()->download($path, $filename);
     }

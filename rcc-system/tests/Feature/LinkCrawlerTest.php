@@ -14,7 +14,7 @@ class LinkCrawlerTest extends TestCase
     {
         $base = rtrim(getenv('TEST_BASE_URL') ?: 'http://127.0.0.1:8000', '/');
         $host = parse_url($base, PHP_URL_HOST);
-        $queue = [$base . '/admin'];
+        $queue = [$base.'/admin'];
         $visited = [];
         $broken = [];
         $maxPages = 300;
@@ -30,6 +30,7 @@ class LinkCrawlerTest extends TestCase
                 [$status, $html] = $this->fetch($url);
                 if ($status >= 400) {
                     $broken[] = ['url' => $url, 'status' => $status];
+
                     continue;
                 }
                 foreach ($this->extractLinks($html) as $link) {
@@ -72,28 +73,31 @@ class LinkCrawlerTest extends TestCase
             'broken_count' => count($broken),
             'broken' => $broken,
         ];
-        $logDir = __DIR__ . '/../../storage/logs';
-        if (!is_dir($logDir)) {
+        $logDir = __DIR__.'/../../storage/logs';
+        if (! is_dir($logDir)) {
             @mkdir($logDir, 0777, true);
         }
-        file_put_contents(__DIR__ . '/../../storage/logs/link-report.json', json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        file_put_contents(__DIR__.'/../../storage/logs/link-report.json', json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         // Assert no internal broken links
         $internalBroken = array_filter($broken, fn ($b) => empty($b['external']));
-        $internalBroken = array_filter($internalBroken, fn ($b) => !str_contains($b['url'] ?? '', '/build/assets/app-'));
-        $this->assertCount(0, $internalBroken, 'Internal broken links found: ' . json_encode($internalBroken));
+        $internalBroken = array_filter($internalBroken, fn ($b) => ! str_contains($b['url'] ?? '', '/build/assets/app-'));
+        $this->assertCount(0, $internalBroken, 'Internal broken links found: '.json_encode($internalBroken));
     }
 
     private function extractLinks(string $html): array
     {
         $links = [];
-        if (! $html) return $links;
+        if (! $html) {
+            return $links;
+        }
         if (preg_match_all('/href\s*=\s*"([^"]+)"/i', $html, $m)) {
             $links = array_merge($links, $m[1]);
         }
         if (preg_match_all('/href\s*=\s*\'([^\']+)\'/i', $html, $m2)) {
             $links = array_merge($links, $m2[1]);
         }
+
         return array_values(array_unique($links));
     }
 
@@ -108,10 +112,11 @@ class LinkCrawlerTest extends TestCase
         // Resolve relative
         $prefix = rtrim($base, '/');
         if (Str::startsWith($href, '/')) {
-            return $prefix . $href;
+            return $prefix.$href;
         }
         $curr = rtrim($currentUrl, '/');
-        return $curr . '/' . $href;
+
+        return $curr.'/'.$href;
     }
 
     private function fetch(string $url): array
@@ -125,6 +130,7 @@ class LinkCrawlerTest extends TestCase
         $body = curl_exec($ch);
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+
         return [$status ?: 0, $body ?: ''];
     }
 }

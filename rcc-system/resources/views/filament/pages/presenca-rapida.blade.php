@@ -15,7 +15,8 @@
                 <input type="text" id="q" name="q" placeholder="Nome, CPF ou Telefone" class="block w-full rounded-md border border-gray-300 px-3 py-2" />
                 <div>
                     <label for="group" class="block text-sm font-medium text-gray-700">Grupo</label>
-                    <select id="group" name="group" class="block w-full rounded-md border border-gray-300 px-3 py-2">
+                    <select id="group" name="group" class="block w-full rounded-md border border-gray-300 px-3 py-2" required>
+                        <option value="" disabled selected>Selecione o grupo</option>
                         @foreach($groups as $g)
                             <option value="{{ $g->id }}">{{ $g->name }}</option>
                         @endforeach

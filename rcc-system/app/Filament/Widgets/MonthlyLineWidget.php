@@ -4,11 +4,11 @@ namespace App\Filament\Widgets;
 
 use App\Models\GroupAttendance;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Carbon;
 
 class MonthlyLineWidget extends ChartWidget
 {
     protected static ?string $heading = 'Evolução Mensal';
+
     protected static ?string $description = 'Total de presenças por mês';
 
     protected function getData(): array
@@ -16,6 +16,7 @@ class MonthlyLineWidget extends ChartWidget
         $months = collect(range(0, 11))->reverse()->map(function ($i) {
             $m = now()->copy()->subMonths($i);
             $count = GroupAttendance::whereMonth('date', $m->month)->whereYear('date', $m->year)->count();
+
             return ['label' => $m->format('M/Y'), 'count' => $count];
         });
 

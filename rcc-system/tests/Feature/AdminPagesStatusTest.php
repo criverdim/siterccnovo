@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AdminPagesStatusTest extends TestCase
 {
@@ -19,6 +19,8 @@ class AdminPagesStatusTest extends TestCase
             'email' => 'admin.health@test.local',
             'role' => 'admin',
             'status' => 'active',
+            'can_access_admin' => true,
+            'is_master_admin' => true,
         ]);
     }
 
@@ -76,4 +78,3 @@ class AdminPagesStatusTest extends TestCase
         return trim(str_replace(['/', '{', '}', ':'], ['-', '', '', '-'], $path), '-');
     }
 }
-

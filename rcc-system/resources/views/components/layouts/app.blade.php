@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="RCC • Evangelizar com beleza, simplicidade e organização">
+    @if(isset($og))
+        <meta property="og:title" content="{{ $og['title'] }}" />
+        <meta property="og:description" content="{{ $og['description'] }}" />
+        <meta property="og:image" content="{{ $og['image'] }}" />
+        <meta property="og:url" content="{{ $og['url'] }}" />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary_large_image" />
+    @endif
     <meta name="theme-color" content="#0b7a48">
     <title>{{ $title ?? 'RCC' }}</title>
     @vite(['resources/css/app.css','resources/js/app.jsx'])
@@ -22,9 +30,9 @@
     <header class="p-4 md:p-6 border-b bg-white/80 backdrop-blur sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <a href="/" class="site-logo-wrap">
-                @php($brand = \App\Models\Setting::where('key','brand')->first())
-                @if(($brand?->value['logo'] ?? null))
-                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brand->value['logo']) }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1" loading="eager" decoding="async" fetchpriority="high" />
+                @php($logoUrl = ($siteSettings['brand_logo'] ?? null))
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1" loading="eager" decoding="async" fetchpriority="high" />
                 @else
                     <img src="{{ asset('favicon.ico') }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1" />
                 @endif
@@ -76,16 +84,16 @@
         <div class="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
             <div>
                 <div class="text-emerald-700 font-semibold mb-2">Contato</div>
-                <div class="text-sm text-gray-700">Endereço: {{ env('SITE_ADDRESS', 'Rua Exemplo, 123 - Cidade/UF') }}</div>
-                <div class="text-sm text-gray-700">Telefone: {{ env('SITE_PHONE', '(00) 0000-0000') }}</div>
-                <div class="text-sm text-gray-700">WhatsApp: {{ env('SITE_WHATSAPP', '(00) 90000-0000') }}</div>
+                <div class="text-sm text-gray-700">Endereço: {{ data_get($siteSettings, 'site.address') }}</div>
+                <div class="text-sm text-gray-700">Telefone: {{ data_get($siteSettings, 'site.phone') }}</div>
+                <div class="text-sm text-gray-700">WhatsApp: {{ data_get($siteSettings, 'site.whatsapp') }}</div>
             </div>
             <div>
                 <div class="text-emerald-700 font-semibold mb-2">Redes</div>
                 <div class="flex items-center gap-4 text-2xl">
-                    <a href="{{ env('SOCIAL_INSTAGRAM', '#') }}" class="text-emerald-700 hover:gold"><i class="fab fa-instagram" aria-label="Instagram"></i></a>
-                    <a href="{{ env('SOCIAL_FACEBOOK', '#') }}" class="text-emerald-700 hover:gold"><i class="fab fa-facebook" aria-label="Facebook"></i></a>
-                    <a href="{{ env('SOCIAL_YOUTUBE', '#') }}" class="text-emerald-700 hover:gold"><i class="fab fa-youtube" aria-label="YouTube"></i></a>
+                    <a href="{{ data_get($siteSettings, 'social.instagram', '#') }}" class="text-emerald-700 hover:gold"><i class="fab fa-instagram" aria-label="Instagram"></i></a>
+                    <a href="{{ data_get($siteSettings, 'social.facebook', '#') }}" class="text-emerald-700 hover:gold"><i class="fab fa-facebook" aria-label="Facebook"></i></a>
+                    <a href="{{ data_get($siteSettings, 'social.youtube', '#') }}" class="text-emerald-700 hover:gold"><i class="fab fa-youtube" aria-label="YouTube"></i></a>
                 </div>
             </div>
             <div>

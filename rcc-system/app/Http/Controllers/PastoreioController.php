@@ -8,6 +8,7 @@ use App\Models\GroupDraw;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PastoreioController extends Controller
 {
@@ -90,16 +91,53 @@ class PastoreioController extends Controller
 
     public function attendance(Request $request)
     {
-        $data = $request->validate([
-            'user_id' => ['nullable', 'integer', 'exists:users,id'],
-            'name' => ['nullable', 'string', 'max:255'],
-            'cpf' => ['nullable', 'string', 'max:20'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'group_id' => ['required', 'integer', 'exists:groups,id'],
-            'date' => ['required', 'date'],
+        if (! $request->filled('date')) {
+            $request->merge(['date' => now()->toDateString()]);
+        }
+        $rawDate = $request->input('date');
+        if (is_string($rawDate) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $rawDate)) {
+            [$d, $m, $y] = [substr($rawDate, 0, 2), substr($rawDate, 3, 2), substr($rawDate, 6, 4)];
+            $request->merge(['date' => "$y-$m-$d"]);
+        }
+        // Removido fallback de group_id para obrigar seleção explícita pelo usuário
+        try {
+            $data = $request->validate([
+                'user_id' => ['nullable', 'integer', 'exists:users,id'],
+                'name' => ['nullable', 'string', 'max:255'],
+                'cpf' => ['nullable', 'string', 'max:20'],
+                'phone' => ['nullable', 'string', 'max:50'],
+                'group_id' => ['required', 'integer', 'exists:groups,id'],
+                'date' => ['required', 'date'],
+            ], [
+                'group_id.required' => 'Selecione o grupo',
+                'group_id.integer' => 'Grupo inválido',
+                'group_id.exists' => 'Grupo não encontrado',
+                'date.required' => 'Informe a data',
+                'date.date' => 'Data inválida',
+            ]);
+        } catch (ValidationException $e) {
+            \Log::warning('pastoreio.attendance.validation_error', [
+                'errors' => $e->errors(),
+                'input' => $request->all(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Dados inválidos',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+        \Log::info('pastoreio.attendance.request', [
+            'user_id' => $data['user_id'] ?? null,
+            'name' => $data['name'] ?? null,
+            'cpf' => $data['cpf'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'group_id' => $data['group_id'],
+            'date' => $data['date'],
         ]);
 
-        $user = $data['user_id'] ? User::find($data['user_id']) : null;
+        $userId = $data['user_id'] ?? null;
+        $user = $userId ? User::find($userId) : null;
         if (! $user) {
             $user = User::query()
                 ->where(function ($q) use ($data) {
@@ -108,30 +146,44 @@ class PastoreioController extends Controller
                         ->when($data['name'] ?? null, fn ($q, $name) => $q->orWhere('name', 'like', "%$name%"));
                 })
                 ->first();
+            if ($user) {
+                \Log::info('pastoreio.attendance.user_found', ['user_id' => $user->id]);
+            }
         }
         if (! $user) {
             $user = User::create([
                 'name' => $data['name'] ?? 'Participante',
                 'email' => Str::uuid().'@local',
                 'phone' => $data['phone'] ?? '',
+                'whatsapp' => $data['phone'] ?? '',
+                'cpf' => $data['cpf'] ?? null,
                 'password' => bcrypt(Str::random(12)),
                 'group_id' => $data['group_id'],
+                'status' => 'active',
             ]);
+            \Log::info('pastoreio.attendance.user_created', ['user_id' => $user->id]);
         }
 
-        $attendance = GroupAttendance::firstOrCreate(
-            [
-                'user_id' => $user->id,
-                'group_id' => $data['group_id'],
-                'date' => $data['date'],
-            ],
-            [
-                'created_by' => auth()->id() ?? $user->id,
-                'source' => 'manual',
-            ]
-        );
+        try {
+            $attendance = GroupAttendance::firstOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'group_id' => $data['group_id'],
+                    'date' => $data['date'],
+                ],
+                [
+                    'created_by' => auth()->id() ?? $user->id,
+                    'source' => 'manual',
+                ]
+            );
+            \Log::info('pastoreio.attendance.success', ['attendance_id' => $attendance->id]);
 
-        return response()->json(['status' => 'ok', 'attendance_id' => $attendance->id]);
+            return response()->json(['status' => 'ok', 'attendance_id' => $attendance->id, 'created' => (bool) $attendance->wasRecentlyCreated]);
+        } catch (\Throwable $e) {
+            \Log::error('pastoreio.attendance.error', ['message' => $e->getMessage()]);
+
+            return response()->json(['status' => 'error', 'message' => 'Falha ao registrar presença'], 500);
+        }
     }
 
     public function draw(Request $request)

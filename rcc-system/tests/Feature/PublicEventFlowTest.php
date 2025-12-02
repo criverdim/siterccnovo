@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class PublicEventFlowTest extends TestCase
 {
@@ -32,4 +32,3 @@ class PublicEventFlowTest extends TestCase
         $this->assertDatabaseHas('event_participations', ['user_id' => $user->id, 'event_id' => $event->id]);
     }
 }
-

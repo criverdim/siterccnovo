@@ -18,8 +18,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('groups', function (Blueprint $table) {
-            $table->dropColumn(['responsible_phone','responsible_whatsapp','responsible_email']);
+            $table->dropColumn(['responsible_phone', 'responsible_whatsapp', 'responsible_email']);
         });
     }
 };
-

@@ -22,28 +22,36 @@ graph TD
 ```
 
 ## 2. Technology Description
-- Frontend: React@18 + tailwindcss@3 + vite
-- Initialization Tool: vite-init
-- Backend: Supabase (BaaS)
-- UI Components: Headless UI + Radix UI
-- State Management: React Context + useReducer
-- Styling: Tailwind CSS com configuração customizada para paleta RCC
+
+* Frontend: React\@18 + tailwindcss\@3 + vite
+
+* Initialization Tool: vite-init
+
+* Backend: Supabase (BaaS)
+
+* UI Components: Headless UI + Radix UI
+
+* State Management: React Context + useReducer
+
+* Styling: Tailwind CSS com configuração customizada para paleta RCC
 
 ## 3. Route definitions
-| Route | Purpose |
-|-------|---------|
-| / | Página inicial com hero section e navegação |
-| /login | Página de autenticação do usuário |
+
+| Route      | Purpose                                        |
+| ---------- | ---------------------------------------------- |
+| /          | Página inicial com hero section e navegação    |
+| /login     | Página de autenticação do usuário              |
 | /dashboard | Dashboard principal com widgets e estatísticas |
-| /profile | Página de perfil do usuário |
-| /settings | Configurações e preferências do usuário |
-| /admin | Painel administrativo (apenas para admins) |
+| /profile   | Página de perfil do usuário                    |
+| /settings  | Configurações e preferências do usuário        |
+| /admin     | Painel administrativo (apenas para admins)     |
 
 ## 4. API definitions
 
 ### 4.1 Core API
 
 **Autenticação via Supabase**
+
 ```javascript
 // Login com email/senha
 const { data, error } = await supabase.auth.signInWithPassword({
@@ -65,6 +73,7 @@ const { data, error } = await supabase.auth.signUp({
 ```
 
 **CRUD Operations**
+
 ```javascript
 // Listar dados com filtros
 const { data, error } = await supabase
@@ -104,6 +113,7 @@ graph TD
 ## 6. Data model
 
 ### 6.1 Data model definition
+
 ```mermaid
 erDiagram
     USERS ||--o{ PROFILES : has
@@ -148,6 +158,7 @@ erDiagram
 ### 6.2 Data Definition Language
 
 **Tabela de Usuários (users)**
+
 ```sql
 -- Tabela de autenticação gerenciada pelo Supabase Auth
 -- Configurações de segurança:
@@ -156,6 +167,7 @@ GRANT ALL ON auth.users TO authenticated;
 ```
 
 **Tabela de Perfis (profiles)**
+
 ```sql
 -- create table
 CREATE TABLE profiles (
@@ -187,6 +199,7 @@ CREATE POLICY "Usuários podem editar seu próprio perfil" ON profiles
 ```
 
 **Tabela de Configurações (settings)**
+
 ```sql
 -- create table
 CREATE TABLE settings (
@@ -218,6 +231,7 @@ CREATE POLICY "Usuários podem editar próprias configurações" ON settings
 ```
 
 **Tabela de Atividades (activities)**
+
 ```sql
 -- create table
 CREATE TABLE activities (
@@ -245,3 +259,4 @@ CREATE POLICY "Usuários podem ver próprias atividades" ON activities
 CREATE POLICY "Usuários podem criar atividades próprias" ON activities
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 ```
+

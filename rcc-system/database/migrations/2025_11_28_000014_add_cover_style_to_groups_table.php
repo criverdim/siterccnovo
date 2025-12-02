@@ -17,8 +17,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('groups', function (Blueprint $table) {
-            $table->dropColumn(['cover_bg_color','cover_object_position']);
+            $table->dropColumn(['cover_bg_color', 'cover_object_position']);
         });
     }
 };
-

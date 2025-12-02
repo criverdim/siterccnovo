@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\Ministry;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,6 +26,11 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('secret123'),
                 'status' => 'active',
                 'is_servo' => true,
+                'role' => 'admin',
+                'can_access_admin' => true,
+                'is_master_admin' => true,
+                'phone' => '+55 11 90000-0000',
+                'whatsapp' => '+55 11 90000-0000',
             ]
         );
 

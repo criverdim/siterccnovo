@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\User;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,7 +17,7 @@ class SendBirthdayMessages implements ShouldQueue
     public function handle(): void
     {
         $today = now()->format('m-d');
-        $template = optional(Setting::where('key','templates')->first())->value['template_aniversario'] ?? 'Feliz aniversário, {{name}}!';
+        $template = optional(Setting::where('key', 'templates')->first())->value['template_aniversario'] ?? 'Feliz aniversário, {{name}}!';
         $users = User::whereNotNull('birth_date')->get();
         foreach ($users as $u) {
             if ($u->birth_date && $u->birth_date->format('m-d') === $today) {
@@ -28,4 +28,3 @@ class SendBirthdayMessages implements ShouldQueue
         }
     }
 }
-

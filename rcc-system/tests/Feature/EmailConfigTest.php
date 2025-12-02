@@ -18,8 +18,10 @@ class EmailConfigTest extends TestCase
     {
         parent::setUp();
         $dir = storage_path('logs');
-        if (!is_dir($dir)) @mkdir($dir, 0777, true);
-        $this->reportPath = $dir . '/email-config-report.json';
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+        $this->reportPath = $dir.'/email-config-report.json';
     }
 
     private function writeReport(array $data): void
@@ -42,33 +44,33 @@ class EmailConfigTest extends TestCase
                 'from_name' => env('MAIL_FROM_NAME', 'RCC System'),
             ],
         ]);
-        $cfg = Setting::where('key','email')->first();
-        $ok = is_string($cfg->value['host'] ?? null) && !empty($cfg->value['host'])
+        $cfg = Setting::where('key', 'email')->first();
+        $ok = is_string($cfg->value['host'] ?? null) && ! empty($cfg->value['host'])
             && is_numeric($cfg->value['port'] ?? null)
-            && in_array($cfg->value['encryption'] ?? '', ['tls','ssl']);
-        $this->writeReport(['env'=>env('APP_ENV'),'smtp_params_ok'=>$ok,'cfg'=>$cfg->value]);
+            && in_array($cfg->value['encryption'] ?? '', ['tls', 'ssl']);
+        $this->writeReport(['env' => env('APP_ENV'), 'smtp_params_ok' => $ok, 'cfg' => $cfg->value]);
         $this->assertFileExists($this->reportPath);
     }
 
     public function test_smtp_connectivity_probe_tls_and_ssl(): void
     {
-        $cfg = Setting::where('key','email')->first();
-        $svc = new \App\Services\EmailDiagnosticsService();
-        $plain = $svc->probe($cfg->value['host'] ?? 'localhost', (int)($cfg->value['port'] ?? 25), $cfg->value['encryption'] ?? 'tls');
-        $this->writeReport(['smtp_probe_plain'=>$plain]);
+        $cfg = Setting::where('key', 'email')->first();
+        $svc = new \App\Services\EmailDiagnosticsService;
+        $plain = $svc->probe($cfg->value['host'] ?? 'localhost', (int) ($cfg->value['port'] ?? 25), $cfg->value['encryption'] ?? 'tls');
+        $this->writeReport(['smtp_probe_plain' => $plain]);
         $this->assertFileExists($this->reportPath);
     }
 
     public function test_password_recovery_flow_end_to_end_with_rate_limit(): void
     {
-        $user = User::factory()->create(['email'=>'test-user@example.com']);
+        $user = User::factory()->create(['email' => 'test-user@example.com']);
         // Request reset 5x should pass, 6th should be rate limited
-        for ($i=0; $i<5; $i++) {
-            $res = $this->post('/password/email', ['email'=>$user->email]);
+        for ($i = 0; $i < 5; $i++) {
+            $res = $this->post('/password/email', ['email' => $user->email]);
             $res->assertStatus(302);
         }
-        $res6 = $this->post('/password/email', ['email'=>$user->email]);
-        $this->writeReport(['rate_limit_6th'=> $res6->getStatusCode(), 'expected_error'=>true]);
+        $res6 = $this->post('/password/email', ['email' => $user->email]);
+        $this->writeReport(['rate_limit_6th' => $res6->getStatusCode(), 'expected_error' => true]);
         $this->assertFileExists($this->reportPath);
     }
 
@@ -77,27 +79,27 @@ class EmailConfigTest extends TestCase
         Mail::fake();
         // Usa closures raw, sem dependência de view
         // Usa um mailable simples para garantir contagem
-        if (!class_exists('Tests\\Feature\\SimpleTestMailable')) {
+        if (! class_exists('Tests\\Feature\\SimpleTestMailable')) {
             eval('namespace Tests\\Feature; class SimpleTestMailable extends \\Illuminate\\Mail\\Mailable { public function build(){ return $this->subject("Teste RCC")->html("<p>Teste</p>"); } }');
         }
-        Mail::to('destinatario@gmail.com')->send(new \Tests\Feature\SimpleTestMailable());
-        Mail::to('destinatario@outlook.com')->send(new \Tests\Feature\SimpleTestMailable());
+        Mail::to('destinatario@gmail.com')->send(new \Tests\Feature\SimpleTestMailable);
+        Mail::to('destinatario@outlook.com')->send(new \Tests\Feature\SimpleTestMailable);
         Mail::assertSent(\Tests\Feature\SimpleTestMailable::class, 2);
-        $this->writeReport(['providers_tested'=>['gmail','outlook'],'mode'=>'raw']);
-        $this->writeReport(['providers_tested'=>['gmail','outlook'],'mode'=>'simulation']);
+        $this->writeReport(['providers_tested' => ['gmail', 'outlook'], 'mode' => 'raw']);
+        $this->writeReport(['providers_tested' => ['gmail', 'outlook'], 'mode' => 'simulation']);
         $this->assertFileExists($this->reportPath);
     }
 
     public function test_failure_scenarios_connection_timeout_and_credentials(): void
     {
         // Simula cenário de timeout e registra em relatório
-        $svc = new \App\Services\EmailDiagnosticsService();
+        $svc = new \App\Services\EmailDiagnosticsService;
         $probe = $svc->probe('203.0.113.1', 25, 'tls', 1.0); // IP exemplo (RFC), timeout curto
-        $this->writeReport(['timeout_probe'=>$probe]);
+        $this->writeReport(['timeout_probe' => $probe]);
         $this->assertFileExists($this->reportPath);
         // Credenciais inválidas: registra condição
         $invalid = ['username' => 'wrong', 'password' => 'bad'];
-        $this->writeReport(['invalid_credentials'=>$invalid]);
+        $this->writeReport(['invalid_credentials' => $invalid]);
         $this->assertFileExists($this->reportPath);
     }
 }

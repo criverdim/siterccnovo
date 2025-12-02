@@ -2,13 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Event;
 use App\Models\Group;
-use App\Models\Setting;
 use App\Models\Ministerio;
-use App\Models\PaymentLog;
-use App\Models\Visita;
+use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -23,18 +21,20 @@ class AdminComprehensiveTest extends TestCase
     {
         parent::setUp();
         Storage::fake('local');
-        
+
         // Criar usuário administrativo
         $this->adminUser = User::factory()->create([
             'is_servo' => true,
             'status' => 'active',
-            'role' => 'admin'
+            'role' => 'admin',
+            'can_access_admin' => true,
+            'is_master_admin' => true,
         ]);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 1. TESTES DE NAVEGAÇÃO E LINKS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa acesso ao painel administrativo
@@ -42,10 +42,10 @@ class AdminComprehensiveTest extends TestCase
     public function test_admin_can_access_admin_panel(): void
     {
         $this->actingAs($this->adminUser);
-        
+
         $response = $this->get('/admin');
         $response->assertStatus(200);
-        $response->assertSee('Dashboard');
+        $response->assertSee('RCC Admin');
     }
 
     /**
@@ -54,7 +54,7 @@ class AdminComprehensiveTest extends TestCase
     public function test_all_admin_navigation_links_are_accessible(): void
     {
         $this->actingAs($this->adminUser);
-        
+
         $navigationRoutes = [
             '/admin' => 'Dashboard',
             '/admin/users' => 'Usuários',
@@ -83,15 +83,15 @@ class AdminComprehensiveTest extends TestCase
     public function test_admin_redirects_work_correctly(): void
     {
         $this->actingAs($this->adminUser);
-        
+
         // Testar redirecionamento de /admin para /admin/dashboard
         $response = $this->get('/admin');
         $response->assertStatus(200); // Filament já trata o dashboard
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 2. TESTES DE FUNÇÕES ADMINISTRATIVAS (CRUD)
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa CRUD completo de usuários
@@ -111,7 +111,7 @@ class AdminComprehensiveTest extends TestCase
             'phone' => '(11) 99999-9999',
             'whatsapp' => '(11) 99999-9999',
             'role' => 'fiel',
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         $this->assertDatabaseHas('users', ['email' => 'joao@teste.com']);
@@ -149,7 +149,7 @@ class AdminComprehensiveTest extends TestCase
             'location' => 'Local de Teste',
             'start_date' => now()->addDays(7)->format('Y-m-d'),
             'start_time' => '10:00',
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         $this->assertDatabaseHas('events', ['name' => 'Evento de Teste']);
@@ -185,7 +185,7 @@ class AdminComprehensiveTest extends TestCase
             'responsible' => 'Responsável Teste',
             'weekday' => 'sunday',
             'time' => '19:00',
-            'address' => 'Endereço de Teste'
+            'address' => 'Endereço de Teste',
         ]);
 
         $this->assertDatabaseHas('groups', ['name' => 'Grupo de Teste']);
@@ -205,9 +205,9 @@ class AdminComprehensiveTest extends TestCase
         $this->assertDatabaseMissing('groups', ['name' => 'Grupo de Teste']);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 3. TESTES DE FORMULÁRIOS E VALIDAÇÕES
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa validação de formulários obrigatórios
@@ -219,11 +219,11 @@ class AdminComprehensiveTest extends TestCase
         // Testar validação de usuário
         $response = $this->post('/admin/users', []);
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
-        
+
         // Testar validação de evento
         $response = $this->post('/admin/events', []);
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
-        
+
         // Testar validação de grupo
         $response = $this->post('/admin/groups', []);
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
@@ -243,7 +243,7 @@ class AdminComprehensiveTest extends TestCase
             'whatsapp' => '(11) 99999-9999',
             'cpf' => '123.456.789-09', // CPF inválido
             'role' => 'fiel',
-            'status' => 'active'
+            'status' => 'active',
         ];
 
         $response = $this->post('/admin/users', $userData);
@@ -265,7 +265,7 @@ class AdminComprehensiveTest extends TestCase
             'phone' => '(11) 99999-9999',
             'whatsapp' => '(11) 99999-9999',
             'role' => 'fiel',
-            'status' => 'active'
+            'status' => 'active',
         ];
 
         $response = $this->post('/admin/users', $userData);
@@ -273,9 +273,9 @@ class AdminComprehensiveTest extends TestCase
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 4. TESTES DE FILTROS E BUSCAS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa filtros de usuários
@@ -338,18 +338,18 @@ class AdminComprehensiveTest extends TestCase
         // Testar que os dados existem no banco
         $this->assertDatabaseHas('users', ['name' => 'João Pesquisa']);
         $this->assertDatabaseHas('events', ['name' => 'Evento Pesquisa']);
-        
+
         // Verificar que as páginas carregam corretamente
         $response = $this->get('/admin/users');
         $response->assertStatus(200);
-        
+
         $response = $this->get('/admin/events');
         $response->assertStatus(200);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 5. TESTES DE LAYOUT E RESPONSIVIDADE
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa se páginas carregam elementos de UI corretamente
@@ -361,7 +361,7 @@ class AdminComprehensiveTest extends TestCase
         // Testar dashboard
         $response = $this->get('/admin');
         $response->assertStatus(200);
-        $response->assertSee('Dashboard');
+        $response->assertSee('RCC Admin');
 
         // Testar widgets
         $response = $this->get('/admin');
@@ -384,9 +384,9 @@ class AdminComprehensiveTest extends TestCase
         $response->assertStatus(200);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 6. TESTES DE FLUXO COMPLETO DO ADMINISTRADOR
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa fluxo completo de criação e gerenciamento de evento
@@ -406,7 +406,7 @@ class AdminComprehensiveTest extends TestCase
             'is_paid' => true,
             'price' => 150.00,
             'capacity' => 100,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // Verificar que o evento foi criado
@@ -460,7 +460,7 @@ class AdminComprehensiveTest extends TestCase
             'role' => 'servo',
             'is_servo' => true,
             'group_id' => $group->id,
-            'status' => 'active'
+            'status' => 'active',
         ];
 
         $user = User::factory()->create(array_merge($userData, ['email' => 'maria@completa.com']));
@@ -511,9 +511,9 @@ class AdminComprehensiveTest extends TestCase
         $this->assertEquals('smtp.outlook.com', $setting->fresh()->value['host']);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 7. TESTES DE PERMISSÕES E SEGURANÇA
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa que usuários não administradores não podem acessar o painel
@@ -523,13 +523,13 @@ class AdminComprehensiveTest extends TestCase
         $normalUser = User::factory()->create([
             'is_servo' => false,
             'status' => 'active',
-            'role' => 'fiel'
+            'role' => 'fiel',
         ]);
 
         $this->actingAs($normalUser);
-        
+
         $response = $this->get('/admin');
-        $response->assertStatus(403); // Ou redirecionamento, dependendo da configuração
+        $response->assertStatus(403);
     }
 
     /**
@@ -540,18 +540,19 @@ class AdminComprehensiveTest extends TestCase
         $servoUser = User::factory()->create([
             'is_servo' => true,
             'status' => 'active',
-            'role' => 'servo'
+            'role' => 'servo',
+            'can_access_admin' => true,
         ]);
 
         $this->actingAs($servoUser);
-        
+
         $response = $this->get('/admin');
         $response->assertStatus(200);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 8. TESTES DE PERFORMANCE
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa performance de listagens com grandes volumes de dados
@@ -568,17 +569,17 @@ class AdminComprehensiveTest extends TestCase
         // Testar carregamento básico das páginas
         $response = $this->get('/admin/users');
         $response->assertStatus(200);
-        
+
         $response = $this->get('/admin/events');
         $response->assertStatus(200);
-        
+
         $response = $this->get('/admin/groups');
         $response->assertStatus(200);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // 9. TESTES DE RELATÓRIOS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Gera relatório de cobertura de testes
@@ -590,40 +591,40 @@ class AdminComprehensiveTest extends TestCase
                 'total_routes' => 9,
                 'tested_routes' => 9,
                 'coverage' => '100%',
-                'status' => 'completed'
+                'status' => 'completed',
             ],
             'crud_operations' => [
                 'users' => ['create' => true, 'read' => true, 'update' => true, 'delete' => true],
                 'events' => ['create' => true, 'read' => true, 'update' => true, 'delete' => true],
                 'groups' => ['create' => true, 'read' => true, 'update' => true, 'delete' => true],
-                'settings' => ['create' => true, 'read' => true, 'update' => true, 'delete' => true]
+                'settings' => ['create' => true, 'read' => true, 'update' => true, 'delete' => true],
             ],
             'form_validation' => [
                 'required_fields' => 'tested',
                 'email_validation' => 'tested',
                 'cpf_validation' => 'tested',
-                'date_validation' => 'tested'
+                'date_validation' => 'tested',
             ],
             'filters_and_search' => [
                 'user_filters' => 'tested',
                 'event_filters' => 'tested',
                 'group_filters' => 'tested',
-                'global_search' => 'tested'
+                'global_search' => 'tested',
             ],
             'complete_workflows' => [
                 'event_management' => 'tested',
                 'user_management' => 'tested',
-                'settings_management' => 'tested'
+                'settings_management' => 'tested',
             ],
             'security' => [
                 'admin_access' => 'tested',
                 'servo_access' => 'tested',
-                'user_access_denied' => 'tested'
+                'user_access_denied' => 'tested',
             ],
             'performance' => [
                 'large_datasets' => 'tested',
-                'export_operations' => 'tested'
-            ]
+                'export_operations' => 'tested',
+            ],
         ];
 
         return $report;

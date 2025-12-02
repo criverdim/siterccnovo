@@ -9,8 +9,11 @@ use Filament\Pages\Page;
 class DuplicatesTool extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-users';
+
     protected static ?string $navigationGroup = 'Gerenciamento';
+
     protected static ?string $title = 'Fusão de Duplicados';
+
     protected static string $view = 'filament.pages.duplicates-tool';
 
     public ?array $results = [];
@@ -45,4 +48,3 @@ class DuplicatesTool extends Page
         $source->delete();
     }
 }
-

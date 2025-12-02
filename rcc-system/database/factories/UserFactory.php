@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -23,6 +24,9 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $role = fake()->randomElement(['fiel', 'servo', 'admin']);
+        $status = 'active';
+
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
@@ -31,7 +35,26 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'phone' => fake()->phoneNumber(),
             'whatsapp' => fake()->phoneNumber(),
+            'role' => $role,
+            'status' => $status,
+            'can_access_admin' => false,
+            'is_master_admin' => false,
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this
+            ->afterMaking(function (User $user) {
+                if ($user->role === 'admin') {
+                    $user->can_access_admin = true;
+                }
+            })
+            ->afterCreating(function (User $user) {
+                if ($user->role === 'admin' && ! $user->can_access_admin) {
+                    $user->forceFill(['can_access_admin' => true])->save();
+                }
+            });
     }
 
     /**

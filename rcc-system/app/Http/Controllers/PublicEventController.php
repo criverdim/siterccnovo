@@ -20,7 +20,7 @@ class PublicEventController extends Controller
                         ->orWhere('description', 'like', "%$q%")
                         ->orWhere('location', 'like', "%$q%");
                 }))
-                ->when(in_array($paid, ['paid','free'], true), fn ($qr) => $qr->where('is_paid', $paid === 'paid'))
+                ->when(in_array($paid, ['paid', 'free'], true), fn ($qr) => $qr->where('is_paid', $paid === 'paid'))
                 ->when($month && $month >= 1 && $month <= 12, fn ($qr) => $qr->whereMonth('start_date', $month))
                 ->orderBy('start_date')
                 ->paginate(12)

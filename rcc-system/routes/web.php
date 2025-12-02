@@ -19,13 +19,17 @@ Route::get('/api/events', function () {
                 ->orWhere('description', 'like', "%$q%")
                 ->orWhere('location', 'like', "%$q%");
         }))
-        ->when(in_array($paid, ['paid','free'], true), fn ($qr) => $qr->where('is_paid', $paid === 'paid'))
+        ->when(in_array($paid, ['paid', 'free'], true), fn ($qr) => $qr->where('is_paid', $paid === 'paid'))
         ->when($month && $month >= 1 && $month <= 12, fn ($qr) => $qr->whereMonth('start_date', $month))
         ->orderBy('start_date')
         ->paginate(12)
         ->withQueryString();
 
     return response()->json($events);
+});
+Route::get('/api/site', function () {
+    $svc = app(\App\Services\SiteSettings::class);
+    return response()->json($svc->all());
 });
 Route::get('/events/{event}', [\App\Http\Controllers\PublicEventController::class, 'show'])->name('events.show');
 
@@ -42,7 +46,7 @@ Route::get('/api/groups', function () {
         }))
         ->when($weekday, fn ($qr) => $qr->where('weekday', $weekday))
         ->orderBy('name')
-        ->get(['id','name','weekday','time','address','photos']);
+        ->get(['id', 'name', 'weekday', 'time', 'address', 'photos']);
 
     return response()->json($groups);
 });
@@ -54,7 +58,15 @@ Route::get('/calendar', function () {
 Route::get('/register', [\App\Http\Controllers\RegistrationController::class, 'create']);
 Route::post('/register', [\App\Http\Controllers\RegistrationController::class, 'register']);
 Route::post('/events/{event}/participate', [\App\Http\Controllers\EventParticipationController::class, 'participate'])->name('events.participate');
-Route::post('/checkout', [\App\Http\Controllers\CheckoutController::class, 'checkout']);
+Route::get('/events/{event}/participate', function (\App\Models\Event $event) {
+    $redirect = '/login?redirect='.urlencode('/events/'.$event->id);
+    if (! auth()->check()) {
+        return redirect($redirect);
+    }
+
+    return redirect('/events/'.$event->id);
+})->name('events.participate.get');
+Route::match(['get', 'post'], '/checkout', [\App\Http\Controllers\CheckoutController::class, 'checkout'])->name('checkout');
 Route::post('/webhooks/mercadopago', [\App\Http\Controllers\MercadoPagoWebhookController::class, 'handle']);
 
 Route::get('/pastoreio', [\App\Http\Controllers\PastoreioController::class, 'index']);
@@ -78,13 +90,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/area/ticket/{uuid}', [\App\Http\Controllers\AuthController::class, 'downloadTicket']);
     Route::get('/admin/dashboard', function () {
         return view('admin.dashboard');
-    });
+    })->middleware('admin.access');
     Route::get('/admin/settings/logo-editor', function () {
         return view('admin.logo-editor');
-    });
-    Route::get('/admin/logo', [\App\Http\Controllers\AdminLogoController::class, 'show']);
-    Route::post('/admin/logo', [\App\Http\Controllers\AdminLogoController::class, 'save']);
-    Route::get('/admin/api/stats', function () {
+    })->middleware('admin.access:settings');
+    Route::get('/admin/logo', [\App\Http\Controllers\AdminLogoController::class, 'show'])->middleware('admin.access');
+    Route::post('/admin/logo', [\App\Http\Controllers\AdminLogoController::class, 'save'])->middleware('admin.access');
+Route::get('/admin/api/stats', function () {
         $members = \App\Models\User::count();
         $groups = \App\Models\Group::count();
         $events = \App\Models\Event::where('is_active', true)->count();
@@ -96,13 +108,22 @@ Route::middleware('auth')->group(function () {
             'events' => $events,
             'registrations_today' => $registrationsToday,
         ]);
+    })->middleware('admin.access');
+
+    Route::prefix('/api/v1/admin')->middleware('admin.access')->group(function () {
+        Route::get('/users', [\App\Http\Controllers\AdminUserController::class, 'index']);
+        Route::get('/users/{id}', [\App\Http\Controllers\AdminUserController::class, 'show']);
+        Route::put('/users/{id}', [\App\Http\Controllers\AdminUserController::class, 'update']);
+        Route::post('/users/{id}/send-message', [\App\Http\Controllers\AdminUserController::class, 'sendMessage']);
+        Route::post('/users/{id}/upload-photo', [\App\Http\Controllers\AdminUserController::class, 'uploadPhoto']);
+        Route::post('/users/bulk-update-status', [\App\Http\Controllers\AdminUserController::class, 'bulkUpdateStatus']);
     });
     Route::get('/area/api/participations', function () {
         $items = \App\Models\EventParticipation::with('event')
             ->where('user_id', auth()->id())
             ->latest()
             ->get()
-            ->map(function($p){
+            ->map(function ($p) {
                 return [
                     'event' => [
                         'name' => $p->event->name ?? null,
@@ -113,6 +134,7 @@ Route::middleware('auth')->group(function () {
                     'ticket_uuid' => $p->ticket_uuid,
                 ];
             });
+
         return response()->json($items);
     });
 });
@@ -124,5 +146,27 @@ Route::get('/editor/logo-demo', function () {
 // Safe landing for admin dashboard link in public layout
 Route::get('/admin/dashboard', function () {
     return redirect('/admin');
+});
+// Testing-only helpers
+Route::get('/testing/login-admin', function () {
+    if (! app()->isProduction() && app()->environment('testing')) {
+        $email = request()->string('email')->toString();
+        $user = null;
+        if ($email) {
+            $user = \App\Models\User::where('email', $email)->first();
+        }
+        if (! $user) {
+            $user = \App\Models\User::where('is_master_admin', true)->first() ?: \App\Models\User::where('role', 'admin')->first();
+        }
+        if (! $user) {
+            $user = \App\Models\User::first();
+        }
+        if ($user) {
+            auth()->login($user);
+            return response()->json(['status' => 'ok', 'user' => $user->only(['id','email','name'])]);
+        }
+        return response()->json(['status' => 'no-user'], 404);
+    }
+    abort(404);
 });
 // trailing accidental PHP open tag removed

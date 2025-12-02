@@ -17,7 +17,7 @@ class GroupFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->company() . ' - Grupo de Oração',
+            'name' => fake()->company().' - Grupo de Oração',
             'description' => fake()->paragraph(),
             'responsible' => fake()->name(),
             'responsible_phone' => fake()->phoneNumber(),

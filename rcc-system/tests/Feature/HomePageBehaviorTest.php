@@ -9,7 +9,7 @@ class HomePageBehaviorTest extends TestCase
     public function test_homepage_assets_and_carousel(): void
     {
         $base = rtrim(getenv('TEST_BASE_URL') ?: 'http://127.0.0.1', '/');
-        [$status, $html] = $this->fetch($base . '/');
+        [$status, $html] = $this->fetch($base.'/');
         $this->assertTrue(in_array($status, [200, 301, 302]), 'Homepage not reachable');
 
         // Basic assertions for assets and structure
@@ -33,6 +33,7 @@ class HomePageBehaviorTest extends TestCase
         $body = curl_exec($ch);
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+
         return [$status ?: 0, $body ?: ''];
     }
 }

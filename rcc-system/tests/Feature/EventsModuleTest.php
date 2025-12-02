@@ -31,7 +31,7 @@ class EventsModuleTest extends TestCase
             'parceling_enabled' => true,
             'parceling_max' => 3,
             'coupons_enabled' => false,
-            'extra_services' => [['title'=>'Almoço','desc'=>'Buffet','price'=>30]],
+            'extra_services' => [['title' => 'Almoço', 'desc' => 'Buffet', 'price' => 30]],
             'terms' => '<p>Leia os termos</p>',
             'rules' => '<p>Siga as regras</p>',
             'generates_ticket' => true,
@@ -49,7 +49,7 @@ class EventsModuleTest extends TestCase
 
     public function test_user_inscription_and_checkout_simulation(): void
     {
-        $event = Event::factory()->create(['is_paid'=>true,'price'=>50,'generates_ticket'=>true]);
+        $event = Event::factory()->create(['is_paid' => true, 'price' => 50, 'generates_ticket' => true]);
         $user = User::factory()->create();
 
         $this->be($user);
@@ -62,7 +62,7 @@ class EventsModuleTest extends TestCase
         $checkout = $this->post('/checkout', [
             'participation_id' => $pid,
             'payment_method' => 'pix',
-            'payer' => ['email'=>$user->email],
+            'payer' => ['email' => $user->email],
         ]);
         $checkout->assertStatus(200);
         $this->assertEquals('pending', $checkout->json('status'));
@@ -70,13 +70,13 @@ class EventsModuleTest extends TestCase
 
     public function test_event_show_page_renders_new_blocks(): void
     {
-        $event = Event::factory()->create([
-            'category'=>'congresso',
-            'arrival_info'=>'Chegar 30min antes',
-            'map_embed_url'=>'https://maps.google.com',
-            'extra_services'=>[['title'=>'Café','desc'=>'Incluso','price'=>0]],
-            'terms'=>'<p>Termos</p>',
-            'rules'=>'<p>Regras</p>',
+        $event = Event::factory()->active()->create([
+            'category' => 'congresso',
+            'arrival_info' => 'Chegar 30min antes',
+            'map_embed_url' => 'https://maps.google.com',
+            'extra_services' => [['title' => 'Café', 'desc' => 'Incluso', 'price' => 0]],
+            'terms' => '<p>Termos</p>',
+            'rules' => '<p>Regras</p>',
         ]);
 
         $res = $this->get("/events/{$event->id}");
@@ -87,4 +87,3 @@ class EventsModuleTest extends TestCase
         $res->assertSee('Regras de participação');
     }
 }
-

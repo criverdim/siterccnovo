@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Event;
-use App\Models\Group;
 use App\Models\EventParticipation;
-use App\Models\Visit;
+use App\Models\Group;
 use App\Models\Ministerio;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -22,17 +21,19 @@ class AdminAdvancedFeaturesTest extends TestCase
     {
         parent::setUp();
         Storage::fake('local');
-        
+
         $this->adminUser = User::factory()->create([
             'is_servo' => true,
             'status' => 'active',
-            'role' => 'admin'
+            'role' => 'admin',
+            'can_access_admin' => true,
+            'is_master_admin' => true,
         ]);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE FUNCIONALIDADES AVANÇADAS DE EVENTOS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa gerenciamento de inscrições em eventos
@@ -46,7 +47,7 @@ class AdminAdvancedFeaturesTest extends TestCase
             'name' => 'Evento com Inscrições',
             'capacity' => 50,
             'is_paid' => true,
-            'price' => 100.00
+            'price' => 100.00,
         ]);
 
         // Criar participantes
@@ -58,14 +59,14 @@ class AdminAdvancedFeaturesTest extends TestCase
             'event_id' => $event->id,
             'user_id' => $user1->id,
             'payment_status' => 'approved',
-            'ticket_uuid' => 'uuid-123'
+            'ticket_uuid' => 'uuid-123',
         ]);
 
         $participation2 = EventParticipation::factory()->create([
             'event_id' => $event->id,
             'user_id' => $user2->id,
             'payment_status' => 'pending',
-            'ticket_uuid' => 'uuid-456'
+            'ticket_uuid' => 'uuid-456',
         ]);
 
         // Verificar listagem de participações
@@ -99,14 +100,14 @@ class AdminAdvancedFeaturesTest extends TestCase
                 [
                     'title' => 'Coffee Break Premium',
                     'desc' => 'Café especial durante o evento',
-                    'price' => 25.00
+                    'price' => 25.00,
                 ],
                 [
                     'title' => 'Material Didático',
                     'desc' => 'Apostila e materiais',
-                    'price' => 50.00
-                ]
-            ]
+                    'price' => 50.00,
+                ],
+            ],
         ];
 
         $event = Event::factory()->create($eventData);
@@ -117,9 +118,9 @@ class AdminAdvancedFeaturesTest extends TestCase
         $this->assertEquals(12, $event->parceling_max);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE FUNCIONALIDADES DE GRUPOS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa gerenciamento de membros de grupos
@@ -154,7 +155,7 @@ class AdminAdvancedFeaturesTest extends TestCase
         // Criar grupo com WhatsApp
         $group = Group::factory()->create([
             'name' => 'Grupo WhatsApp',
-            'responsible_whatsapp' => '(11) 99999-9999'
+            'responsible_whatsapp' => '(11) 99999-9999',
         ]);
 
         // Verificar se o link do WhatsApp está funcionando
@@ -166,9 +167,9 @@ class AdminAdvancedFeaturesTest extends TestCase
         $this->assertNotNull($group->responsible_whatsapp);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE FUNCIONALIDADES DE USUÁRIOS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa gerenciamento de ministérios de usuários
@@ -185,7 +186,7 @@ class AdminAdvancedFeaturesTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Servo Teste',
             'is_servo' => true,
-            'role' => 'servo'
+            'role' => 'servo',
         ]);
 
         // Associar ministérios
@@ -208,21 +209,23 @@ class AdminAdvancedFeaturesTest extends TestCase
             'name' => 'Admin Teste',
             'role' => 'admin',
             'is_servo' => true,
-            'status' => 'active'
+            'status' => 'active',
+            'can_access_admin' => true,
         ]);
 
         $servoUser = User::factory()->create([
             'name' => 'Servo Teste',
             'role' => 'servo',
             'is_servo' => true,
-            'status' => 'active'
+            'status' => 'active',
+            'can_access_admin' => true,
         ]);
 
         $fielUser = User::factory()->create([
             'name' => 'Fiel Teste',
             'role' => 'fiel',
             'is_servo' => false,
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         // Admin deve ter acesso completo
@@ -241,9 +244,9 @@ class AdminAdvancedFeaturesTest extends TestCase
         $response->assertStatus(403);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE CONFIGURAÇÕES DO SISTEMA
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa diferentes tipos de configurações
@@ -255,14 +258,14 @@ class AdminAdvancedFeaturesTest extends TestCase
         // Acessar página de configurações
         $response = $this->get('/admin/settings');
         $response->assertStatus(200);
-        
+
         // Verificar que a página carrega corretamente
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE FUNCIONALIDADES DE LOGS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa visualização de logs do sistema
@@ -274,7 +277,7 @@ class AdminAdvancedFeaturesTest extends TestCase
         // Acessar página de dashboard (logs podem não estar disponíveis)
         $response = $this->get('/admin');
         $response->assertStatus(200);
-        
+
         // Verificar que a página carrega corretamente
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
     }
@@ -289,14 +292,14 @@ class AdminAdvancedFeaturesTest extends TestCase
         // Acessar página de eventos (pagamentos podem não estar disponíveis)
         $response = $this->get('/admin/events');
         $response->assertStatus(200);
-        
+
         // Verificar que a página carrega corretamente
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE FUNCIONALIDADES DE VISITAS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa gerenciamento de visitas
@@ -308,14 +311,14 @@ class AdminAdvancedFeaturesTest extends TestCase
         // Acessar página de dashboard (visitas podem não estar disponíveis)
         $response = $this->get('/admin');
         $response->assertStatus(200);
-        
+
         // Verificar que a página carrega corretamente
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE FUNCIONALIDADES DE MINISTÉRIOS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa gerenciamento de ministérios
@@ -330,7 +333,7 @@ class AdminAdvancedFeaturesTest extends TestCase
             'Ministério de Dança',
             'Ministério de Intercessão',
             'Ministério de Comunicação',
-            'Ministério de Acolhimento'
+            'Ministério de Acolhimento',
         ];
 
         foreach ($ministerios as $nome) {
@@ -346,9 +349,9 @@ class AdminAdvancedFeaturesTest extends TestCase
         $this->assertEquals(5, Ministerio::count());
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE EXPORTAÇÃO E RELATÓRIOS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa exportação de diferentes tipos de dados
@@ -390,9 +393,9 @@ class AdminAdvancedFeaturesTest extends TestCase
         $response->assertStatus(200);
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE PERFORMANCE E CARGA
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa performance com grandes volumes de dados
@@ -410,7 +413,7 @@ class AdminAdvancedFeaturesTest extends TestCase
         // Testar carregamento
         $response = $this->get('/admin/users');
         $response->assertStatus(200);
-        
+
         // Verificar que a página carrega corretamente
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
     }
@@ -427,7 +430,7 @@ class AdminAdvancedFeaturesTest extends TestCase
                 'name' => "Admin {$i}",
                 'is_servo' => true,
                 'status' => 'active',
-                'role' => 'admin'
+                'role' => 'admin',
             ]);
         }
 
@@ -439,9 +442,9 @@ class AdminAdvancedFeaturesTest extends TestCase
         }
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // TESTES DE INTEGRAÇÃO ENTRE MÓDULOS
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Testa integração entre usuários, grupos e eventos
@@ -463,12 +466,12 @@ class AdminAdvancedFeaturesTest extends TestCase
         // Criar participações
         EventParticipation::factory()->create([
             'event_id' => $event->id,
-            'user_id' => $user1->id
+            'user_id' => $user1->id,
         ]);
 
         EventParticipation::factory()->create([
             'event_id' => $event->id,
-            'user_id' => $user2->id
+            'user_id' => $user2->id,
         ]);
 
         // Verificar integrações
@@ -493,21 +496,21 @@ class AdminAdvancedFeaturesTest extends TestCase
         // Criar dados para relatórios
         User::factory()->count(20)->create(['status' => 'active']);
         User::factory()->count(5)->create(['status' => 'inactive']);
-        
+
         Event::factory()->count(3)->create(['is_active' => true, 'category' => 'culto']);
         Event::factory()->count(2)->create(['is_active' => false, 'category' => 'retiro']);
 
         // Acessar dashboard
         $response = $this->get('/admin');
         $response->assertStatus(200);
-        
+
         // Verificar que a página carrega corretamente
         $this->assertTrue(true); // Adicionar assertion para evitar teste risky
     }
 
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
     // MÉTODOS AUXILIARES
-    ///////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
 
     /**
      * Gera relatório detalhado de testes avançados
@@ -521,40 +524,40 @@ class AdminAdvancedFeaturesTest extends TestCase
                 'group_member_management' => 'tested',
                 'whatsapp_integration' => 'tested',
                 'user_ministry_management' => 'tested',
-                'multi_level_access' => 'tested'
+                'multi_level_access' => 'tested',
             ],
             'system_settings' => [
                 'email_settings' => 'tested',
                 'payment_gateway_settings' => 'tested',
-                'whatsapp_settings' => 'tested'
+                'whatsapp_settings' => 'tested',
             ],
             'logs_and_monitoring' => [
                 'system_logs' => 'tested',
                 'payment_logs' => 'tested',
-                'visita_logs' => 'tested'
+                'visita_logs' => 'tested',
             ],
             'data_export' => [
                 'user_export' => 'tested',
                 'event_export' => 'tested',
                 'group_export' => 'tested',
-                'bulk_export' => 'tested'
+                'bulk_export' => 'tested',
             ],
             'performance_tests' => [
                 'large_datasets' => 'tested',
                 'concurrent_access' => 'tested',
-                'load_time_validation' => 'tested'
+                'load_time_validation' => 'tested',
             ],
             'integration_tests' => [
                 'user_group_event_integration' => 'tested',
                 'dashboard_integration' => 'tested',
-                'cross_module_functionality' => 'tested'
+                'cross_module_functionality' => 'tested',
             ],
             'coverage_summary' => [
                 'total_features' => 25,
                 'tested_features' => 25,
                 'coverage_percentage' => '100%',
-                'test_execution_time' => 'comprehensive'
-            ]
+                'test_execution_time' => 'comprehensive',
+            ],
         ];
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AdminEditUserPageTest extends TestCase
 {
@@ -16,6 +16,8 @@ class AdminEditUserPageTest extends TestCase
             'email' => 'admin@test.local',
             'role' => 'admin',
             'status' => 'active',
+            'can_access_admin' => true,
+            'is_master_admin' => true,
         ]);
 
         $user = \App\Models\User::factory()->create([
@@ -36,4 +38,3 @@ class AdminEditUserPageTest extends TestCase
         $this->assertTrue(\Illuminate\Support\Facades\Route::has($name), "Missing route: $name");
     }
 }
-

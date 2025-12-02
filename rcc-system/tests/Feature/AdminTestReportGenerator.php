@@ -12,17 +12,20 @@ class AdminTestReportGenerator extends TestCase
     use RefreshDatabase;
 
     protected $adminUser;
+
     protected $reportData = [];
 
     protected function setUp(): void
     {
         parent::setUp();
         Storage::fake('local');
-        
+
         $this->adminUser = User::factory()->create([
             'is_servo' => true,
             'status' => 'active',
-            'role' => 'admin'
+            'role' => 'admin',
+            'can_access_admin' => true,
+            'is_master_admin' => true,
         ]);
     }
 
@@ -43,11 +46,11 @@ class AdminTestReportGenerator extends TestCase
                 'workflow_tests' => $this->getWorkflowTestsSummary(),
                 'security_tests' => $this->getSecurityTestsSummary(),
                 'performance_tests' => $this->getPerformanceTestsSummary(),
-                'advanced_features_tests' => $this->getAdvancedFeaturesSummary()
+                'advanced_features_tests' => $this->getAdvancedFeaturesSummary(),
             ],
             'coverage_analysis' => $this->getCoverageAnalysis(),
             'recommendations' => $this->getRecommendations(),
-            'conclusion' => $this->getConclusion()
+            'conclusion' => $this->getConclusion(),
         ];
 
         // Salvar relatório em arquivo
@@ -66,7 +69,7 @@ class AdminTestReportGenerator extends TestCase
             'laravel_version' => app()->version(),
             'database' => config('database.default'),
             'environment' => app()->environment(),
-            'application_name' => config('app.name')
+            'application_name' => config('app.name'),
         ];
     }
 
@@ -89,9 +92,9 @@ class AdminTestReportGenerator extends TestCase
                 '/admin/ministerios' => 'Ministérios - Acessível',
                 '/admin/payment-logs' => 'Logs de Pagamento - Acessível',
                 '/admin/visitas' => 'Visitas - Acessível',
-                '/admin/logs' => 'Logs - Acessível'
+                '/admin/logs' => 'Logs - Acessível',
             ],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -110,28 +113,28 @@ class AdminTestReportGenerator extends TestCase
                     'create' => 'Funcional',
                     'read' => 'Funcional',
                     'update' => 'Funcional',
-                    'delete' => 'Funcional'
+                    'delete' => 'Funcional',
                 ],
                 'events' => [
                     'create' => 'Funcional',
                     'read' => 'Funcional',
                     'update' => 'Funcional',
-                    'delete' => 'Funcional'
+                    'delete' => 'Funcional',
                 ],
                 'groups' => [
                     'create' => 'Funcional',
                     'read' => 'Funcional',
                     'update' => 'Funcional',
-                    'delete' => 'Funcional'
+                    'delete' => 'Funcional',
                 ],
                 'settings' => [
                     'create' => 'Funcional',
                     'read' => 'Funcional',
                     'update' => 'Funcional',
-                    'delete' => 'Funcional'
-                ]
+                    'delete' => 'Funcional',
+                ],
             ],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -153,9 +156,9 @@ class AdminTestReportGenerator extends TestCase
                 'date_format' => 'Validado',
                 'numeric_fields' => 'Validado',
                 'file_uploads' => 'Validado',
-                'select_options' => 'Validado'
+                'select_options' => 'Validado',
             ],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -178,9 +181,9 @@ class AdminTestReportGenerator extends TestCase
                 'event_category_filter' => 'Funcional',
                 'group_weekday_filter' => 'Funcional',
                 'global_search' => 'Funcional',
-                'column_search' => 'Funcional'
+                'column_search' => 'Funcional',
             ],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -204,11 +207,11 @@ class AdminTestReportGenerator extends TestCase
                 'interactive_elements' => 'Testado',
                 'modals_dialogs' => 'Testado',
                 'notifications' => 'Testado',
-                'form_validation_ui' => 'Testado'
+                'form_validation_ui' => 'Testado',
             ],
             'devices_tested' => ['desktop', 'tablet', 'mobile'],
             'browsers_tested' => ['chrome', 'firefox', 'safari', 'edge'],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -228,9 +231,9 @@ class AdminTestReportGenerator extends TestCase
                 'settings_configuration' => 'Testado',
                 'user_role_assignment' => 'Testado',
                 'event_participation_flow' => 'Testado',
-                'group_member_management' => 'Testado'
+                'group_member_management' => 'Testado',
             ],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -252,9 +255,9 @@ class AdminTestReportGenerator extends TestCase
                 'role_based_permissions' => 'Testado',
                 'data_validation_security' => 'Testado',
                 'sql_injection_prevention' => 'Testado',
-                'xss_prevention' => 'Testado'
+                'xss_prevention' => 'Testado',
             ],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -273,9 +276,9 @@ class AdminTestReportGenerator extends TestCase
                 'page_load_time_events' => '< 2 segundos',
                 'page_load_time_groups' => '< 1 segundo',
                 'large_dataset_handling' => 'Testado (500+ registros)',
-                'concurrent_user_support' => 'Testado (5 usuários simultâneos)'
+                'concurrent_user_support' => 'Testado (5 usuários simultâneos)',
             ],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -301,9 +304,9 @@ class AdminTestReportGenerator extends TestCase
                 'data_export_functionality' => 'Testado',
                 'bulk_operations' => 'Testado',
                 'email_configuration' => 'Testado',
-                'payment_gateway_integration' => 'Testado'
+                'payment_gateway_integration' => 'Testado',
             ],
-            'status' => 'completed'
+            'status' => 'completed',
         ];
     }
 
@@ -323,7 +326,7 @@ class AdminTestReportGenerator extends TestCase
                 'tests_passed' => $passedTests,
                 'tests_failed' => $failedTests,
                 'success_rate' => $coveragePercentage,
-                'execution_time' => 'Aproximadamente 15-20 minutos'
+                'execution_time' => 'Aproximadamente 15-20 minutos',
             ],
             'functional_coverage' => [
                 'navigation' => '100%',
@@ -334,7 +337,7 @@ class AdminTestReportGenerator extends TestCase
                 'workflows' => '100%',
                 'security' => '100%',
                 'performance' => '100%',
-                'advanced_features' => '100%'
+                'advanced_features' => '100%',
             ],
             'test_categories_distribution' => [
                 'navigation_tests' => '10.3%',
@@ -345,8 +348,8 @@ class AdminTestReportGenerator extends TestCase
                 'workflow_tests' => '6.9%',
                 'security_tests' => '9.2%',
                 'performance_tests' => '5.7%',
-                'advanced_features' => '13.8%'
-            ]
+                'advanced_features' => '13.8%',
+            ],
         ];
     }
 
@@ -360,20 +363,20 @@ class AdminTestReportGenerator extends TestCase
                 'Adicionar testes de carga com mais usuários simultâneos',
                 'Implementar testes de regressão automatizados',
                 'Criar testes de integração com serviços externos',
-                'Adicionar monitoramento de performance em produção'
+                'Adicionar monitoramento de performance em produção',
             ],
             'long_term_improvements' => [
                 'Implementar testes de usabilidade com usuários reais',
                 'Criar suite de testes de acessibilidade',
                 'Desenvolver testes de segurança avançados',
-                'Estabelecer pipeline de testes contínuos'
+                'Estabelecer pipeline de testes contínuos',
             ],
             'best_practices_suggestions' => [
                 'Manter cobertura de testes acima de 95%',
                 'Executar testes antes de cada deploy',
                 'Documentar casos de teste complexos',
-                'Realizar testes de fumaça após deploys'
-            ]
+                'Realizar testes de fumaça após deploys',
+            ],
         ];
     }
 
@@ -393,15 +396,15 @@ class AdminTestReportGenerator extends TestCase
                 'Fluxos de trabalho completos testados',
                 'Segurança e permissões adequadas',
                 'Performance dentro dos limites aceitáveis',
-                'Funcionalidades avançadas operacionais'
+                'Funcionalidades avançadas operacionais',
             ],
             'quality_metrics' => [
                 'functional_coverage' => '100%',
                 'test_success_rate' => '100%',
                 'critical_path_coverage' => '100%',
-                'security_test_coverage' => '100%'
+                'security_test_coverage' => '100%',
             ],
-            'final_status' => 'PASSED - Sistema pronto para produção'
+            'final_status' => 'PASSED - Sistema pronto para produção',
         ];
     }
 
@@ -412,7 +415,7 @@ class AdminTestReportGenerator extends TestCase
     {
         $reportPath = storage_path('logs/admin-comprehensive-test-report.json');
         file_put_contents($reportPath, json_encode($this->reportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        
+
         // Também criar versão HTML
         $htmlReport = $this->generateHtmlReport();
         $htmlPath = storage_path('logs/admin-comprehensive-test-report.html');
@@ -458,7 +461,7 @@ class AdminTestReportGenerator extends TestCase
     <div class="container">
         <div class="header">
             <h1>Relatório de Testes - Administração RCC System</h1>
-            <p>Data da Execução: ' . $this->reportData['executed_at'] . '</p>
+            <p>Data da Execução: '.$this->reportData['executed_at'].'</p>
             <p>Status: <span class="status-badge status-completed">COMPLETO</span></p>
         </div>
 
@@ -498,19 +501,19 @@ class AdminTestReportGenerator extends TestCase
                     </tr>
                 </thead>
                 <tbody>';
-        
+
         foreach ($this->reportData['test_categories'] as $category => $data) {
             $html .= '
                     <tr>
-                        <td>' . ucfirst(str_replace('_', ' ', $category)) . '</td>
-                        <td>' . $data['total_tests'] . '</td>
-                        <td class="success">' . $data['passed_tests'] . '</td>
-                        <td class="danger">' . $data['failed_tests'] . '</td>
-                        <td>' . $data['coverage_percentage'] . '</td>
-                        <td><span class="status-badge status-completed">' . ucfirst($data['status']) . '</span></td>
+                        <td>'.ucfirst(str_replace('_', ' ', $category)).'</td>
+                        <td>'.$data['total_tests'].'</td>
+                        <td class="success">'.$data['passed_tests'].'</td>
+                        <td class="danger">'.$data['failed_tests'].'</td>
+                        <td>'.$data['coverage_percentage'].'</td>
+                        <td><span class="status-badge status-completed">'.ucfirst($data['status']).'</span></td>
                     </tr>';
         }
-        
+
         $html .= '
                 </tbody>
             </table>
@@ -521,22 +524,22 @@ class AdminTestReportGenerator extends TestCase
             <div class="metric">
                 <h3>Melhorias Imediatas</h3>
                 <ul>';
-        
+
         foreach ($this->reportData['recommendations']['immediate_improvements'] as $improvement) {
-            $html .= '<li>' . $improvement . '</li>';
+            $html .= '<li>'.$improvement.'</li>';
         }
-        
+
         $html .= '
                 </ul>
             </div>
             <div class="metric">
                 <h3>Melhorias de Longo Prazo</h3>
                 <ul>';
-        
+
         foreach ($this->reportData['recommendations']['long_term_improvements'] as $improvement) {
-            $html .= '<li>' . $improvement . '</li>';
+            $html .= '<li>'.$improvement.'</li>';
         }
-        
+
         $html .= '
                 </ul>
             </div>
@@ -545,14 +548,14 @@ class AdminTestReportGenerator extends TestCase
         <div class="section">
             <h2>Conclusão</h2>
             <div class="metric">
-                <p><strong>' . $this->reportData['conclusion']['executive_summary'] . '</strong></p>
-                <p>Status Final: <span class="status-badge status-completed">' . $this->reportData['conclusion']['final_status'] . '</span></p>
+                <p><strong>'.$this->reportData['conclusion']['executive_summary'].'</strong></p>
+                <p>Status Final: <span class="status-badge status-completed">'.$this->reportData['conclusion']['final_status'].'</span></p>
             </div>
         </div>
     </div>
 </body>
 </html>';
-        
+
         return $html;
     }
 
@@ -562,9 +565,9 @@ class AdminTestReportGenerator extends TestCase
     public function test_generate_admin_test_report(): void
     {
         $this->actingAs($this->adminUser);
-        
+
         $report = $this->generate_comprehensive_test_report();
-        
+
         // Verificar se o relatório foi gerado
         $this->assertNotEmpty($report);
         $this->assertArrayHasKey('executed_at', $report);
@@ -572,17 +575,17 @@ class AdminTestReportGenerator extends TestCase
         $this->assertArrayHasKey('coverage_analysis', $report);
         $this->assertArrayHasKey('recommendations', $report);
         $this->assertArrayHasKey('conclusion', $report);
-        
+
         // Verificar se arquivos foram criados
         $this->assertFileExists(storage_path('logs/admin-comprehensive-test-report.json'));
         $this->assertFileExists(storage_path('logs/admin-comprehensive-test-report.html'));
-        
+
         // Adicionar ao relatório de execução
         $this->appendReport('report_generation', [
             'status' => 'completed',
             'json_report' => 'generated',
             'html_report' => 'generated',
-            'coverage' => '100%'
+            'coverage' => '100%',
         ]);
     }
 

@@ -113,10 +113,24 @@ function HomeApp() {
     React.useEffect(() => {
         const next = () => setCurrent((c) => (c + 1) % 3);
         let timer = setInterval(next, 7000);
-        return () => clearInterval(timer);
+        const load = async () => {
+            try {
+                const r = await fetch('/api/site');
+                const j = await r.json();
+                setSite(j);
+                setSiteError(null);
+            } catch (e) {
+                setSiteError('Falha ao carregar dados do site');
+            }
+        };
+        load();
+        const poll = setInterval(load, 60000);
+        return () => { clearInterval(timer); clearInterval(poll); };
     }, []);
 
     const [current, setCurrent] = React.useState(0);
+    const [site, setSite] = React.useState(null);
+    const [siteError, setSiteError] = React.useState(null);
     const slides = [
         'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=Renova%C3%A7%C3%A3o%20Carism%C3%A1tica%20Cat%C3%B3lica%20event%20gathering%2C%20people%20worshipping%20together%2C%20warm%20lighting%2C%20church%20setting%2C%20spiritual%20atmosphere%2C%20professional%20photography&image_size=landscape_16_9',
         'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=Catholic%20charismatic%20prayer%20group%2C%20people%20holding%20hands%20in%20prayer%2C%20candles%20and%20cross%2C%20peaceful%20spiritual%20environment%2C%20warm%20golden%20lighting%2C%20professional%20photography&image_size=landscape_16_9',
@@ -139,6 +153,33 @@ function HomeApp() {
                     </div>
                 </div>
             </section>
+            <div className="max-w-7xl mx-auto px-4 mt-8">
+                {siteError && (
+                    <div className="p-3 rounded bg-red-50 text-red-700" role="alert" aria-live="polite">{siteError}</div>
+                )}
+                {site && (
+                    <div className="grid md:grid-cols-3 gap-6">
+                        <div className="card p-4">
+                            <div className="text-emerald-700 font-semibold mb-2">Contato</div>
+                            <div className="text-sm text-gray-700">Endereço: {site?.site?.address}</div>
+                            <div className="text-sm text-gray-700">Telefone: {site?.site?.phone}</div>
+                            <div className="text-sm text-gray-700">WhatsApp: {site?.site?.whatsapp}</div>
+                        </div>
+                        <div className="card p-4">
+                            <div className="text-emerald-700 font-semibold mb-2">Redes</div>
+                            <div className="flex items-center gap-4 text-2xl">
+                                <a href={site?.social?.instagram || '#'} className="text-emerald-700 hover:gold" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+                                <a href={site?.social?.facebook || '#'} className="text-emerald-700 hover:gold" aria-label="Facebook"><i className="fab fa-facebook"></i></a>
+                                <a href={site?.social?.youtube || '#'} className="text-emerald-700 hover:gold" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+                            </div>
+                        </div>
+                        <div className="card p-4">
+                            <div className="text-emerald-700 font-semibold mb-2">E-mail</div>
+                            <div className="text-sm text-gray-700">{site?.site?.email}</div>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -287,14 +328,37 @@ function PastoreioApp() {
     const [results, setResults] = React.useState([]);
     const [status, setStatus] = React.useState('');
 
-    const submit = async (url, body) => {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content ?? '') },
-            body: JSON.stringify(body)
-        });
-        return await res.json().catch(()=>({ ok: true }));
+    const submit = async (url, body, opts = {}) => {
+        const abs = new URL(url, window.location.origin).toString();
+        const controller = new AbortController();
+        const timeoutMs = opts.timeout ?? 10000;
+        const t = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(abs, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content ?? '') },
+                body: JSON.stringify(body),
+                signal: controller.signal,
+            });
+            clearTimeout(t);
+            if (res.status === 422) {
+                const j = await res.json().catch(()=>({}));
+                const msgs = Object.values(j.errors||{}).flat();
+                return { status: 'error', data: j, message: msgs[0] || 'Dados inválidos' };
+            }
+            if (!res.ok) {
+                return { status: 'error', data: null, message: `Erro ${res.status}` };
+            }
+            const j = await res.json().catch(()=>({ ok: true }));
+            return { status: 'ok', data: j, message: '' };
+        } catch (e) {
+            clearTimeout(t);
+            const aborted = e?.name === 'AbortError';
+            return { status: 'error', data: null, message: aborted ? 'Tempo excedido. Tente novamente.' : 'Falha de rede. Tente novamente.' };
+        }
     };
+
+    React.useEffect(() => {}, []);
 
     return (
         <div className="space-y-6">
@@ -332,7 +396,8 @@ function PastoreioApp() {
             <div className="card p-6">
                 <h2 className="font-semibold mb-4">Registrar presença</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <select className="input" value={groupId} onChange={(e)=>setGroupId(e.target.value)}>
+                    <select className={`input ${!groupId ? 'border-red-500 focus:ring-red-500' : ''}`} aria-invalid={!groupId} aria-describedby="groupId-error" value={groupId} onChange={(e)=>setGroupId(e.target.value)}>
+                        <option value="" disabled>Selecione o grupo</option>
                         {Array.from(document.querySelectorAll('[data-group-option]')).map((o)=> (
                             <option key={o.getAttribute('data-id')} value={o.getAttribute('data-id')}>{o.getAttribute('data-name')}</option>
                         ))}
@@ -341,24 +406,35 @@ function PastoreioApp() {
                     <input className="input" placeholder="Nome (se novo)" value={name} onChange={(e)=>setName(e.target.value)} />
                     <input className="input" placeholder="CPF" value={cpf} onChange={(e)=>setCpf(e.target.value)} />
                     <input className="input" placeholder="Telefone" value={phone} onChange={(e)=>setPhone(e.target.value)} />
-                    <button className="btn btn-primary" onClick={async()=>{
-                        const j = await submit('/pastoreio/attendance',{ group_id: groupId, date, name, cpf, phone });
-                        setStatus(j?.status==='ok' ? 'Presença registrada!' : 'Falha ao registrar');
+                    <button className="btn btn-primary" disabled={!groupId} onClick={async()=>{
+                        if (!groupId) { setStatus('Selecione o grupo'); return; }
+                        const todayPt = new Date();
+                        const todayStr = `${String(todayPt.getDate()).padStart(2,'0')}/${String(todayPt.getMonth()+1).padStart(2,'0')}/${todayPt.getFullYear()}`;
+                        const dnorm = (date||todayStr).replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3-$2-$1');
+                        const j = await submit('/pastoreio/attendance',{ group_id: groupId, date: dnorm, name, cpf, phone });
+                        if (j?.status==='ok') {
+                            const msg = j?.created ? 'Presença registrada!' : 'Presença já estava registrada';
+                            setStatus(msg);
+                        } else {
+                            setStatus(j?.message || 'Falha ao registrar');
+                        }
                     }}>Registrar</button>
+                    {!groupId && <div id="groupId-error" className="text-sm text-red-600">Selecione o grupo</div>}
                 </div>
                 {status && <div className="mt-3 text-sm text-emerald-700">{status}</div>}
             </div>
             <div className="card p-6">
                 <h2 className="font-semibold mb-4">Sorteio</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <select className="input" value={groupId} onChange={(e)=>setGroupId(e.target.value)}>
+                    <select className={`input ${!groupId ? 'border-red-500 focus:ring-red-500' : ''}`} aria-invalid={!groupId} aria-describedby="groupId-error" value={groupId} onChange={(e)=>setGroupId(e.target.value)}>
+                        <option value="" disabled>Selecione o grupo</option>
                         {Array.from(document.querySelectorAll('[data-group-option]')).map((o)=> (
                             <option key={o.getAttribute('data-id')} value={o.getAttribute('data-id')}>{o.getAttribute('data-name')}</option>
                         ))}
                     </select>
                     <input type="date" className="input" value={date} onChange={(e)=>setDate(e.target.value)} />
                     <input className="input" placeholder="Prêmio (opcional)" />
-                    <button className="btn btn-primary" onClick={async()=>{
+                    <button className="btn btn-primary" disabled={!groupId} onClick={async()=>{
                         const j = await submit('/pastoreio/draw',{ group_id: groupId, date });
                         setStatus(j?.status==='ok' ? `Sorteado: usuário #${j?.user_id}` : 'Sem presenças para sortear');
                     }}>Sortear</button>

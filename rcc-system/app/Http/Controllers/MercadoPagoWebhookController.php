@@ -9,32 +9,26 @@ class MercadoPagoWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        $type = $request->input('type');
-        $dataId = $request->input('data.id');
-        $action = $request->input('action');
+        $type = $request->string('type')->toString();
+        $data = $request->input('data', []);
+        $id = $data['id'] ?? null;
+        $status = $data['status'] ?? $request->string('status')->toString();
 
-        $payload = $request->all();
-
-        $participation = EventParticipation::query()
-            ->where('mp_payment_id', (string) $dataId)
-            ->first();
-
-        if (! $participation) {
-            return response()->json(['status' => 'ignored']);
+        if ($type !== 'payment' || ! $id) {
+            return response()->json(['ok' => true]);
         }
 
-        $status = $payload['data']['status'] ?? $payload['status'] ?? null;
-        if ($status) {
-            $participation->update([
-                'payment_status' => $status,
-                'mp_payload_raw' => $payload,
-            ]);
+        $p = EventParticipation::where('mp_payment_id', (string) $id)->first();
+        if (! $p) {
+            return response()->json(['ok' => true]);
         }
 
-        if ($status === 'approved' && $participation->event && $participation->event->generates_ticket) {
-            app(\App\Services\TicketService::class)->generateAndSend($participation);
+        $p->payment_status = $status ?: $p->payment_status;
+        if (($p->payment_status === 'approved') && empty($p->ticket_uuid) && ($p->event?->generates_ticket)) {
+            $p->ticket_uuid = (string) \Illuminate\Support\Str::uuid();
         }
+        $p->save();
 
-        return response()->json(['status' => 'ok']);
+        return response()->json(['ok' => true]);
     }
 }

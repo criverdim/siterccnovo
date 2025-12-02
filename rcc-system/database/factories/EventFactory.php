@@ -17,7 +17,7 @@ class EventFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->catchPhrase() . ' - Evento',
+            'name' => fake()->company().' - Evento',
             'category' => fake()->randomElement(['retiro', 'encontro', 'culto', 'congresso', 'vigilia']),
             'description' => fake()->paragraph(3),
             'location' => fake()->address(),

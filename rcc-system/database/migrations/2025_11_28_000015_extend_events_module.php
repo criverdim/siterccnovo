@@ -28,10 +28,9 @@ return new class extends Migration
     {
         Schema::table('events', function (Blueprint $table) {
             $table->dropColumn([
-                'category','min_age','days_count','schedule','arrival_info','map_embed_url',
-                'parceling_enabled','parceling_max','coupons_enabled','extra_services','terms','rules'
+                'category', 'min_age', 'days_count', 'schedule', 'arrival_info', 'map_embed_url',
+                'parceling_enabled', 'parceling_max', 'coupons_enabled', 'extra_services', 'terms', 'rules',
             ]);
         });
     }
 };
-

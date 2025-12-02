@@ -8,6 +8,7 @@ use Filament\Widgets\ChartWidget;
 class TopRankingBarWidget extends ChartWidget
 {
     protected static ?string $heading = 'Ranking de Presença';
+
     protected static ?string $description = 'Top 10 usuários mais presentes';
 
     protected function getData(): array
@@ -27,7 +28,7 @@ class TopRankingBarWidget extends ChartWidget
                 'borderColor' => '#a3802d',
                 'borderWidth' => 1,
             ]],
-            'labels' => $top->map(fn($r) => $r->user?->name ?? 'Usuário '.$r->user_id),
+            'labels' => $top->map(fn ($r) => $r->user?->name ?? 'Usuário '.$r->user_id),
         ];
     }
 

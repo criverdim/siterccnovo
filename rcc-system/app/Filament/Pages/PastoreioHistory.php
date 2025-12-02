@@ -7,7 +7,9 @@ use Filament\Pages\Page;
 class PastoreioHistory extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-clock';
+
     protected static ?string $navigationGroup = 'Gerenciamento';
+
     protected static ?string $title = 'Histórico Pastoral';
 
     protected static string $view = 'filament.pages.pastoreio-history';
@@ -17,4 +19,3 @@ class PastoreioHistory extends Page
         return auth()->user()?->can('manage_pastoreio') ?? false;
     }
 }
-

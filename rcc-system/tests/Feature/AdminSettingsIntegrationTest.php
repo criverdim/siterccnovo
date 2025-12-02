@@ -13,21 +13,27 @@ class AdminSettingsIntegrationTest extends TestCase
 
     public function test_create_email_server_settings_validates_and_saves(): void
     {
-        $user = User::factory()->create(['is_servo'=>true,'status'=>'active']);
+        $user = User::factory()->create([
+            'is_servo' => true,
+            'status' => 'active',
+            'role' => 'admin',
+            'can_access_admin' => true,
+            'is_master_admin' => true,
+        ]);
         $this->be($user);
         Setting::create([
-            'key'=>'email',
-            'value'=>[
-                'host'=>'smtp.example.com',
-                'port'=>587,
-                'username'=>'user',
-                'password'=>'Secret!2025',
-                'encryption'=>'tls',
-                'from_email'=>'noreply@example.com',
-                'from_name'=>'RCC System',
+            'key' => 'email',
+            'value' => [
+                'host' => 'smtp.example.com',
+                'port' => 587,
+                'username' => 'user',
+                'password' => 'Secret!2025',
+                'encryption' => 'tls',
+                'from_email' => 'noreply@example.com',
+                'from_name' => 'RCC System',
             ],
         ]);
-        $this->assertTrue(Setting::where('key','email')->exists());
+        $this->assertTrue(Setting::where('key', 'email')->exists());
         // UI index renders
         $res = $this->get('/admin/settings');
         $res->assertStatus(200);
@@ -36,7 +42,13 @@ class AdminSettingsIntegrationTest extends TestCase
 
     public function test_create_mercadopago_settings_requires_fields(): void
     {
-        $user = User::factory()->create(['is_servo'=>true,'status'=>'active']);
+        $user = User::factory()->create([
+            'is_servo' => true,
+            'status' => 'active',
+            'role' => 'admin',
+            'can_access_admin' => true,
+            'is_master_admin' => true,
+        ]);
         $this->be($user);
         // Simulate missing fields via model validation expectations (Filament handles validation in UI)
         // Here we assert that index page loads and sections are present for Mercado Pago

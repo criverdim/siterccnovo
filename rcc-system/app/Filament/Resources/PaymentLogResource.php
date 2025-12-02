@@ -12,8 +12,11 @@ use Filament\Tables\Table;
 class PaymentLogResource extends Resource
 {
     protected static ?string $model = EventParticipation::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+
     protected static ?string $navigationGroup = 'Logs';
+
     protected static ?string $navigationLabel = 'Pagamentos (Mercado Pago)';
 
     public static function table(Table $table): Table
@@ -52,8 +55,8 @@ class PaymentLogResource extends Resource
                     ])
                     ->query(function ($query, array $data) {
                         return $query
-                            ->when($data['start'] ?? null, fn($q,$d) => $q->whereDate('created_at', '>=', $d))
-                            ->when($data['end'] ?? null, fn($q,$d) => $q->whereDate('created_at', '<=', $d));
+                            ->when($data['start'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+                            ->when($data['end'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '<=', $d));
                     }),
             ])
             ->actions([
@@ -63,11 +66,12 @@ class PaymentLogResource extends Resource
                     ->action(function (\App\Models\EventParticipation $record) {
                         $html = view('pdf.receipt', ['p' => $record])->render();
                         $pdf = \PDF::loadHTML($html);
+
                         return response($pdf->output(), 200, [
                             'Content-Type' => 'application/pdf',
                             'Content-Disposition' => 'attachment; filename="recibo-'.$record->id.'.pdf"',
                         ]);
-                    })
+                    }),
             ])
             ->bulkActions([
                 //

@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LogResource\Pages;
 use App\Models\WaMessage;
-use App\Models\EventParticipation;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -13,8 +12,11 @@ use Filament\Tables\Table;
 class LogResource extends Resource
 {
     protected static ?string $model = WaMessage::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+
     protected static ?string $navigationGroup = 'Logs';
+
     protected static ?string $navigationLabel = 'WhatsApp & Pagamentos';
 
     public static function table(Table $table): Table
@@ -45,8 +47,8 @@ class LogResource extends Resource
                     ])
                     ->query(function ($query, array $data) {
                         return $query
-                            ->when($data['start'] ?? null, fn($q,$d) => $q->whereDate('created_at', '>=', $d))
-                            ->when($data['end'] ?? null, fn($q,$d) => $q->whereDate('created_at', '<=', $d));
+                            ->when($data['start'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+                            ->when($data['end'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '<=', $d));
                     }),
             ])
             ->actions([
@@ -64,4 +66,3 @@ class LogResource extends Resource
         ];
     }
 }
-

@@ -9,11 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'role')) {
+            if (! Schema::hasColumn('users', 'role')) {
                 $table->string('role')->default('fiel')->after('status');
             }
             // Índice para CPF
-            try { $table->index('cpf'); } catch (\Throwable $e) {}
+            try {
+                $table->index('cpf');
+            } catch (\Throwable $e) {
+            }
         });
     }
 
@@ -23,7 +26,10 @@ return new class extends Migration
             if (Schema::hasColumn('users', 'role')) {
                 $table->dropColumn('role');
             }
-            try { $table->dropIndex('users_cpf_index'); } catch (\Throwable $e) {}
+            try {
+                $table->dropIndex('users_cpf_index');
+            } catch (\Throwable $e) {
+            }
             // não remove unique de email por segurança; se necessário:
             // $table->dropUnique(['email']);
         });

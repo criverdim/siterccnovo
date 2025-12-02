@@ -14,13 +14,13 @@ class MercadoPagoWebhookTest extends TestCase
 
     public function test_webhook_updates_payment_status_and_generates_ticket(): void
     {
-        $event = Event::factory()->create(['is_paid'=>true,'price'=>50,'generates_ticket'=>true]);
+        $event = Event::factory()->create(['is_paid' => true, 'price' => 50, 'generates_ticket' => true]);
         $user = User::factory()->create();
         $p = EventParticipation::create([
-            'user_id'=>$user->id,
-            'event_id'=>$event->id,
-            'payment_status'=>'pending',
-            'mp_payment_id'=>'test_123',
+            'user_id' => $user->id,
+            'event_id' => $event->id,
+            'payment_status' => 'pending',
+            'mp_payment_id' => 'test_123',
         ]);
 
         $res = $this->post('/webhooks/mercadopago', [

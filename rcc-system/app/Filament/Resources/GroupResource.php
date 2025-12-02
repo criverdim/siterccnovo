@@ -20,7 +20,9 @@ class GroupResource extends Resource
     protected static ?string $navigationGroup = 'Gerenciamento';
 
     protected static ?string $navigationLabel = 'Grupos de Oração';
+
     protected static ?string $modelLabel = 'Grupo de Oração';
+
     protected static ?string $pluralModelLabel = 'Grupos de Oração';
 
     public static function form(Form $form): Form
@@ -169,9 +171,9 @@ class GroupResource extends Resource
                 Tables\Actions\Action::make('abrir_whatsapp')
                     ->label('Abrir WhatsApp')
                     ->icon('heroicon-o-chat-bubble-bottom-center-text')
-                    ->url(fn($record) => $record->responsible_whatsapp ? ('https://wa.me/'.preg_replace('/\D+/', '', $record->responsible_whatsapp)) : null, true)
+                    ->url(fn ($record) => $record->responsible_whatsapp ? ('https://wa.me/'.preg_replace('/\D+/', '', $record->responsible_whatsapp)) : null, true)
                     ->openUrlInNewTab()
-                    ->visible(fn($record) => filled($record->responsible_whatsapp)),
+                    ->visible(fn ($record) => filled($record->responsible_whatsapp)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

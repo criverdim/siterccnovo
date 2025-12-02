@@ -11,8 +11,11 @@ use Filament\Tables\Table;
 class VisitaResource extends Resource
 {
     protected static ?string $model = \App\Models\Visit::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
+
     protected static ?string $navigationGroup = 'Gerenciamento';
+
     protected static ?string $navigationLabel = 'Visitas';
 
     public static function form(Form $form): Form

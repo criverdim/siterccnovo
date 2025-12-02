@@ -8,6 +8,7 @@ use Filament\Widgets\ChartWidget;
 class PresencePieWidget extends ChartWidget
 {
     protected static ?string $heading = 'Presença Geral';
+
     protected static ?string $description = 'Distribuição de presenças recentes vs anteriores';
 
     protected function getData(): array

@@ -3,11 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -41,6 +41,8 @@ class User extends Authenticatable implements FilamentUser
         'consent_at',
         'status',
         'role',
+        'can_access_admin',
+        'is_master_admin',
     ];
 
     /**
@@ -51,6 +53,11 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    protected $casts = [
+        'can_access_admin' => 'boolean',
+        'is_master_admin' => 'boolean',
     ];
 
     /**
@@ -73,7 +80,12 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return ($this->status === 'active') && ((bool) $this->is_servo || ($this->role === 'admin'));
+        return ($this->status === 'active') && ($this->can_access_admin || $this->is_master_admin || $this->role === 'admin');
+    }
+
+    public function isMasterAdmin(): bool
+    {
+        return (bool) $this->is_master_admin;
     }
 
     public function group()
@@ -104,5 +116,41 @@ class User extends Authenticatable implements FilamentUser
     public function ministries()
     {
         return $this->belongsToMany(Ministry::class, 'user_ministries')->withTimestamps();
+    }
+
+    public function photos()
+    {
+        return $this->hasMany(UserPhoto::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(UserActivity::class);
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(UserMessage::class);
+    }
+
+    public function sentMessages()
+    {
+        return $this->hasMany(UserMessage::class, 'sent_by');
+    }
+
+    public function activePhoto()
+    {
+        return $this->hasOne(UserPhoto::class)->where('is_active', true);
+    }
+
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        $activePhoto = $this->activePhoto;
+        
+        if ($activePhoto) {
+            return $activePhoto->thumbnail_url;
+        }
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
     }
 }

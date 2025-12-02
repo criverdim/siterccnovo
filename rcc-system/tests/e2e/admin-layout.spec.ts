@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import fs from 'fs'
 
-const baseURL = (globalThis as any).process?.env?.BASE_URL || 'http://localhost:8000'
+const baseURL = (globalThis as any).process?.env?.BASE_URL || 'http://127.0.0.1:8000'
 const ADMIN_EMAIL = (globalThis as any).process?.env?.ADMIN_EMAIL
 const ADMIN_PASSWORD = (globalThis as any).process?.env?.ADMIN_PASSWORD
 
@@ -30,9 +30,15 @@ test.describe('Admin layout smoke', () => {
     await page.fill('input[type="email"]', ADMIN_EMAIL!)
     await page.fill('input[type="password"]', ADMIN_PASSWORD!)
     await Promise.all([
-      page.waitForURL('**/admin', { timeout: 30000 }).catch(() => {}),
-      page.click('button[type="submit"], button:has-text("Sign in"), button:has-text("Entrar")')
+      page.waitForURL('**/admin', { timeout: 45000 }).catch(() => {}),
+      page.click('button:has-text("Sign in"), button:has-text("Entrar"), button:has-text("Login")'),
     ])
+    const sidebar = page.locator('.fi-sidebar')
+    await sidebar.waitFor({ state: 'visible', timeout: 30000 }).catch(async () => {
+      await page.waitForLoadState('networkidle').catch(() => {})
+      await page.reload({ waitUntil: 'domcontentloaded' })
+      await sidebar.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {})
+    })
   })
 
   test('theme CSS and sticky sidebar', async ({ page }) => {

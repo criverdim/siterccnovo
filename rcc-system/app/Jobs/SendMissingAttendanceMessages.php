@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\User;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,7 +16,7 @@ class SendMissingAttendanceMessages implements ShouldQueue
 
     public function handle(): void
     {
-        $template = optional(Setting::where('key','templates')->first())->value['template_saudades'] ?? 'Sentimos sua falta, {{name}}!';
+        $template = optional(Setting::where('key', 'templates')->first())->value['template_saudades'] ?? 'Sentimos sua falta, {{name}}!';
         $cut = now()->subDays(60)->toDateString();
         $users = User::whereHas('groupAttendance')->get();
         foreach ($users as $u) {
@@ -28,4 +28,3 @@ class SendMissingAttendanceMessages implements ShouldQueue
         }
     }
 }
-

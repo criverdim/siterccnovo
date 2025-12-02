@@ -8,12 +8,13 @@ use Filament\Widgets\ChartWidget;
 class WeekdayHeatmapWidget extends ChartWidget
 {
     protected static ?string $heading = 'Presença por Dia da Semana';
+
     protected static ?string $description = 'Total de presenças por dia';
 
     protected function getData(): array
     {
         $map = collect([
-            'sunday' => 'Dom', 'monday' => 'Seg', 'tuesday' => 'Ter', 'wednesday' => 'Qua', 'thursday' => 'Qui', 'friday' => 'Sex', 'saturday' => 'Sáb'
+            'sunday' => 'Dom', 'monday' => 'Seg', 'tuesday' => 'Ter', 'wednesday' => 'Qua', 'thursday' => 'Qui', 'friday' => 'Sex', 'saturday' => 'Sáb',
         ]);
 
         $counts = $map->keys()->map(function ($day) {
@@ -24,7 +25,7 @@ class WeekdayHeatmapWidget extends ChartWidget
             'datasets' => [[
                 'label' => 'Presenças',
                 'data' => $counts,
-                'backgroundColor' => $counts->map(fn($c) => $c > 0 ? '#059669' : '#9CA3AF'),
+                'backgroundColor' => $counts->map(fn ($c) => $c > 0 ? '#059669' : '#9CA3AF'),
                 'borderRadius' => 6,
             ]],
             'labels' => $map->values(),
@@ -33,7 +34,7 @@ class WeekdayHeatmapWidget extends ChartWidget
 
     protected function weekdayToNumber(string $day): string
     {
-        return match($day) {
+        return match ($day) {
             'sunday' => '1',
             'monday' => '2',
             'tuesday' => '3',

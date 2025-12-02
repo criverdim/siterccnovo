@@ -6,7 +6,7 @@ use Tests\TestCase;
 
 /**
  * Classe principal para executar todos os testes administrativos
- * 
+ *
  * Esta classe coordena a execução de todos os testes de administração
  * e gera um relatório consolidado ao final.
  */
@@ -21,17 +21,17 @@ class AdminTestSuite extends TestCase
             'start_time' => microtime(true),
             'tests_executed' => [],
             'summary' => [],
-            'status' => 'running'
+            'status' => 'running',
         ];
 
         // Executar cada categoria de teste
         $testCategories = [
             'navigation' => 'AdminNavigationTest',
-            'comprehensive' => 'AdminComprehensiveTest', 
+            'comprehensive' => 'AdminComprehensiveTest',
             'advanced' => 'AdminAdvancedFeaturesTest',
             'ui' => 'AdminUITest',
             'existing_settings' => 'AdminSettingsUiTest',
-            'existing_integration' => 'AdminSettingsIntegrationTest'
+            'existing_integration' => 'AdminSettingsIntegrationTest',
         ];
 
         foreach ($testCategories as $category => $testClass) {
@@ -39,14 +39,14 @@ class AdminTestSuite extends TestCase
                 $results['tests_executed'][$category] = [
                     'class' => $testClass,
                     'status' => 'executed',
-                    'timestamp' => now()->format('Y-m-d H:i:s')
+                    'timestamp' => now()->format('Y-m-d H:i:s'),
                 ];
             } catch (\Exception $e) {
                 $results['tests_executed'][$category] = [
                     'class' => $testClass,
                     'status' => 'failed',
                     'error' => $e->getMessage(),
-                    'timestamp' => now()->format('Y-m-d H:i:s')
+                    'timestamp' => now()->format('Y-m-d H:i:s'),
                 ];
             }
         }
@@ -110,23 +110,23 @@ class AdminTestSuite extends TestCase
             'test_suite_execution' => $results,
             'comprehensive_analysis' => [
                 'total_test_categories' => count($results['tests_executed']),
-                'execution_time' => $results['execution_time'] . ' segundos',
+                'execution_time' => $results['execution_time'].' segundos',
                 'overall_status' => $results['status'],
                 'coverage_estimate' => '100%',
-                'quality_score' => 'Excelente'
+                'quality_score' => 'Excelente',
             ],
             'recommendations' => [
                 'Manter testes atualizados com novas funcionalidades',
                 'Executar suite de testes regularmente',
                 'Adicionar testes de regressão para mudanças críticas',
-                'Implementar monitoramento contínuo de performance'
+                'Implementar monitoramento contínuo de performance',
             ],
             'next_steps' => [
                 'Configurar execução automatizada dos testes',
                 'Integrar com pipeline de CI/CD',
                 'Criar alertas para falhas de teste',
-                'Estabelecer métricas de qualidade contínua'
-            ]
+                'Estabelecer métricas de qualidade contínua',
+            ],
         ];
 
         // Salvar relatório final
@@ -142,7 +142,7 @@ class AdminTestSuite extends TestCase
             'failed_tests' => 0,
             'coverage' => '100%',
             'status' => 'PASSED',
-            'system_ready' => true
+            'system_ready' => true,
         ];
         file_put_contents($summaryPath, json_encode($summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
@@ -164,7 +164,7 @@ class AdminTestSuite extends TestCase
                 'Workflows' => 6,
                 'Security' => 8,
                 'Performance' => 5,
-                'Advanced Features' => 12
+                'Advanced Features' => 12,
             ],
             'coverage_areas' => [
                 'Links & Navigation' => '100%',
@@ -172,14 +172,14 @@ class AdminTestSuite extends TestCase
                 'Forms & Validations' => '100%',
                 'Filters & Searches' => '100%',
                 'Page Coverage' => '100%',
-                'Complete Flows' => '100%'
+                'Complete Flows' => '100%',
             ],
             'quality_criteria' => [
                 'Functional Coverage' => '100%',
                 'Test Report' => 'Detailed Generated',
                 'Test Documentation' => 'Complete',
-                'Improvement Identification' => 'Comprehensive'
-            ]
+                'Improvement Identification' => 'Comprehensive',
+            ],
         ];
     }
 }

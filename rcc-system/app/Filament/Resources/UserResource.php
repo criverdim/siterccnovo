@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Facades\Schema;
 
 class UserResource extends Resource
@@ -19,6 +20,9 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $navigationGroup = 'Gerenciamento';
+    protected static ?string $navigationLabel = 'Usuários';
+    protected static ?string $modelLabel = 'Usuário';
+    protected static ?string $pluralModelLabel = 'Usuários';
 
     public static function form(Form $form): Form
     {
@@ -124,6 +128,13 @@ class UserResource extends Resource
                             ])
                             ->default('fiel')
                             ->required(),
+                        Forms\Components\Toggle::make('can_access_admin')
+                            ->label('Pode acessar painel /admin')
+                            ->inline(false),
+                        Forms\Components\Toggle::make('is_master_admin')
+                            ->label('Administrador master')
+                            ->inline(false)
+                            ->helperText('Apenas o administrador master pode acessar Configurações'),
                         $groupField,
                         Forms\Components\Toggle::make('is_servo')
                             ->label('É Servo?')
@@ -152,47 +163,106 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->header(view('admin.users.header'))
+            ->description('Listagem e gestão de usuários')
+            ->contentGrid([
+                'default' => 1,
+                'sm' => 1,
+                'md' => 2,
+                'lg' => 3,
+                'xl' => 3,
+                '2xl' => 4,
+            ])
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Nome')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
-                    ->label('Telefone')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('whatsapp')
-                    ->label('WhatsApp')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('group.name')
-                    ->label('Grupo')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('role')
-                    ->label('Nível')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'admin' => 'danger',
-                        'servo' => 'primary',
-                        default => 'gray',
-                    }),
-                Tables\Columns\IconColumn::make('is_servo')
-                    ->label('Servo')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'active' => 'success',
-                        'inactive' => 'warning',
-                        'blocked' => 'danger',
-                    }),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Split::make([
+                    Tables\Columns\Layout\Stack::make([
+                        Tables\Columns\TextColumn::make('name')
+                            ->label('Nome')
+                            ->weight('bold')
+                            ->size('lg')
+                            ->searchable()
+                            ->limit(28)
+                            ->tooltip(fn ($state) => (string) $state),
+                        Tables\Columns\TextColumn::make('email')
+                            ->icon('heroicon-o-envelope')
+                            ->label('E-mail')
+                            ->wrap()
+                            ->lineClamp(1)
+                            ->limit(28)
+                            ->tooltip(fn ($state) => (string) $state)
+                            ->copyable()
+                            ->searchable()
+                            ->extraAttributes(['class' => 'text-gray-700 max-w-[220px]']),
+                        Tables\Columns\TextColumn::make('phone')
+                            ->label('Telefone')
+                            ->icon('heroicon-o-phone')
+                            ->toggleable()
+                            ->searchable()
+                            ->wrap()
+                            ->lineClamp(1)
+                            ->limit(20)
+                            ->tooltip(fn ($state) => (string) $state)
+                            ->extraAttributes(['class' => 'text-gray-700 max-w-[200px]']),
+                        Tables\Columns\TextColumn::make('whatsapp')
+                            ->label('WhatsApp')
+                            ->icon('heroicon-o-chat-bubble-left')
+                            ->toggleable()
+                            ->searchable()
+                            ->wrap()
+                            ->lineClamp(1)
+                            ->limit(20)
+                            ->tooltip(fn ($state) => (string) $state)
+                            ->extraAttributes(['class' => 'text-gray-700 max-w-[200px]']),
+                    ])->space(2),
+                    Tables\Columns\Layout\Stack::make([
+                        Tables\Columns\TextColumn::make('group.name')
+                            ->label('Grupo')
+                            ->icon('heroicon-o-user-group')
+                            ->sortable(),
+                        Tables\Columns\TagsColumn::make('ministries.name')
+                            ->label('Ministérios')
+                            ->limit(3)
+                            ->toggleable(),
+                        Tables\Columns\TextColumn::make('role')
+                            ->label('Nível')
+                            ->badge()
+                            ->icon(fn ($state) => match ($state) {
+                                'admin' => 'heroicon-o-shield-check',
+                                'servo' => 'heroicon-o-hand-thumb-up',
+                                default => 'heroicon-o-user',
+                            })
+                            ->color(fn ($state) => match ($state) {
+                                'admin' => 'danger',
+                                'servo' => 'primary',
+                                default => 'gray',
+                            }),
+                        Tables\Columns\IconColumn::make('is_servo')
+                            ->label('Servo')
+                            ->boolean(),
+                        Tables\Columns\TextColumn::make('status')
+                            ->badge()
+                            ->icon(fn ($state) => match ($state) {
+                                'active' => 'heroicon-o-check-badge',
+                                'inactive' => 'heroicon-o-pause-circle',
+                                'blocked' => 'heroicon-o-exclamation-triangle',
+                            })
+                            ->color(fn ($state) => match ($state) {
+                                'active' => 'success',
+                                'inactive' => 'warning',
+                                'blocked' => 'danger',
+                            }),
+                        Tables\Columns\TextColumn::make('created_at')
+                            ->icon('heroicon-o-clock')
+                            ->dateTime('d/m/Y H:i')
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                        Tables\Columns\TextColumn::make('updated_at')
+                            ->icon('heroicon-o-clock')
+                            ->dateTime('d/m/Y H:i')
+                            ->sortable()
+                            ->toggleable(isToggledHiddenByDefault: true),
+                    ])->space(2),
+                ]),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -209,18 +279,46 @@ class UserResource extends Resource
                 Tables\Filters\TernaryFilter::make('is_servo')
                     ->label('É Servo?'),
             ])
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
             ->headerActions([
                 Tables\Actions\ExportAction::make()->label('Exportar CSV'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->icon('heroicon-o-pencil')
+                    ->label('')
+                    ->tooltip('Editar')
+                    ->size('sm')
+                    ->color('primary'),
+                Tables\Actions\DeleteAction::make()
+                    ->icon('heroicon-o-trash')
+                    ->label('')
+                    ->tooltip('Excluir')
+                    ->size('sm')
+                    ->color('danger')
+                    ->requiresConfirmation(),
+                Tables\Actions\Action::make('more')
+                    ->icon('heroicon-o-ellipsis-vertical')
+                    ->label('')
+                    ->tooltip('Mais ações')
+                    ->size('sm')
+                    ->action(fn ($record) => null),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ExportBulkAction::make()->label('Exportar Selecionados'),
                 ]),
+            ])
+            ->searchPlaceholder('Buscar por nome, e-mail, grupo...')
+            ->persistSearchInSession()
+            ->persistFiltersInSession()
+            ->persistSortInSession()
+            ->paginationPageOptions([10, 25, 50, 100])
+            ->defaultSort('name')
+            ->recordClasses(fn (\App\Models\User $record) => [
+                'ring-red-600/10 bg-red-50' => $record->status === 'blocked',
+                'opacity-70' => $record->status === 'inactive',
             ]);
     }
 

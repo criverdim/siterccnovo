@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const baseURL = (globalThis as any).process?.env?.BASE_URL || 'http://127.0.0.1'
+const baseURL = (globalThis as any).process?.env?.BASE_URL || 'http://127.0.0.1:8000'
 
 test.describe('Logo Editor interactions', () => {
   test('allows free vertical cropping without aspect lock', async ({ page, browserName }) => {

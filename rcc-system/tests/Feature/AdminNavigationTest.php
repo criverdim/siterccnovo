@@ -2,14 +2,14 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Event;
 use App\Models\Group;
 use App\Models\Ministerio;
 use App\Models\Setting;
-use App\Models\Visita;
+use App\Models\User;
+use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AdminNavigationTest extends TestCase
 {
@@ -17,14 +17,17 @@ class AdminNavigationTest extends TestCase
 
     protected $user;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        
-        // Create regular user (admin access is handled by Filament middleware)
+
         $this->user = User::factory()->create([
             'email' => 'admin@example.com',
             'name' => 'Admin User',
+            'status' => 'active',
+            'role' => 'admin',
+            'can_access_admin' => true,
+            'is_master_admin' => true,
         ]);
     }
 
@@ -50,7 +53,7 @@ class AdminNavigationTest extends TestCase
         Group::factory()->count(2)->create();
         Event::factory()->count(2)->create();
         Ministerio::factory()->count(2)->create();
-        Visita::factory()->count(2)->create();
+        Visit::factory()->count(2)->create();
         Setting::factory()->count(2)->create();
 
         $resources = [
@@ -106,7 +109,7 @@ class AdminNavigationTest extends TestCase
     {
         $response = $this->actingAs($this->user)->get('/admin');
         $response->assertStatus(200);
-        
+
         // Check for RCC Admin branding
         $response->assertSee('RCC Admin');
     }
@@ -136,7 +139,7 @@ class AdminNavigationTest extends TestCase
     {
         $response = $this->actingAs($this->user)->post('/admin/logout');
         $response->assertRedirect('/admin/login');
-        
+
         // Verify user is logged out
         $this->assertGuest();
     }

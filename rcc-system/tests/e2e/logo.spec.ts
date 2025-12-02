@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const baseURL = process.env.BASE_URL || 'http://127.0.0.1'
+const baseURL = process.env.BASE_URL || 'http://127.0.0.1:8000'
 
 test.describe('Logo visibility and responsiveness', () => {
   test('header logo renders and has correct size', async ({ page, browserName }) => {

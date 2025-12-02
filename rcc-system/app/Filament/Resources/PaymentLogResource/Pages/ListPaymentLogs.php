@@ -9,4 +9,3 @@ class ListPaymentLogs extends ListRecords
 {
     protected static string $resource = PaymentLogResource::class;
 }
-
