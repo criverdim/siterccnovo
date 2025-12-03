@@ -16,40 +16,48 @@
                 </a>
             </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="card p-4 card-hover">
-                <div class="flex items-center gap-3">
-                    <x-filament::icon icon="heroicon-o-users" class="w-6 h-6 text-emerald-700" />
-                    <div>
-                        <div class="text-xs text-gray-500">Total</div>
-                        <div class="text-2xl font-semibold text-gray-900">{{ number_format(\App\Models\User::count()) }}</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="stat-card stat-total">
+                <div class="stat-card-body">
+                    <div class="stat-icon">
+                        <x-filament::icon icon="heroicon-o-users" class="w-6 h-6" />
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value">{{ number_format(\App\Models\User::count()) }}</div>
                     </div>
                 </div>
             </div>
-            <div class="card p-4 card-hover">
-                <div class="flex items-center gap-3">
-                    <x-filament::icon icon="heroicon-o-hand-thumb-up" class="w-6 h-6 text-emerald-700" />
-                    <div>
-                        <div class="text-xs text-gray-500">Servos</div>
-                        <div class="text-2xl font-semibold text-gray-900">{{ number_format(\App\Models\User::where('is_servo', true)->count()) }}</div>
+            <div class="stat-card stat-servos">
+                <div class="stat-card-body">
+                    <div class="stat-icon">
+                        <x-filament::icon icon="heroicon-o-hand-thumb-up" class="w-6 h-6" />
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Servos</div>
+                        <div class="stat-value">{{ number_format(\App\Models\User::where('is_servo', true)->count()) }}</div>
                     </div>
                 </div>
             </div>
-            <div class="card p-4 card-hover">
-                <div class="flex items-center gap-3">
-                    <x-filament::icon icon="heroicon-o-check-circle" class="w-6 h-6 text-emerald-700" />
-                    <div>
-                        <div class="text-xs text-gray-500">Ativos</div>
-                        <div class="text-2xl font-semibold text-gray-900">{{ number_format(\App\Models\User::where('status','active')->count()) }}</div>
+            <div class="stat-card stat-ativos">
+                <div class="stat-card-body">
+                    <div class="stat-icon">
+                        <x-filament::icon icon="heroicon-o-check-circle" class="w-6 h-6" />
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Ativos</div>
+                        <div class="stat-value">{{ number_format(\App\Models\User::where('status','active')->count()) }}</div>
                     </div>
                 </div>
             </div>
-            <div class="card p-4 card-hover">
-                <div class="flex items-center gap-3">
-                    <x-filament::icon icon="heroicon-o-shield-check" class="w-6 h-6 text-emerald-700" />
-                    <div>
-                        <div class="text-xs text-gray-500">Administradores</div>
-                        <div class="text-2xl font-semibold text-gray-900">{{ number_format(\App\Models\User::where('role','admin')->count()) }}</div>
+            <div class="stat-card stat-admins">
+                <div class="stat-card-body">
+                    <div class="stat-icon">
+                        <x-filament::icon icon="heroicon-o-shield-check" class="w-6 h-6" />
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-label">Administradores</div>
+                        <div class="stat-value">{{ number_format(\App\Models\User::where('role','admin')->count()) }}</div>
                     </div>
                 </div>
             </div>

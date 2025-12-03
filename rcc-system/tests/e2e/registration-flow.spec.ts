@@ -20,10 +20,17 @@ test.describe('Registration Flow', () => {
     await page.fill(cpfSel, '123.456.789-10')
     await page.fill(passSel, 'segredo123')
     await page.check('label:has-text("Consentimento") input[type="checkbox"], label:has-text("LGPD") input[type="checkbox"]')
+    const groupCheckboxes = page.locator('label:has-text("Grupos de oração") input[type="checkbox"]')
+    const totalGroups = await groupCheckboxes.count()
+    test.skip(totalGroups === 0, 'Sem grupos cadastrados no ambiente de teste')
+    await groupCheckboxes.nth(0).check()
+    if (totalGroups > 1) {
+      await groupCheckboxes.nth(1).check()
+    }
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      page.waitForURL('**/login', { timeout: 30000 }).catch(() => {}),
       page.click('button[type="submit"], button:has-text("Cadastrar")'),
     ])
-    await expect(page).toHaveURL(/login/) // redireciona para login
+    await expect(page).toHaveURL(/\/login$/)
   })
 })

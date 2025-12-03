@@ -8,6 +8,7 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -58,6 +59,10 @@ class User extends Authenticatable implements FilamentUser
     protected $casts = [
         'can_access_admin' => 'boolean',
         'is_master_admin' => 'boolean',
+    ];
+
+    protected $appends = [
+        'profile_photo_url',
     ];
 
     /**
@@ -118,6 +123,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsToMany(Ministry::class, 'user_ministries')->withTimestamps();
     }
 
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'user_groups')->withTimestamps();
+    }
+
     public function photos()
     {
         return $this->hasMany(UserPhoto::class);
@@ -146,11 +156,14 @@ class User extends Authenticatable implements FilamentUser
     public function getProfilePhotoUrlAttribute(): string
     {
         $activePhoto = $this->activePhoto;
-        
         if ($activePhoto) {
-            return $activePhoto->thumbnail_url;
+            $pathInfo = pathinfo($activePhoto->file_path);
+            $thumb = $pathInfo['dirname'] . '/thumbs/' . $pathInfo['basename'];
+            if (Storage::disk('public')->exists($thumb)) {
+                return Storage::disk('public')->url($thumb);
+            }
+            return Storage::disk('public')->url($activePhoto->file_path);
         }
-
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
     }
 }

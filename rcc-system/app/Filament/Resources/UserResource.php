@@ -5,6 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use App\Models\UserPhoto;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -27,13 +29,12 @@ class UserResource extends Resource
     public static function form(Form $form): Form
     {
         $groupField = Schema::hasTable('groups')
-            ? Forms\Components\Select::make('group_id')
-                ->label('Grupo de Oração')
-                ->relationship('group', 'name')
-                ->searchable()
-                ->preload()
+            ? Forms\Components\CheckboxList::make('groups')
+                ->label('Grupos de Oração')
+                ->relationship('groups', 'name')
+                ->columns(2)
             : Forms\Components\TextInput::make('group_name')
-                ->label('Grupo de Oração')
+                ->label('Grupos de Oração')
                 ->disabled()
                 ->placeholder('Tabela de grupos ausente');
 
@@ -136,6 +137,10 @@ class UserResource extends Resource
                             ->inline(false)
                             ->helperText('Apenas o administrador master pode acessar Configurações'),
                         $groupField,
+                        Forms\Components\Placeholder::make('group_id_sync_info')
+                            ->label('Grupo principal')
+                            ->content('O primeiro grupo selecionado será usado como grupo principal em filtros e integrações legadas.')
+                            ->hintIcon('heroicon-o-information-circle'),
                         Forms\Components\Toggle::make('is_servo')
                             ->label('É Servo?')
                             ->inline(false),
@@ -165,14 +170,7 @@ class UserResource extends Resource
         return $table
             ->header(view('admin.users.header'))
             ->description('Listagem e gestão de usuários')
-            ->contentGrid([
-                'default' => 1,
-                'sm' => 1,
-                'md' => 2,
-                'lg' => 3,
-                'xl' => 3,
-                '2xl' => 4,
-            ])
+            // Visual profissional em linhas: removemos o grid de cartões
             ->columns([
                 Tables\Columns\Layout\Split::make([
                     Tables\Columns\Layout\Stack::make([
@@ -181,18 +179,18 @@ class UserResource extends Resource
                             ->weight('bold')
                             ->size('lg')
                             ->searchable()
-                            ->limit(28)
+                            ->limit(40)
                             ->tooltip(fn ($state) => (string) $state),
                         Tables\Columns\TextColumn::make('email')
                             ->icon('heroicon-o-envelope')
                             ->label('E-mail')
                             ->wrap()
-                            ->lineClamp(1)
-                            ->limit(28)
+                            ->lineClamp(2)
+                            ->limit(60)
                             ->tooltip(fn ($state) => (string) $state)
                             ->copyable()
                             ->searchable()
-                            ->extraAttributes(['class' => 'text-gray-700 max-w-[220px]']),
+                            ->extraAttributes(['class' => 'text-gray-700 max-w-[320px]']),
                         Tables\Columns\TextColumn::make('phone')
                             ->label('Telefone')
                             ->icon('heroicon-o-phone')
@@ -200,9 +198,9 @@ class UserResource extends Resource
                             ->searchable()
                             ->wrap()
                             ->lineClamp(1)
-                            ->limit(20)
+                            ->limit(30)
                             ->tooltip(fn ($state) => (string) $state)
-                            ->extraAttributes(['class' => 'text-gray-700 max-w-[200px]']),
+                            ->extraAttributes(['class' => 'text-gray-700 max-w-[240px]']),
                         Tables\Columns\TextColumn::make('whatsapp')
                             ->label('WhatsApp')
                             ->icon('heroicon-o-chat-bubble-left')
@@ -210,15 +208,19 @@ class UserResource extends Resource
                             ->searchable()
                             ->wrap()
                             ->lineClamp(1)
-                            ->limit(20)
+                            ->limit(30)
                             ->tooltip(fn ($state) => (string) $state)
-                            ->extraAttributes(['class' => 'text-gray-700 max-w-[200px]']),
-                    ])->space(2),
+                            ->extraAttributes(['class' => 'text-gray-700 max-w-[240px]']),
+                    ])->space(2)->extraAttributes(['class' => 'fi-ta-record-content']),
                     Tables\Columns\Layout\Stack::make([
                         Tables\Columns\TextColumn::make('group.name')
-                            ->label('Grupo')
+                            ->label('Grupo principal')
                             ->icon('heroicon-o-user-group')
                             ->sortable(),
+                        Tables\Columns\TagsColumn::make('groups.name')
+                            ->label('Grupos')
+                            ->limit(3)
+                            ->toggleable(),
                         Tables\Columns\TagsColumn::make('ministries.name')
                             ->label('Ministérios')
                             ->limit(3)
@@ -261,7 +263,7 @@ class UserResource extends Resource
                             ->dateTime('d/m/Y H:i')
                             ->sortable()
                             ->toggleable(isToggledHiddenByDefault: true),
-                    ])->space(2),
+                    ])->space(2)->extraAttributes(['class' => 'fi-ta-record-actions']),
                 ]),
             ])
             ->filters([
@@ -272,7 +274,7 @@ class UserResource extends Resource
                         'blocked' => 'Bloqueado',
                     ]),
                 Tables\Filters\SelectFilter::make('group_id')
-                    ->label('Grupo')
+                    ->label('Grupo principal')
                     ->relationship('group', 'name')
                     ->searchable()
                     ->preload(),
@@ -290,6 +292,50 @@ class UserResource extends Resource
                     ->tooltip('Editar')
                     ->size('sm')
                     ->color('primary'),
+                Tables\Actions\Action::make('uploadPhoto')
+                    ->icon('heroicon-o-photo')
+                    ->label('')
+                    ->tooltip('Enviar foto')
+                    ->size('sm')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\FileUpload::make('photo')
+                            ->image()
+                            ->acceptedFileTypes(['image/jpeg','image/png','image/jpg'])
+                            ->maxSize(5120)
+                            ->disk('public')
+                            ->visibility('public')
+                            ->directory(fn (User $record) => 'user-photos/' . $record->id)
+                            ->required(),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Marcar como ativa')
+                            ->default(true),
+                    ])
+                    ->action(function (User $record, array $data) {
+                        $file = $data['photo'] ?? null;
+                        if ($file) {
+                            $path = null;
+                            if ($file instanceof TemporaryUploadedFile) {
+                                $path = $file->store('user-photos/' . $record->id, 'public');
+                            } elseif (is_string($file)) {
+                                $path = $file;
+                            }
+                            if ($path) {
+                                if (!empty($data['is_active'])) {
+                                    $record->photos()->update(['is_active' => false]);
+                                }
+                                UserPhoto::create([
+                                    'user_id' => $record->id,
+                                    'file_path' => $path,
+                                    'file_name' => basename($path),
+                                    'file_size' => method_exists($file, 'getSize') ? $file->getSize() : 0,
+                                    'mime_type' => method_exists($file, 'getMimeType') ? $file->getMimeType() : 'image/jpeg',
+                                    'is_active' => !empty($data['is_active']),
+                                ]);
+                            }
+                        }
+                    })
+                    ->modalHeading('Enviar foto do usuário'),
                 Tables\Actions\DeleteAction::make()
                     ->icon('heroicon-o-trash')
                     ->label('')
@@ -314,7 +360,7 @@ class UserResource extends Resource
             ->persistSearchInSession()
             ->persistFiltersInSession()
             ->persistSortInSession()
-            ->paginationPageOptions([10, 25, 50, 100])
+            ->paginationPageOptions([12, 24, 48])
             ->defaultSort('name')
             ->recordClasses(fn (\App\Models\User $record) => [
                 'ring-red-600/10 bg-red-50' => $record->status === 'blocked',

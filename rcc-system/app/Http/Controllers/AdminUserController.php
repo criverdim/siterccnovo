@@ -15,7 +15,7 @@ class AdminUserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::with(['group', 'activePhoto', 'activities'])
+        $query = User::with(['group', 'groups', 'activePhoto', 'activities', 'ministries'])
             ->when($request->search, function ($q, $search) {
                 $q->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
@@ -42,7 +42,11 @@ class AdminUserController extends Controller
         $users = $query->paginate($request->per_page ?? 12);
 
         return response()->json([
-            'users' => $users->items(),
+            'users' => collect($users->items())->map(function ($u) {
+                $arr = $u->toArray();
+                $arr['groups'] = $u->groups?->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->values()->all() ?? [];
+                return $arr;
+            })->all(),
             'pagination' => [
                 'current_page' => $users->currentPage(),
                 'last_page' => $users->lastPage(),
@@ -58,6 +62,7 @@ class AdminUserController extends Controller
     {
         $user = User::with([
             'group',
+            'groups',
             'photos',
             'activities' => function ($query) {
                 $query->recent(30)->orderBy('created_at', 'desc');
@@ -68,8 +73,10 @@ class AdminUserController extends Controller
             'ministries'
         ])->findOrFail($id);
 
+        $arr = $user->toArray();
+        $arr['groups'] = $user->groups?->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->values()->all() ?? [];
         return response()->json([
-            'user' => $user,
+            'user' => $arr,
         ]);
     }
 
@@ -120,7 +127,7 @@ class AdminUserController extends Controller
 
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => $user->fresh(['group', 'activePhoto']),
+            'user' => $user->fresh(['group', 'groups', 'activePhoto']),
         ]);
     }
 

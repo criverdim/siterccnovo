@@ -41,6 +41,11 @@ class Group extends Model
         return $this->hasMany(User::class);
     }
 
+    public function members()
+    {
+        return $this->belongsToMany(User::class, 'user_groups')->withTimestamps();
+    }
+
     public function attendance()
     {
         return $this->hasMany(GroupAttendance::class);

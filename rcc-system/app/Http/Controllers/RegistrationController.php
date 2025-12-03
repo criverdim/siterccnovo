@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class RegistrationController extends Controller
 {
@@ -18,6 +20,13 @@ class RegistrationController extends Controller
 
     public function register(Request $request)
     {
+        $request->merge([
+            'is_servo' => $request->boolean('is_servo'),
+            'consent' => $request->boolean('consent'),
+            'groups' => array_map('intval', (array) $request->input('groups', [])),
+            'ministries' => array_map('intval', (array) $request->input('ministries', [])),
+        ]);
+        $hasGroups = \App\Models\Group::query()->exists();
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
@@ -33,12 +42,34 @@ class RegistrationController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
             'state' => ['nullable', 'string', 'max:2'],
             'gender' => ['nullable', 'string', 'max:20'],
-            'group_id' => ['nullable', 'integer', 'exists:groups,id'],
+            'groups' => $hasGroups ? ['required', 'array', 'min:1'] : ['nullable', 'array'],
+            'groups.*' => ['integer', 'exists:groups,id'],
             'password' => ['required', 'string', 'min:6'],
             'consent' => ['accepted'],
             'is_servo' => ['nullable', 'boolean'],
             'ministries' => ['nullable', 'array'],
             'ministries.*' => ['integer', 'exists:ministries,id'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
+        ], [
+            'name.required' => 'Informe seu nome completo',
+            'email.required' => 'Informe um e-mail',
+            'email.email' => 'Informe um e-mail válido',
+            'phone.required' => 'Informe seu telefone',
+            'whatsapp.required' => 'Informe seu WhatsApp',
+            'groups.required' => 'Selecione pelo menos um grupo de oração',
+            'groups.array' => 'Seleção de grupos inválida',
+            'groups.*.integer' => 'Grupo inválido',
+            'groups.*.exists' => 'Grupo não encontrado',
+            'password.required' => 'Informe a senha',
+            'password.min' => 'A senha deve ter no mínimo 6 caracteres',
+            'consent.accepted' => 'É necessário concordar com o uso dos dados conforme a LGPD',
+            'is_servo.boolean' => 'Campo "Sou servo" inválido',
+            'ministries.array' => 'Seleção de ministérios inválida',
+            'ministries.*.integer' => 'Ministério inválido',
+            'ministries.*.exists' => 'Ministério não encontrado',
+            'photo.image' => 'Envie uma imagem válida',
+            'photo.mimes' => 'Formatos permitidos: jpeg, png, jpg',
+            'photo.max' => 'A imagem deve ter no máximo 5MB',
         ]);
 
         // Normalização básica para melhor índice e busca
@@ -57,8 +88,11 @@ class RegistrationController extends Controller
                 ->first();
 
             $user = $existing ?: new User;
-            $payload = collect($data)->except(['password', 'consent'])->toArray();
+            $primaryGroupId = (array) ($data['groups'] ?? []);
+            $primaryGroupId = count($primaryGroupId) ? (int) $primaryGroupId[0] : null;
+            $payload = collect($data)->except(['password', 'consent', 'groups'])->toArray();
             $user->fill($payload);
+            $user->group_id = $user->group_id ?: $primaryGroupId;
             $user->password = Hash::make($data['password']);
             $user->role = $user->role ?: 'fiel';
             if ($data['consent'] ?? false) {
@@ -74,8 +108,25 @@ class RegistrationController extends Controller
                 $user->ministries()->sync($data['ministries']);
             }
 
+            if (! empty($data['groups'])) {
+                $user->groups()->sync($data['groups']);
+            }
+
             return $user;
         });
+
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('user-photos/' . $user->id, 'public');
+            $user->photos()->update(['is_active' => false]);
+            UserPhoto::create([
+                'user_id' => $user->id,
+                'file_path' => $path,
+                'file_name' => $request->file('photo')->getClientOriginalName(),
+                'file_size' => $request->file('photo')->getSize(),
+                'mime_type' => $request->file('photo')->getMimeType(),
+                'is_active' => true,
+            ]);
+        }
 
         if (
             $request->expectsJson() ||

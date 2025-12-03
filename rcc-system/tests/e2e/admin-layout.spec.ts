@@ -41,13 +41,13 @@ test.describe('Admin layout smoke', () => {
     })
   })
 
-  test('theme CSS and sticky sidebar', async ({ page }) => {
-    const cssLinkCount = await page.locator('head link[rel="stylesheet"][href*="admin-"][href$=".css"]').count()
-    expect(cssLinkCount).toBeGreaterThan(0)
-    const position = await page.evaluate(() => getComputedStyle(document.querySelector('.fi-sidebar')!).position)
-    expect(position).toBe('sticky')
-    await page.screenshot({ path: 'test-results/admin-layout-sticky-chromium.png', fullPage: true })
-  })
+test('theme CSS and sticky sidebar', async ({ page }) => {
+  const cssLinkCount = await page.locator('head link[rel="stylesheet"][href*="admin-"][href$=".css"]').count()
+  expect(cssLinkCount).toBeGreaterThan(0)
+  const position = await page.evaluate(() => getComputedStyle(document.querySelector('.fi-sidebar')!).position)
+  expect(position).toBe('sticky')
+  await page.screenshot({ path: 'test-results/admin-layout-sticky-chromium.png', fullPage: true })
+})
 
   test('navigation groups present', async ({ page }) => {
     const candidates = ['Gerenciamento','Eventos','Logs','Configurações','Management','Events','Settings']
@@ -57,5 +57,48 @@ test.describe('Admin layout smoke', () => {
     }
     expect(found).toBeGreaterThanOrEqual(3)
     await page.screenshot({ path: 'test-results/admin-layout-groups-chromium.png', fullPage: true })
+  })
+
+  test('admin-user-cards redesign basics', async ({ page }) => {
+    await page.goto(`${baseURL}/admin/admin-user-cards`, { waitUntil: 'domcontentloaded' })
+    await page.waitForSelector('#users-grid', { timeout: 15000 })
+    await page.waitForLoadState('networkidle').catch(() => {})
+
+    const firstCard = page.locator('.uc-card').first()
+    await firstCard.scrollIntoViewIfNeeded()
+    await expect(firstCard).toBeVisible()
+
+    // Botão "Ver detalhes →" estilizado
+    const detailsBtn = firstCard.locator('button.btn-details')
+    await expect(detailsBtn).toBeVisible()
+    const bgColor = await detailsBtn.evaluate(el => getComputedStyle(el).backgroundColor)
+    // #2E86AB em rgb
+    expect(bgColor).toMatch(/rgb\(46,\s*134,\s*171\)/)
+
+    // Layout com espaçamento interno de ~18px
+    const bodyPadding = await firstCard.locator('.uc-card-body').evaluate(el => getComputedStyle(el).padding)
+    expect(bodyPadding).toMatch(/18px/)
+
+    // Ícones 24x24
+    const iconSize = await firstCard.locator('.uc-icon').first().evaluate(el => [getComputedStyle(el).width, getComputedStyle(el).height])
+    expect(iconSize[0]).toBe('24px')
+    expect(iconSize[1]).toBe('24px')
+  })
+
+  test('admin-user-cards basic responsiveness', async ({ page }) => {
+    await page.goto(`${baseURL}/admin/admin-user-cards`, { waitUntil: 'domcontentloaded' })
+    await page.waitForSelector('.uc-card', { timeout: 15000 })
+
+    // Desktop
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.screenshot({ path: 'test-results/admin-user-cards-1440.png' })
+
+    // Tablet
+    await page.setViewportSize({ width: 1024, height: 800 })
+    await page.screenshot({ path: 'test-results/admin-user-cards-1024.png' })
+
+    // Mobile
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.screenshot({ path: 'test-results/admin-user-cards-390.png' })
   })
 })

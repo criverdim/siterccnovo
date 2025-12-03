@@ -2,110 +2,192 @@
 
 ```mermaid
 graph TD
-    A[Navegador do Administrador] --> B[Aplicação Laravel + Filament]
-    B --> C[Controladores Admin]
-    B --> D[Componentes Filament Customizados]
-    C --> E[Banco de Dados PostgreSQL]
-    D --> E
-    B --> F[Serviço de Upload de Imagens]
-    B --> G[Serviço de Notificações]
-    F --> H[Storage Local/Disco]
-    G --> I[Fila de Processamento]
+    A[Navegador do Administrador] --> B[Aplicação Frontend Blade]
+    B --> C[Filament Admin Panel]
+    C --> D[API REST Laravel]
+    D --> E[Supabase PostgreSQL]
+    D --> F[Storage de Fotos]
 
-    subgraph "Camada de Apresentação"
+    subgraph "Frontend Layer"
         B
     end
-    
-    subgraph "Camada de Dados"
-        E
+
+    subgraph "Backend Layer"
+        C
+        D
     end
-    
-    subgraph "Serviços Externos"
+
+    subgraph "Data Layer"
+        E
         F
-        G
     end
 ```
 
 ## 2. Tecnologias Utilizadas
 
-- **Backend**: Laravel 10.x + Filament 3.x
-- **Frontend**: Blade Components + Alpine.js + Tailwind CSS
-- **Banco de Dados**: PostgreSQL
-- **Fila**: Redis para processamento assíncrono
-- **Storage**: Sistema de arquivos local para fotos 3x4
-- **Inicialização**: Laravel com Sail (Docker)
+- **Frontend**: Laravel Blade + Filament Admin Panel + TailwindCSS
+- **Backend**: Laravel 10 com API REST
+- **Banco de Dados**: Supabase PostgreSQL
+- **Storage**: Supabase Object Storage para fotos de perfil
+- **Autenticação**: Laravel Sanctum para API tokens
+- **Estilização**: TailwindCSS 3 com classes customizadas
 
 ## 3. Definições de Rotas
 
-| Rota | Finalidade |
-|------|------------|
-| /admin/users | Página principal listagem de usuários em formato de fichas |
-| /admin/users/{id} | Visualização individual de ficha detalhada (via modal) |
-| /admin/users/{id}/edit | Formulário de edição rápida |
-| /admin/users/bulk-actions | Processamento de ações em lote |
-| /admin/users/{id}/send-message | Envio de mensagem direta ao usuário |
-| /admin/users/filters | Endpoint AJAX para filtros dinâmicos |
+| Rota | Método | Propósito |
+|------|--------|-----------|
+| `/admin/users` | GET | Página principal de gestão de usuários |
+| `/api/v1/admin/users` | GET | Listar usuários com filtros e paginação |
+| `/api/v1/admin/users/{id}` | GET | Obter detalhes completos de um usuário |
+| `/api/v1/admin/users/{id}/send-message` | POST | Enviar mensagem para usuário |
+| `/api/v1/admin/users/{id}/upload-photo` | POST | Upload de foto de perfil |
 
 ## 4. Definições de API
 
-### 4.1 API de Gerenciamento de Usuários
-
-**Listar usuários com paginação e filtros**
+### 4.1 Listar Usuários
 ```
-GET /api/admin/users
+GET /api/v1/admin/users
 ```
 
-Parâmetros:
-| Nome do Parâmetro | Tipo | Obrigatório | Descrição |
-|-------------------|------|-------------|-----------|
-| page | integer | false | Número da página para paginação |
-| per_page | integer | false | Itens por página (padrão: 12) |
-| search | string | false | Busca por nome ou email |
-| status | string | false | Filtrar por status (active, inactive) |
-| date_from | date | false | Data inicial do filtro |
-| date_to | date | false | Data final do filtro |
+**Parâmetros de Requisição:**
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| page | integer | false | Número da página (default: 1) |
+| per_page | integer | false | Itens por página (default: 12) |
+| search | string | false | Busca por nome, email ou telefone |
+| status | string | false | Filtrar por status (active/inactive/pending) |
+| role | string | false | Filtrar por função (user/admin/leader/servant) |
+| group_id | integer | false | Filtrar por ID do grupo |
+| can_access_admin | boolean | false | Filtrar por acesso admin |
+| is_servo | integer | false | Filtrar apenas servos (1) |
 
-Resposta:
+**Resposta de Sucesso (200):**
 ```json
 {
-  "data": [
+  "users": [
     {
-      "id": "uuid",
+      "id": 1,
       "name": "João Silva",
       "email": "joao@example.com",
-      "photo_url": "/storage/users/photos/photo_123.jpg",
+      "phone": "+5511999999999",
+      "profile_photo_url": "https://storage.supabase.com/photos/user1.jpg",
       "status": "active",
-      "created_at": "2024-01-15T10:00:00Z",
-      "last_activity": "2024-12-01T15:30:00Z"
+      "role": "admin",
+      "group": {
+        "id": 1,
+        "name": "Grupo Central"
+      },
+      "ministries": [
+        {"id": 1, "name": "Louvor"},
+        {"id": 2, "name": "Media"}
+      ],
+      "activities": [
+        {
+          "id": 1,
+          "activity_description": "Login realizado",
+          "created_at": "2025-12-01T10:00:00Z"
+        }
+      ],
+      "created_at": "2025-11-01T00:00:00Z",
+      "can_access_admin": true,
+      "is_servo": true
     }
   ],
-  "meta": {
+  "pagination": {
     "current_page": 1,
-    "total_pages": 5,
-    "total_items": 58
+    "last_page": 5,
+    "per_page": 12,
+    "total": 58
   }
 }
 ```
 
-**Enviar mensagem para usuário**
+### 4.2 Obter Detalhes do Usuário
 ```
-POST /api/admin/users/{id}/send-message
+GET /api/v1/admin/users/{id}
 ```
 
-Parâmetros:
-| Nome do Parâmetro | Tipo | Obrigatório | Descrição |
-|-------------------|------|-------------|-----------|
-| message_type | string | true | Tipo: email ou notification |
-| subject | string | true | Assunto da mensagem |
-| content | string | true | Conteúdo da mensagem |
-| template_id | string | false | ID do template pré-definido |
+**Resposta de Sucesso (200):**
+```json
+{
+  "user": {
+    "id": 1,
+    "name": "João Silva",
+    "email": "joao@example.com",
+    "phone": "+5511999999999",
+    "whatsapp": "+5511999999999",
+    "birth_date": "1990-01-15",
+    "cpf": "123.456.789-00",
+    "profile_photo_url": "https://storage.supabase.com/photos/user1.jpg",
+    "status": "active",
+    "role": "admin",
+    "cep": "01234-567",
+    "address": "Rua Exemplo",
+    "number": "123",
+    "complement": "Apto 45",
+    "district": "Centro",
+    "city": "São Paulo",
+    "state": "SP",
+    "group": {
+      "id": 1,
+      "name": "Grupo Central"
+    },
+    "ministries": [
+      {"id": 1, "name": "Louvor"},
+      {"id": 2, "name": "Media"}
+    ],
+    "activities": [...],
+    "messages": [...],
+    "photos": [...],
+    "can_access_admin": true,
+    "is_master_admin": false,
+    "is_servo": true,
+    "created_at": "2025-11-01T00:00:00Z",
+    "profile_completed_at": "2025-11-15T00:00:00Z",
+    "consent_at": "2025-11-01T00:00:00Z"
+  }
+}
+```
 
-Resposta:
+### 4.3 Enviar Mensagem
+```
+POST /api/v1/admin/users/{id}/send-message
+```
+
+**Corpo da Requisição:**
+```json
+{
+  "message_type": "email",
+  "subject": "Atualização importante",
+  "content": "Olá, gostaríamos de informar..."
+}
+```
+
+**Resposta de Sucesso (200):**
 ```json
 {
   "success": true,
-  "message_id": "msg_123",
-  "status": "queued"
+  "message": "Mensagem enviada com sucesso"
+}
+```
+
+### 4.4 Upload de Foto
+```
+POST /api/v1/admin/users/{id}/upload-photo
+```
+
+**Corpo da Requisição:** FormData com campo 'photo'
+
+**Resposta de Sucesso (200):**
+```json
+{
+  "success": true,
+  "photo": {
+    "id": 1,
+    "full_url": "https://storage.supabase.com/photos/user1_full.jpg",
+    "thumbnail_url": "https://storage.supabase.com/photos/user1_thumb.jpg",
+    "is_active": true
+  }
 }
 ```
 
@@ -113,202 +195,274 @@ Resposta:
 
 ```mermaid
 graph TD
-    A[Requisição HTTP] --> B[Middleware de Autenticação]
-    B --> C[UserController]
+    A[Cliente Frontend] --> B[Middleware Auth]
+    B --> C[AdminController]
     C --> D[UserService]
     D --> E[UserRepository]
-    E --> F[(PostgreSQL)]
-    
-    C --> G[NotificationService]
-    G --> H[Fila Redis]
-    H --> I[Job de Processamento]
-    
-    D --> J[ImageUploadService]
-    J --> K[Storage Local]
-    
-    subgraph "Camada de Controladores"
+    E --> F[(Supabase PostgreSQL)]
+    D --> G[PhotoService]
+    G --> H[Supabase Storage]
+    D --> I[MessageService]
+    I --> J[Email Service]
+    I --> K[Notification Service]
+
+    subgraph "Controller Layer"
         C
     end
-    
-    subgraph "Camada de Serviços"
+
+    subgraph "Service Layer"
         D
         G
-        J
+        I
     end
-    
-    subgraph "Camada de Repositórios"
+
+    subgraph "Repository Layer"
         E
+    end
+
+    subgraph "External Services"
+        F
+        H
+        J
+        K
     end
 ```
 
 ## 6. Modelo de Dados
 
-### 6.1 Definição do Modelo de Dados
+### 6.1 Diagrama ER
 
 ```mermaid
 erDiagram
-    USERS ||--o{ USER_ACTIVITIES : has
-    USERS ||--o{ USER_MESSAGES : receives
-    USERS ||--o{ USER_PHOTOS : has
-    
+    USERS ||--o{ GROUPS : belongs_to
+    USERS ||--o{ MINISTRIES : participates
+    USERS ||--o{ ACTIVITIES : generates
+    USERS ||--o{ MESSAGES : receives
+    USERS ||--o{ PHOTOS : has
+    USERS ||--o{ USER_MINISTRIES : serves_in
+
     USERS {
         uuid id PK
         string name
         string email UK
-        string password
+        string password_hash
+        string phone
+        string whatsapp
+        date birth_date
+        string cpf UK
+        string profile_photo_url
         enum status
-        timestamp email_verified_at
-        json metadata
+        enum role
+        string cep
+        string address
+        string number
+        string complement
+        string district
+        string city
+        string state
+        uuid group_id FK
+        boolean can_access_admin
+        boolean is_master_admin
+        boolean is_servo
+        boolean profile_completed
+        timestamp consent_at
         timestamp created_at
         timestamp updated_at
     }
-    
-    USER_ACTIVITIES {
+
+    GROUPS {
         uuid id PK
-        uuid user_id FK
-        string activity_type
-        json details
-        string ip_address
+        string name
+        string description
         timestamp created_at
     }
-    
-    USER_MESSAGES {
+
+    MINISTRIES {
+        uuid id PK
+        string name
+        string description
+        timestamp created_at
+    }
+
+    USER_MINISTRIES {
         uuid id PK
         uuid user_id FK
-        uuid sent_by FK
-        string message_type
+        uuid ministry_id FK
+        timestamp created_at
+    }
+
+    ACTIVITIES {
+        uuid id PK
+        uuid user_id FK
+        string activity_description
+        json metadata
+        timestamp created_at
+    }
+
+    MESSAGES {
+        uuid id PK
+        uuid user_id FK
+        enum message_type
         string subject
         text content
         enum status
         timestamp sent_at
         timestamp created_at
     }
-    
-    USER_PHOTOS {
+
+    PHOTOS {
         uuid id PK
         uuid user_id FK
-        string file_path
-        string file_name
-        integer file_size
-        string mime_type
+        string full_url
+        string thumbnail_url
         boolean is_active
         timestamp created_at
     }
 ```
 
-### 6.2 Linguagem de Definição de Dados (DDL)
+### 6.2 Definições SQL
 
 **Tabela de Usuários (users)**
 ```sql
--- criar tabela
+-- Criar tabela
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
-    email_verified_at TIMESTAMP NULL,
-    metadata JSONB DEFAULT '{}',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    password_hash VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    whatsapp VARCHAR(20),
+    birth_date DATE,
+    cpf VARCHAR(14) UNIQUE,
+    profile_photo_url TEXT,
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('active', 'inactive', 'pending')),
+    role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin', 'leader', 'servant')),
+    cep VARCHAR(9),
+    address VARCHAR(255),
+    number VARCHAR(20),
+    complement VARCHAR(100),
+    district VARCHAR(100),
+    city VARCHAR(100),
+    state VARCHAR(2),
+    group_id UUID REFERENCES groups(id),
+    can_access_admin BOOLEAN DEFAULT false,
+    is_master_admin BOOLEAN DEFAULT false,
+    is_servo BOOLEAN DEFAULT false,
+    profile_completed BOOLEAN DEFAULT false,
+    consent_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- criar índices
+-- Criar índices
 CREATE INDEX idx_users_status ON users(status);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_group_id ON users(group_id);
+CREATE INDEX idx_users_can_access_admin ON users(can_access_admin);
+CREATE INDEX idx_users_is_servo ON users(is_servo);
 CREATE INDEX idx_users_created_at ON users(created_at DESC);
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_search ON users(name, email, phone);
 
--- criar trigger para updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
-CREATE TRIGGER update_users_updated_at 
-    BEFORE UPDATE ON users 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
+-- Permissões Supabase
+GRANT SELECT ON users TO anon;
+GRANT ALL PRIVILEGES ON users TO authenticated;
 ```
 
-**Tabela de Atividades dos Usuários (user_activities)**
+**Tabela de Grupos (groups)**
 ```sql
-CREATE TABLE user_activities (
+CREATE TABLE groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    activity_type VARCHAR(50) NOT NULL,
-    details JSONB DEFAULT '{}',
-    ip_address INET,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_user_activities_user_id ON user_activities(user_id);
-CREATE INDEX idx_user_activities_created_at ON user_activities(created_at DESC);
+GRANT SELECT ON groups TO anon;
+GRANT ALL PRIVILEGES ON groups TO authenticated;
 ```
 
-**Tabela de Mensagens (user_messages)**
+**Tabela de Ministérios (ministries)**
 ```sql
-CREATE TABLE user_messages (
+CREATE TABLE ministries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    sent_by UUID REFERENCES users(id),
-    message_type VARCHAR(20) DEFAULT 'email' CHECK (message_type IN ('email', 'notification')),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+GRANT SELECT ON ministries TO anon;
+GRANT ALL PRIVILEGES ON ministries TO authenticated;
+```
+
+**Tabela de Atividades (activities)**
+```sql
+CREATE TABLE activities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    activity_description VARCHAR(255) NOT NULL,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_activities_user_id ON activities(user_id);
+CREATE INDEX idx_activities_created_at ON activities(created_at DESC);
+
+GRANT SELECT ON activities TO anon;
+GRANT ALL PRIVILEGES ON activities TO authenticated;
+```
+
+**Tabela de Mensagens (messages)**
+```sql
+CREATE TABLE messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    message_type VARCHAR(20) NOT NULL CHECK (message_type IN ('email', 'notification')),
     subject VARCHAR(255),
     content TEXT NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
-    sent_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    status VARCHAR(20) DEFAULT 'sent' CHECK (status IN ('sent', 'delivered', 'failed')),
+    sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_user_messages_user_id ON user_messages(user_id);
-CREATE INDEX idx_user_messages_status ON user_messages(status);
-CREATE INDEX idx_user_messages_created_at ON user_messages(created_at DESC);
+CREATE INDEX idx_messages_user_id ON messages(user_id);
+CREATE INDEX idx_messages_created_at ON messages(created_at DESC);
+
+GRANT SELECT ON messages TO anon;
+GRANT ALL PRIVILEGES ON messages TO authenticated;
 ```
 
-**Tabela de Fotos (user_photos)**
+**Tabela de Fotos (photos)**
 ```sql
-CREATE TABLE user_photos (
+CREATE TABLE photos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    file_path VARCHAR(500) NOT NULL,
-    file_name VARCHAR(255) NOT NULL,
-    file_size INTEGER,
-    mime_type VARCHAR(100),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    full_url TEXT NOT NULL,
+    thumbnail_url TEXT NOT NULL,
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_user_photos_user_id ON user_photos(user_id);
-CREATE INDEX idx_user_photos_active ON user_photos(is_active);
+CREATE INDEX idx_photos_user_id ON photos(user_id);
+CREATE INDEX idx_photos_is_active ON photos(is_active);
+
+GRANT SELECT ON photos TO anon;
+GRANT ALL PRIVILEGES ON photos TO authenticated;
 ```
 
-### 6.3 Configurações de Permissões (Supabase-style)
+### 6.3 Dados Iniciais
 
 ```sql
--- permissões básicas para usuários autenticados
-GRANT SELECT ON users TO authenticated;
-GRANT SELECT ON user_activities TO authenticated;
-GRANT SELECT, INSERT ON user_messages TO authenticated;
-GRANT SELECT ON user_photos TO authenticated;
+-- Inserir grupos padrão
+INSERT INTO groups (name, description) VALUES
+('Grupo Central', 'Grupo principal da igreja'),
+('Grupo Jovem', 'Grupo para jovens de 18-30 anos'),
+('Grupo Família', 'Grupo para casais e famílias');
 
--- permissões completas para administradores
-GRANT ALL PRIVILEGES ON users TO authenticated;
-GRANT ALL PRIVILEGES ON user_activities TO authenticated;
-GRANT ALL PRIVILEGES ON user_messages TO authenticated;
-GRANT ALL PRIVILEGES ON user_photos TO authenticated;
-```
-
-### 6.4 Dados Iniciais
-```sql
--- inserir usuário administrador de exemplo
-INSERT INTO users (name, email, password, status, email_verified_at) 
-VALUES (
-    'Administrador Sistema', 
-    'admin@example.com', 
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
-    'active',
-    CURRENT_TIMESTAMP
-);
+-- Inserir ministérios padrão
+INSERT INTO ministries (name, description) VALUES
+('Louvor', 'Ministério de louvor e adoração'),
+('Media', 'Ministério de comunicação e mídia'),
+('Intercessão', 'Ministério de oração e intercessão'),
+('Recepção', 'Ministério de recepção e acolhimento'),
+('Infantil', 'Ministério infantil');
 ```

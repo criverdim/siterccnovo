@@ -21,7 +21,7 @@ class SettingsMercadoPago extends Page
     public function mount(): void
     {
         $row = Setting::firstOrCreate(['key' => 'mercadopago'], ['value' => []]);
-        redirect()->route('filament.admin.resources.settings.edit', ['record' => $row->id])->send();
+        $url = \App\Filament\Resources\SettingResource::getUrl('edit', ['record' => $row->id]);
+        $this->redirect($url);
     }
 }
-

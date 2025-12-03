@@ -456,8 +456,9 @@ function RegisterApp() {
     const [form, setForm] = React.useState({
         name: '', email: '', phone: '', whatsapp: '', birth_date: '', cpf: '',
         cep: '', address: '', number: '', complement: '', district: '', city: '', state: '',
-        gender: '', group_id: '', is_servo: false, ministries: [], password: '', consent: false,
+        gender: '', groups: [], is_servo: false, ministries: [], password: '', consent: false,
     });
+    const [photoFile, setPhotoFile] = React.useState(null);
     const [groups, setGroups] = React.useState([]);
     const [ministries, setMinistries] = React.useState([]);
     const [errors, setErrors] = React.useState([]);
@@ -472,8 +473,25 @@ function RegisterApp() {
         e.preventDefault();
         setErrors([]);
         setLoading(true);
+        const hasGroupOptions = Array.isArray(groups) && groups.length > 0;
+        if (hasGroupOptions && (!Array.isArray(form.groups) || form.groups.length < 1)) {
+            setErrors(['Selecione pelo menos um grupo de oração']);
+            setLoading(false);
+            return;
+        }
         try {
-            const res = await fetch('/register', { method:'POST', headers: { 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'') }, body: JSON.stringify(form) });
+            const fd = new FormData();
+            Object.entries(form).forEach(([k,v])=> {
+                if (Array.isArray(v)) {
+                    v.forEach((item)=> fd.append(`${k}[]`, item));
+                } else if (typeof v === 'boolean') {
+                    fd.append(k, v ? '1' : '0');
+                } else {
+                    fd.append(k, v ?? '');
+                }
+            });
+            if (photoFile) fd.append('photo', photoFile);
+            const res = await fetch('/register', { method:'POST', headers: { 'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'') }, body: fd });
             if (res.status===422) { const j = await res.json(); setErrors(Object.values(j.errors||{}).flat()); return; }
             if (res.ok) window.location.href = '/login';
         } catch {
@@ -510,11 +528,20 @@ function RegisterApp() {
                         <option value="other">Outro</option>
                     </select>
                 </label>
-                <label className="grid gap-1"><span className="text-sm">Grupo de oração</span>
-                    <select className="input" value={form.group_id} onChange={(e)=>update('group_id',e.target.value)}>
-                        <option value="">Selecione</option>
-                        {groups.map((g)=> <option key={g.id} value={g.id}>{g.name}</option>)}
-                    </select>
+                <label className="grid gap-1"><span className="text-sm">Grupos de oração (Selecione um ou mais)</span>
+                    <div className="grid md:grid-cols-2 gap-2">
+                        {groups.map((g)=> (
+                            <label key={g.id} className="inline-flex items-center gap-2">
+                                <input type="checkbox" className="h-4 w-4 border rounded" checked={(form.groups||[]).includes(g.id)} onChange={()=>toggleArray('groups',g.id)} aria-label={`Selecionar grupo ${g.name}`} />
+                                <span>{g.name}</span>
+                            </label>
+                        ))}
+                    </div>
+                </label>
+            </div>
+            <div className="grid gap-4">
+                <label className="grid gap-1"><span className="text-sm">Foto de perfil (opcional)</span>
+                    <input type="file" accept="image/*" className="input" onChange={(e)=> setPhotoFile(e.target.files?.[0]||null)} />
                 </label>
             </div>
             <div className="grid gap-4 p-4 border rounded">
