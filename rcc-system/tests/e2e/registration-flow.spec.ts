@@ -10,15 +10,16 @@ test.describe('Registration Flow', () => {
     const emailSel = 'label:has-text("Email") input'
     const phoneSel = 'label:has-text("Telefone") input'
     const whatsappSel = 'label:has-text("WhatsApp") input'
-    const cpfSel = 'label:has-text("CPF") input'
-    const passSel = 'label:has-text("Senha") input[type="password"]'
-    await page.waitForSelector(nameSel, { timeout: 20000 })
-    await page.fill(nameSel, 'Teste Usuário')
-    await page.fill(emailSel, `teste_${Date.now()}@mail.com`)
-    await page.fill(phoneSel, '(11) 9999-9999')
-    await page.fill(whatsappSel, '(11) 9 8888-7777')
-    await page.fill(cpfSel, '123.456.789-10')
-    await page.fill(passSel, 'segredo123')
+  const cpfSel = 'label:has-text("CPF") input'
+  const passSel = 'label:has-text("Senha") input[type="password"]'
+  await page.waitForSelector(nameSel, { timeout: 20000 })
+  await page.fill(nameSel, 'Teste Usuário')
+  await page.fill(emailSel, `teste_${Date.now()}@mail.com`)
+  await page.fill(phoneSel, '(11) 9999-9999')
+  await page.fill(whatsappSel, '(11) 9 8888-7777')
+  await page.fill(cpfSel, '123.456.789-10')
+  await page.fill(passSel, 'segredo123')
+  await page.fill('label:has-text("Confirmação de senha") input', 'segredo123')
     await page.check('label:has-text("Consentimento") input[type="checkbox"], label:has-text("LGPD") input[type="checkbox"]')
     const groupCheckboxes = page.locator('label:has-text("Grupos de oração") input[type="checkbox"]')
     const totalGroups = await groupCheckboxes.count()

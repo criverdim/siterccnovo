@@ -11,14 +11,20 @@ class TopRankingBarWidget extends ChartWidget
 
     protected static ?string $description = 'Top 10 usuários mais presentes';
 
+    protected static ?string $maxHeight = '260px';
+
     protected function getData(): array
     {
-        $top = GroupAttendance::selectRaw('user_id, COUNT(*) as total')
-            ->groupBy('user_id')
-            ->orderByDesc('total')
-            ->with('user')
-            ->limit(10)
-            ->get();
+        try {
+            $top = GroupAttendance::selectRaw('user_id, COUNT(*) as total')
+                ->groupBy('user_id')
+                ->orderByDesc('total')
+                ->with('user')
+                ->limit(10)
+                ->get();
+        } catch (\Throwable $e) {
+            $top = collect([]);
+        }
 
         return [
             'datasets' => [[

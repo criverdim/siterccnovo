@@ -8,9 +8,9 @@
                 <div>
                     <h1 class="text-4xl md:text-5xl font-bold text-emerald-700">Eventos RCC</h1>
                     <p class="mt-3 text-lg text-gray-700">Experiências transformadoras, retiros, encontros e celebrações. Participe!</p>
-                    <form method="get" class="mt-6 grid grid-cols-1 md:grid-cols-6 gap-3">
+                    <form method="get" class="mt-6 grid grid-cols-1 md:grid-cols-6 gap-3" role="search" aria-label="Filtrar eventos">
                         <div class="relative md:col-span-3">
-                            <input type="text" name="q" value="{{ $q ?? request('q') }}" placeholder="Buscar por nome, local..." class="rounded-xl border px-4 py-3 w-full shadow-sm focus:ring-2 focus:ring-emerald-600" aria-label="Buscar eventos">
+                            <input type="text" name="q" value="{{ $q ?? request('q') }}" placeholder="Buscar por nome, local..." class="rounded-xl border pl-10 pr-4 py-3 w-full shadow-sm focus:ring-2 focus:ring-emerald-600" aria-label="Buscar eventos">
                             <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
                         </div>
                         <select name="paid" class="rounded-xl border px-4 py-3 shadow-sm" aria-label="Tipo">
@@ -25,11 +25,12 @@
                             @endfor
                         </select>
                         <button class="px-5 py-3 rounded-xl bg-emerald-600 text-white shadow hover:bg-emerald-700" type="submit">Filtrar</button>
+                        <a href="/events" class="px-5 py-3 rounded-xl border shadow-sm text-emerald-700 hover:bg-emerald-50">Limpar</a>
                     </form>
                 </div>
                 <div class="relative">
                     <div class="card-hero">
-                        <img src="{{ asset('images/hero-events.jpg') }}" alt="RCC Eventos" class="w-full h-64 object-cover" />
+                        <img src="{{ asset('favicon.ico') }}" alt="RCC Eventos" class="w-full h-64 object-cover" />
                     </div>
                 </div>
             </div>
@@ -39,7 +40,9 @@
         <div class="grid md:grid-cols-3 gap-6" aria-live="polite">
             @forelse(($events ?? []) as $ev)
                 <article class="rounded-2xl border bg-white shadow-sm overflow-hidden">
-                    <img src="{{ asset('images/event-default.jpg') }}" alt="{{ $ev->name }}" class="w-full h-40 object-cover" />
+                    @php($firstPhoto = (is_array($ev->photos) && count($ev->photos)) ? $ev->photos[0] : null)
+                    @php($thumb = $firstPhoto ? \Illuminate\Support\Str::of($firstPhoto)->replace('/original/','/thumbs/') : null)
+                    <img src="{{ $thumb ? asset('storage/'.$thumb) : asset('favicon.ico') }}" alt="{{ $ev->name }}" class="w-full h-40 object-cover" />
                     <div class="p-4">
                         <div class="flex items-center justify-between mb-2">
                             <h2 class="text-xl font-bold text-emerald-700">{{ $ev->name }}</h2>
@@ -52,7 +55,7 @@
                         <div class="text-sm text-gray-600 mb-3">
                             {{ optional($ev->start_date)->format('d/m/Y') }} • {{ $ev->location }}
                         </div>
-                        <div class="text-sm text-gray-700 line-clamp-3">{!! $ev->description !!}</div>
+                        <div class="text-sm text-gray-700 line-clamp-3">{{ \Illuminate\Support\Str::limit(strip_tags($ev->description ?? ''), 180) }}</div>
                         <div class="mt-4 flex items-center justify-between">
                             <a href="{{ route('events.show', $ev) }}" class="btn btn-outline btn-sm">Detalhes</a>
                             <a href="/events/{{ $ev->id }}/participate" class="btn btn-primary btn-sm">Participar</a>

@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             ['email' => $adminEmail],
             [
                 'name' => 'Administrador RCC',
-                'password' => Hash::make('secret123'),
+                'password' => Hash::make('Verdi123@'),
                 'status' => 'active',
                 'is_servo' => true,
                 'role' => 'admin',

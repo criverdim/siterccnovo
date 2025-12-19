@@ -26,8 +26,9 @@ test.describe('Página de Cadastro (/register)', () => {
     await expect(submit).toBeVisible()
     await submit.click()
 
-    const error = page.locator('text=Selecione pelo menos um grupo de oração')
+    const error = page.locator('#groups-error')
     await expect(error).toBeVisible()
+    await expect(error).toHaveText(/Selecione pelo menos um grupo de oração/i)
   })
 
   test('realiza cadastro com múltiplos grupos selecionados', async ({ page }) => {
@@ -45,6 +46,7 @@ test.describe('Página de Cadastro (/register)', () => {
     await page.locator('label:has-text("Telefone") input').fill('11987654321')
     await page.locator('label:has-text("WhatsApp") input').fill('11987654321')
     await page.locator('label:has-text("Senha") input').fill('123456')
+    await page.locator('label:has-text("Confirmação de senha") input').fill('123456')
 
     // Seleciona pelo menos um grupo (ideal: dois)
     await groupCheckboxes.nth(0).check()

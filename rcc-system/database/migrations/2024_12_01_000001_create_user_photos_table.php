@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('mime_type', 100)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->index('user_id');
             $table->index('is_active');

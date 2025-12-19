@@ -21,6 +21,7 @@ Artisan::command('wa:test {--user=} {--phone=} {--message=}', function () {
     }
     if (! $user && ! $phoneOpt) {
         $this->error('Nenhum usuário encontrado e nenhum telefone informado.');
+
         return 1;
     }
 
@@ -32,7 +33,7 @@ Artisan::command('wa:test {--user=} {--phone=} {--message=}', function () {
     ]);
 
     if ($phoneOpt) {
-        $userObj = $user ?: new \App\Models\User();
+        $userObj = $user ?: new \App\Models\User;
         $userObj->whatsapp = $phoneOpt;
         $wa->setRelation('user', $userObj);
     } else {
@@ -50,3 +51,30 @@ Artisan::command('wa:test {--user=} {--phone=} {--message=}', function () {
 
     return 0;
 })->purpose('Envia uma mensagem de teste via WhatsApp');
+
+Artisan::command('user:promote-admin {email} {--password=}', function (string $email) {
+    if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $this->error('E-mail inválido');
+
+        return 1;
+    }
+    $pwd = (string) ($this->option('password') ?? '');
+    $u = \App\Models\User::where('email', $email)->first();
+    if (! $u) {
+        $u = new \App\Models\User;
+        $u->email = $email;
+        $u->name = 'Administrador';
+        $u->status = 'active';
+        $u->password = \Illuminate\Support\Facades\Hash::make($pwd ?: bin2hex(random_bytes(8)));
+    } elseif ($pwd) {
+        $u->password = \Illuminate\Support\Facades\Hash::make($pwd);
+    }
+    $u->role = 'admin';
+    $u->can_access_admin = true;
+    $u->is_master_admin = true;
+    $u->status = 'active';
+    $u->save();
+    $this->info('Usuário promovido: '.$u->email);
+
+    return 0;
+})->purpose('Promove um usuário para administrador');

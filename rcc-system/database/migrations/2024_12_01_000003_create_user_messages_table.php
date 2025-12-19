@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('status', 20)->default('pending');
             $table->timestamp('sent_at')->nullable();
             $table->timestamps();
-            
+
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('sent_by')->references('id')->on('users')->onDelete('cascade');
             $table->index('user_id');

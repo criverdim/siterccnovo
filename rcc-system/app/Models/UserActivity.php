@@ -54,7 +54,7 @@ class UserActivity extends Model
 
     public function getActivityDescriptionAttribute(): string
     {
-        return match($this->activity_type) {
+        return match ($this->activity_type) {
             'login' => 'Realizou login no sistema',
             'logout' => 'Realizou logout do sistema',
             'profile_updated' => 'Atualizou seu perfil',
@@ -70,7 +70,7 @@ class UserActivity extends Model
 
     public function getActivityIconAttribute(): string
     {
-        return match($this->activity_type) {
+        return match ($this->activity_type) {
             'login' => 'heroicon-o-arrow-right-on-rectangle',
             'logout' => 'heroicon-o-arrow-left-on-rectangle',
             'profile_updated' => 'heroicon-o-user-circle',

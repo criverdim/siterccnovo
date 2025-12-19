@@ -12,10 +12,26 @@ class AdminStatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        $members = User::count();
-        $groups = Group::count();
-        $events = Event::where('is_active', true)->count();
-        $registrationsToday = User::whereDate('created_at', today())->count();
+        try {
+            $members = User::count();
+        } catch (\Throwable $e) {
+            $members = 0;
+        }
+        try {
+            $groups = Group::count();
+        } catch (\Throwable $e) {
+            $groups = 0;
+        }
+        try {
+            $events = Event::where('is_active', true)->count();
+        } catch (\Throwable $e) {
+            $events = 0;
+        }
+        try {
+            $registrationsToday = User::whereDate('created_at', today())->count();
+        } catch (\Throwable $e) {
+            $registrationsToday = 0;
+        }
 
         return [
             Stat::make('Membros', (string) $members)

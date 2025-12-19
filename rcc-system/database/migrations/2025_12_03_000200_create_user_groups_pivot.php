@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -26,7 +26,7 @@ return new class extends Migration
             $createdExpr = $driver === 'sqlite' ? DB::raw("datetime('now')") : DB::raw('CURRENT_TIMESTAMP');
             $updatedExpr = $createdExpr;
             DB::table('user_groups')->insertUsing([
-                'user_id', 'group_id', 'created_at', 'updated_at'
+                'user_id', 'group_id', 'created_at', 'updated_at',
             ], DB::table('users')
                 ->select(['id as user_id', 'group_id', $createdExpr, $updatedExpr])
                 ->whereNotNull('group_id'));

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
-use App\Models\Group;
 use Filament\Resources\Pages\EditRecord;
 
 class EditUser extends EditRecord
@@ -18,6 +17,7 @@ class EditUser extends EditRecord
         } else {
             $data['group_id'] = $data['group_id'] ?? null;
         }
+
         return $data;
     }
 

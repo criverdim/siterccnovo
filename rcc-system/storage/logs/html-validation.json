@@ -1,0 +1,236 @@
+{
+    "version": "25.12.18",
+    "messages": [
+        {
+            "type": "info",
+            "lastLine": 17,
+            "lastColumn": 96,
+            "firstColumn": 5,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "s -->\n    <link rel=\"preload\" as=\"style\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-DbkpcLzJ.css\" \/><link ",
+            "hiliteStart": 10,
+            "hiliteLength": 92
+        },
+        {
+            "type": "info",
+            "lastLine": 17,
+            "lastColumn": 194,
+            "firstColumn": 97,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "zJ.css\" \/><link rel=\"modulepreload\" as=\"script\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-BvvLlzbp.js\" \/><link ",
+            "hiliteStart": 10,
+            "hiliteLength": 98
+        },
+        {
+            "type": "info",
+            "lastLine": 17,
+            "lastColumn": 307,
+            "firstColumn": 195,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "zbp.js\" \/><link rel=\"stylesheet\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-DbkpcLzJ.css\" data-navigate-track=\"reload\" \/><scrip",
+            "hiliteStart": 10,
+            "hiliteLength": 113
+        },
+        {
+            "type": "error",
+            "lastLine": 181,
+            "lastColumn": 123,
+            "firstColumn": 21,
+            "message": "An \u201cinput\u201d element with a \u201ctype\u201d attribute whose value is \u201chidden\u201d must not have an \u201cautocomplete\u201d attribute whose value is \u201con\u201d or \u201coff\u201d.",
+            "extract": "          <input type=\"hidden\" name=\"_token\" value=\"BlR50T38qZ1qF8elCACraou5jCc4DK9Xw7kO6Jsc\" autocomplete=\"off\">      ",
+            "hiliteStart": 10,
+            "hiliteLength": 103
+        },
+        {
+            "type": "info",
+            "lastLine": 183,
+            "lastColumn": 175,
+            "firstColumn": 25,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"email\" name=\"email\" class=\"w-full rounded-xl border bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600\" required \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 151
+        },
+        {
+            "type": "info",
+            "lastLine": 187,
+            "lastColumn": 181,
+            "firstColumn": 25,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"password\" name=\"password\" class=\"w-full rounded-xl border bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-600\" required \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 157
+        },
+        {
+            "type": "info",
+            "lastLine": 189,
+            "lastColumn": 68,
+            "firstColumn": 21,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"hidden\" name=\"redirect\" value=\"\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 48
+        },
+        {
+            "type": "error",
+            "lastLine": 197,
+            "lastColumn": 123,
+            "firstColumn": 21,
+            "message": "An \u201cinput\u201d element with a \u201ctype\u201d attribute whose value is \u201chidden\u201d must not have an \u201cautocomplete\u201d attribute whose value is \u201con\u201d or \u201coff\u201d.",
+            "extract": "          <input type=\"hidden\" name=\"_token\" value=\"BlR50T38qZ1qF8elCACraou5jCc4DK9Xw7kO6Jsc\" autocomplete=\"off\">      ",
+            "hiliteStart": 10,
+            "hiliteLength": 103
+        },
+        {
+            "type": "info",
+            "lastLine": 200,
+            "lastColumn": 84,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"name\" class=\"input\" required \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 56
+        },
+        {
+            "type": "info",
+            "lastLine": 204,
+            "lastColumn": 86,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"email\" name=\"email\" class=\"input\" required \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 58
+        },
+        {
+            "type": "info",
+            "lastLine": 208,
+            "lastColumn": 84,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"tel\" name=\"phone\" class=\"input\" required \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 56
+        },
+        {
+            "type": "info",
+            "lastLine": 212,
+            "lastColumn": 87,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"tel\" name=\"whatsapp\" class=\"input\" required \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 59
+        },
+        {
+            "type": "info",
+            "lastLine": 216,
+            "lastColumn": 81,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"date\" name=\"birth_date\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 53
+        },
+        {
+            "type": "info",
+            "lastLine": 220,
+            "lastColumn": 74,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"cpf\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 46
+        },
+        {
+            "type": "info",
+            "lastLine": 224,
+            "lastColumn": 74,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"cep\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 46
+        },
+        {
+            "type": "info",
+            "lastLine": 228,
+            "lastColumn": 78,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"address\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 50
+        },
+        {
+            "type": "info",
+            "lastLine": 232,
+            "lastColumn": 77,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"number\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 49
+        },
+        {
+            "type": "info",
+            "lastLine": 236,
+            "lastColumn": 81,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"complement\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 53
+        },
+        {
+            "type": "info",
+            "lastLine": 240,
+            "lastColumn": 79,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"district\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 51
+        },
+        {
+            "type": "info",
+            "lastLine": 244,
+            "lastColumn": 75,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"city\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 47
+        },
+        {
+            "type": "info",
+            "lastLine": 248,
+            "lastColumn": 76,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"text\" name=\"state\" class=\"input\" \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 48
+        },
+        {
+            "type": "info",
+            "lastLine": 258,
+            "lastColumn": 92,
+            "firstColumn": 29,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"password\" name=\"password\" class=\"input\" required \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 64
+        },
+        {
+            "type": "info",
+            "lastLine": 262,
+            "lastColumn": 83,
+            "firstColumn": 25,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "          <input type=\"checkbox\" name=\"consent\" value=\"1\" required \/>\n     ",
+            "hiliteStart": 10,
+            "hiliteLength": 59
+        }
+    ],
+    "language": "pt"
+}

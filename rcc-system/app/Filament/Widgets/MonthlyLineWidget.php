@@ -11,11 +11,17 @@ class MonthlyLineWidget extends ChartWidget
 
     protected static ?string $description = 'Total de presenças por mês';
 
+    protected static ?string $maxHeight = '260px';
+
     protected function getData(): array
     {
         $months = collect(range(0, 11))->reverse()->map(function ($i) {
             $m = now()->copy()->subMonths($i);
-            $count = GroupAttendance::whereMonth('date', $m->month)->whereYear('date', $m->year)->count();
+            try {
+                $count = GroupAttendance::whereMonth('date', $m->month)->whereYear('date', $m->year)->count();
+            } catch (\Throwable $e) {
+                $count = 0;
+            }
 
             return ['label' => $m->format('M/Y'), 'count' => $count];
         });

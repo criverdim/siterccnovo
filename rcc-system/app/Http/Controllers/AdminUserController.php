@@ -8,7 +8,6 @@ use App\Models\UserMessage;
 use App\Models\UserPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class AdminUserController extends Controller
@@ -44,7 +43,9 @@ class AdminUserController extends Controller
         return response()->json([
             'users' => collect($users->items())->map(function ($u) {
                 $arr = $u->toArray();
-                $arr['groups'] = $u->groups?->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->values()->all() ?? [];
+                $arr['group'] = $u->group ? ['id' => $u->group->id, 'name' => $u->group->name, 'color_hex' => $u->group->color_hex] : null;
+                $arr['groups'] = $u->groups?->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color_hex' => $g->color_hex])->values()->all() ?? [];
+
                 return $arr;
             })->all(),
             'pagination' => [
@@ -60,24 +61,34 @@ class AdminUserController extends Controller
 
     public function show($id)
     {
-        $user = User::with([
-            'group',
-            'groups',
-            'photos',
-            'activities' => function ($query) {
-                $query->recent(30)->orderBy('created_at', 'desc');
-            },
-            'messages' => function ($query) {
-                $query->recent(30)->orderBy('created_at', 'desc');
-            },
-            'ministries'
-        ])->findOrFail($id);
+        try {
+            $user = User::with([
+                'group',
+                'groups',
+                'activePhoto',
+                'photos',
+                'activities' => function ($query) {
+                    $query->recent(30)->orderBy('created_at', 'desc');
+                },
+                'messages' => function ($query) {
+                    $query->where('created_at', '>=', now()->subDays(30))
+                        ->orderBy('created_at', 'desc');
+                },
+                'ministries',
+            ])->findOrFail($id);
 
-        $arr = $user->toArray();
-        $arr['groups'] = $user->groups?->map(fn($g) => ['id' => $g->id, 'name' => $g->name])->values()->all() ?? [];
-        return response()->json([
-            'user' => $arr,
-        ]);
+            $arr = $user->toArray();
+            $arr['group'] = $user->group ? ['id' => $user->group->id, 'name' => $user->group->name, 'color_hex' => $user->group->color_hex] : null;
+            $arr['groups'] = $user->groups?->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color_hex' => $g->color_hex])->values()->all() ?? [];
+
+            return response()->json([
+                'user' => $arr,
+            ]);
+        } catch (\Throwable $e) {
+            logger()->error('admin.user.show_failed', ['id' => $id, 'message' => $e->getMessage()]);
+
+            return response()->json(['message' => 'Erro ao carregar usuário'], 500);
+        }
     }
 
     public function update(Request $request, $id)
@@ -86,7 +97,7 @@ class AdminUserController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'sometimes|string|email|max:255|unique:users,email,'.$user->id,
             'phone' => 'sometimes|string|max:20',
             'whatsapp' => 'sometimes|string|max:20',
             'birth_date' => 'sometimes|date',
@@ -232,7 +243,7 @@ class AdminUserController extends Controller
             $user->photos()->update(['is_active' => false]);
         }
 
-        $path = $request->file('photo')->store('user-photos/' . $user->id, 'public');
+        $path = $request->file('photo')->store('user-photos/'.$user->id, 'public');
 
         $photo = UserPhoto::create([
             'user_id' => $user->id,

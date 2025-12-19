@@ -8,7 +8,8 @@
 <x-layouts.app :title="$title" :og="$og">
     <div class="max-w-5xl mx-auto p-6 md:p-10">
         <section class="relative rounded-3xl overflow-hidden border shadow mb-6">
-            <img src="{{ asset('images/event-hero.jpg') }}" alt="{{ $event->name }}" class="w-full h-72 object-cover" />
+            @php($heroPhoto = (is_array($event->photos) && count($event->photos)) ? \Illuminate\Support\Str::of($event->photos[0])->replace('/original/','/thumbs/') : null)
+            <img src="{{ $heroPhoto ? asset('storage/'.$heroPhoto) : asset('favicon.ico') }}" alt="{{ $event->name }}" class="w-full h-72 object-cover" />
             <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
             <div class="absolute bottom-4 left-4 text-white">
                 <div class="text-sm opacity-90">Evento</div>

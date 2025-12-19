@@ -7,15 +7,23 @@ use Filament\Pages\Page;
 
 class SettingsMercadoPago extends Page
 {
+    protected static bool $shouldRegisterNavigation = true;
+
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+
     protected static ?string $navigationGroup = 'Configurações';
+
     protected static ?string $navigationLabel = 'Mercado Pago';
+
     protected static ?string $title = 'Mercado Pago';
+
     protected static ?string $slug = 'settings-mercadopago';
 
     public static function canAccess(): bool
     {
-        return (bool) (auth()->user()?->is_master_admin);
+        $u = auth()->user();
+
+        return (bool) ($u?->can_access_admin || $u?->is_master_admin || ($u?->role === 'admin'));
     }
 
     public function mount(): void

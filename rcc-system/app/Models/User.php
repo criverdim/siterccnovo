@@ -158,12 +158,14 @@ class User extends Authenticatable implements FilamentUser
         $activePhoto = $this->activePhoto;
         if ($activePhoto) {
             $pathInfo = pathinfo($activePhoto->file_path);
-            $thumb = $pathInfo['dirname'] . '/thumbs/' . $pathInfo['basename'];
+            $thumb = $pathInfo['dirname'].'/thumbs/'.$pathInfo['basename'];
             if (Storage::disk('public')->exists($thumb)) {
                 return Storage::disk('public')->url($thumb);
             }
+
             return Storage::disk('public')->url($activePhoto->file_path);
         }
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
+
+        return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=7F9CF5&background=EBF4FF';
     }
 }

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { loginAdmin } from './utils'
 import fs from 'fs'
 
 const baseURL = (globalThis as any).process?.env?.BASE_URL || 'http://127.0.0.1:8000'
@@ -25,14 +26,7 @@ test.describe('Admin layout smoke', () => {
       })
       await page.context().addCookies(cookies)
     } catch {}
-    await page.goto(`${baseURL}/admin/login`, { waitUntil: 'domcontentloaded' })
-    await page.waitForSelector('input[type="email"]', { timeout: 15000 })
-    await page.fill('input[type="email"]', ADMIN_EMAIL!)
-    await page.fill('input[type="password"]', ADMIN_PASSWORD!)
-    await Promise.all([
-      page.waitForURL('**/admin', { timeout: 45000 }).catch(() => {}),
-      page.click('button:has-text("Sign in"), button:has-text("Entrar"), button:has-text("Login")'),
-    ])
+    await loginAdmin(page, baseURL, ADMIN_EMAIL!, ADMIN_PASSWORD!)
     const sidebar = page.locator('.fi-sidebar')
     await sidebar.waitFor({ state: 'visible', timeout: 30000 }).catch(async () => {
       await page.waitForLoadState('networkidle').catch(() => {})

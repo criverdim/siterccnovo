@@ -39,7 +39,11 @@ class WhatsAppService
         $response = Http::withToken($token)->post($endpoint, $payload);
 
         $resJson = null;
-        try { $resJson = $response->json(); } catch (\Throwable $e) { $resJson = null; }
+        try {
+            $resJson = $response->json();
+        } catch (\Throwable $e) {
+            $resJson = null;
+        }
         $errCode = is_array($resJson) ? data_get($resJson, 'error.code') : null;
         $msgId = is_array($resJson) ? data_get($resJson, 'messages.0.id') : null;
 
@@ -72,7 +76,11 @@ class WhatsAppService
             ];
             $tplResp = Http::withToken($token)->post($endpoint, $tplPayload);
             $tplJson = null;
-            try { $tplJson = $tplResp->json(); } catch (\Throwable $e) { $tplJson = null; }
+            try {
+                $tplJson = $tplResp->json();
+            } catch (\Throwable $e) {
+                $tplJson = null;
+            }
 
             $tplMsgId = is_array($tplJson) ? data_get($tplJson, 'messages.0.id') : null;
             if ($tplResp->successful() && $tplMsgId) {

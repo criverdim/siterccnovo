@@ -1,0 +1,6 @@
+{
+    "invalid_credentials": {
+        "username": "wrong",
+        "password": "bad"
+    }
+}

@@ -1,29 +1,17 @@
 import { test, expect } from '@playwright/test'
+import { loginAdmin } from './utils'
 
 const baseURL = (globalThis as any).process?.env?.BASE_URL || 'http://127.0.0.1:8000'
 const ADMIN_EMAIL = (globalThis as any).process?.env?.ADMIN_EMAIL
 const ADMIN_PASSWORD = (globalThis as any).process?.env?.ADMIN_PASSWORD
 
-async function loginAdmin(page: any) {
-  await page.goto(`${baseURL}/admin/login`, { waitUntil: 'domcontentloaded' })
-  // react-login-app may render SPA login; provide fallbacks
-  const emailSel = 'input[type="email"], input[name="email"]'
-  const passSel = 'input[type="password"], input[name="password"]'
-  await page.waitForSelector(emailSel, { timeout: 20000 })
-  await page.fill(emailSel, ADMIN_EMAIL!)
-  await page.fill(passSel, ADMIN_PASSWORD!)
-  const submit = page.locator('button[type="submit"], button:has-text("Sign in"), button:has-text("Entrar"), button:has-text("Login")').first()
-  await Promise.all([
-    page.waitForURL('**/admin', { timeout: 45000 }).catch(() => {}),
-    submit.click(),
-  ])
-}
+ 
 
 test.describe('Admin Roles Setup', () => {
   test.skip(!ADMIN_EMAIL || !ADMIN_PASSWORD, 'Admin credentials are required')
 
   test('set role to admin and verify access to Pastoreio pages', async ({ page }) => {
-    await loginAdmin(page)
+    await loginAdmin(page, baseURL, ADMIN_EMAIL!, ADMIN_PASSWORD!)
     await page.goto(`${baseURL}/admin/users`, { waitUntil: 'domcontentloaded' })
     await page.waitForSelector('table', { timeout: 15000 })
 

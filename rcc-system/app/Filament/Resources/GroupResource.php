@@ -69,6 +69,25 @@ class GroupResource extends Resource
                                 'saturday' => 'Sábado',
                             ])
                             ->required(),
+                        Forms\Components\Select::make('color_preset')
+                            ->label('Paleta de cores')
+                            ->options([
+                                '#0b7a48' => 'Emerald',
+                                '#c9a043' => 'Gold',
+                                '#4f46e5' => 'Indigo',
+                                '#06b6d4' => 'Cyan',
+                                '#e11d48' => 'Rose',
+                            ])
+                            ->native(false)
+                            ->dehydrated(false)
+                            ->reactive()
+                            ->afterStateUpdated(fn ($state, callable $set) => $set('color_hex', $state))
+                            ->helperText('Escolha uma cor rápida; você pode ajustar abaixo no seletor personalizado.'),
+                        Forms\Components\ColorPicker::make('color_hex')
+                            ->label('Cor de identificação')
+                            ->format('hex')
+                            ->helperText('Cor usada como marcador visual do grupo nas páginas administrativas e públicas.')
+                            ->columnSpan(1),
                         Forms\Components\TimePicker::make('time')
                             ->label('Horário')
                             ->required()
@@ -117,7 +136,16 @@ class GroupResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nome do Grupo')
-                    ->searchable(),
+                    ->searchable()
+                    ->formatStateUsing(function ($state, $record) {
+                        $color = $record->color_hex ?: null;
+                        if (! $color) {
+                            return $state;
+                        }
+
+                        return '<span style="display:inline-flex;align-items:center;gap:0.4rem;"><span style="width:0.75rem;height:0.75rem;border-radius:9999px;background:'.$color.';border:1px solid #e5e7eb;box-shadow:0 0 0 1px #fff inset"></span>'.e($state).'</span>';
+                    })
+                    ->html(),
                 Tables\Columns\TextColumn::make('weekday')
                     ->label('Dia da Semana')
                     ->badge()

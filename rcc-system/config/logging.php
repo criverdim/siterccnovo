@@ -18,7 +18,9 @@ return [
     |
     */
 
-    'default' => env('LOG_CHANNEL', 'stack'),
+    // Forçamos o canal padrão para "single" ignorando LOG_CHANNEL do .env,
+    // garantindo que os erros sejam gravados em storage/logs/laravel.log.
+    'default' => 'single',
 
     /*
     |--------------------------------------------------------------------------
@@ -52,9 +54,11 @@ return [
 
     'channels' => [
 
+        // Mantemos o canal "stack" apenas para compatibilidade,
+        // mas o padrão da aplicação passa a ser o "single".
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => ['single'],
             'ignore_exceptions' => false,
         ],
 

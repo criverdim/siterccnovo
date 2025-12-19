@@ -13,7 +13,7 @@ class SiteSettings
 
     protected function remember(string $key, \Closure $resolver)
     {
-        return Cache::remember("site_settings:".$key, $this->ttl, $resolver);
+        return Cache::remember('site_settings:'.$key, $this->ttl, $resolver);
     }
 
     public function site(): array
@@ -26,12 +26,17 @@ class SiteSettings
         ];
 
         return $this->remember('site', function () use ($defaults) {
-            if (! Schema::hasTable('settings')) {
+            try {
+                if (! Schema::hasTable('settings')) {
+                    return $defaults;
+                }
+                $s = Setting::where('key', 'site')->first();
+                $vals = $s?->value ?? [];
+
+                return array_merge($defaults, array_filter($vals, fn ($v) => $v !== null));
+            } catch (\Throwable $e) {
                 return $defaults;
             }
-            $s = Setting::where('key', 'site')->first();
-            $vals = $s?->value ?? [];
-            return array_merge($defaults, array_filter($vals, fn ($v) => $v !== null));
         });
     }
 
@@ -46,46 +51,93 @@ class SiteSettings
         ];
 
         return $this->remember('social', function () use ($defaults) {
-            if (! Schema::hasTable('settings')) {
+            try {
+                if (! Schema::hasTable('settings')) {
+                    return $defaults;
+                }
+                $s = Setting::where('key', 'social')->first();
+                $vals = $s?->value ?? [];
+
+                return array_merge($defaults, array_filter($vals, fn ($v) => $v !== null));
+            } catch (\Throwable $e) {
                 return $defaults;
             }
-            $s = Setting::where('key', 'social')->first();
-            $vals = $s?->value ?? [];
-            return array_merge($defaults, array_filter($vals, fn ($v) => $v !== null));
         });
     }
 
     public function brandLogoUrl(): ?string
     {
         return $this->remember('brand_logo', function () {
-            if (! Schema::hasTable('settings')) {
+            try {
+                if (! Schema::hasTable('settings')) {
+                    return null;
+                }
+                $b = Setting::where('key', 'brand')->first();
+                $path = $b?->value['logo'] ?? null;
+                if ($path) {
+                    $base = (string) config('filesystems.disks.public.url');
+                    $cleanPath = ltrim($path, '/');
+                    $reqHost = null;
+                    try { $reqHost = request()->getHost(); } catch (\Throwable $e2) {}
+                    $isLocal = in_array($reqHost, ['127.0.0.1', 'localhost'], true);
+                    if ($base) {
+                        if ($isLocal) {
+                            return '/storage/'.$cleanPath;
+                        }
+                        return rtrim($base, '/').'/'.$cleanPath;
+                    }
+                    $url = Storage::disk('public')->url($path);
+                    $app = rtrim((string) config('app.url'), '/');
+                    if ($app && str_starts_with((string) $url, 'http://127.0.0.1')) {
+                        return $app.'/storage/'.basename($cleanPath);
+                    }
+
+                    return $url;
+                }
+
+                return null;
+            } catch (\Throwable $e) {
                 return null;
             }
-            $b = Setting::where('key', 'brand')->first();
-            $path = $b?->value['logo'] ?? null;
-            if ($path) {
-                return Storage::disk('public')->url($path);
-            }
-            return null;
         });
     }
 
     public function all(): array
     {
-        return [
-            'site' => $this->site(),
-            'social' => $this->social(),
-            'brand_logo' => $this->brandLogoUrl(),
-        ];
+        try {
+            return [
+                'site' => $this->site(),
+                'social' => $this->social(),
+                'brand_logo' => $this->brandLogoUrl(),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'site' => [
+                    'address' => env('SITE_ADDRESS', 'Rua Exemplo, 123 - Cidade/UF'),
+                    'phone' => env('SITE_PHONE', '(00) 0000-0000'),
+                    'whatsapp' => env('SITE_WHATSAPP', '(00) 90000-0000'),
+                    'email' => env('SITE_EMAIL', 'contato@rcc.local'),
+                ],
+                'social' => [
+                    'instagram' => env('SOCIAL_INSTAGRAM', '#'),
+                    'facebook' => env('SOCIAL_FACEBOOK', '#'),
+                    'youtube' => env('SOCIAL_YOUTUBE', '#'),
+                    'whatsapp' => env('SOCIAL_WHATSAPP', '#'),
+                    'tiktok' => env('SOCIAL_TIKTOK', '#'),
+                ],
+                'brand_logo' => null,
+            ];
+        }
     }
 
     public function invalidate(?string $key = null): void
     {
         if ($key) {
-            Cache::forget("site_settings:".$key);
+            Cache::forget('site_settings:'.$key);
             if ($key === 'brand') {
                 Cache::forget('site_settings:brand_logo');
             }
+
             return;
         }
         Cache::forget('site_settings:site');
@@ -93,4 +145,3 @@ class SiteSettings
         Cache::forget('site_settings:brand_logo');
     }
 }
-

@@ -3,12 +3,13 @@
 // Admin Links Test Script
 // This script tests all admin panel links to identify broken ones
 
-$baseUrl = 'http://localhost:8001';
-$adminUrl = $baseUrl.'/admin';
+$baseUrl = getenv('BASE_URL') ?: ($argv[1] ?? 'http://127.0.0.1:8000');
+$adminUrl = rtrim($baseUrl, '/').'/admin';
 
 // Admin panel routes to test (based on actual Laravel route:list output)
 $routes = [
-    // Dashboard
+    // Login e Dashboard
+    ['url' => '/admin/login', 'name' => 'Login'],
     ['url' => '/admin', 'name' => 'Dashboard'],
 
     // Custom Pages
@@ -34,7 +35,7 @@ $brokenLinks = [];
 $workingLinks = [];
 
 foreach ($routes as $route) {
-    $fullUrl = $baseUrl.$route['url'];
+    $fullUrl = rtrim($baseUrl, '/').$route['url'];
     echo "Testing: {$route['name']} ({$fullUrl})... ";
 
     $ch = curl_init($fullUrl);
@@ -43,6 +44,8 @@ foreach ($routes as $route) {
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_HEADER, true);
     curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

@@ -36,14 +36,14 @@ class UserPhoto extends Model
 
     public function getFullUrlAttribute(): string
     {
-        return asset('storage/' . $this->file_path);
+        return asset('storage/'.$this->file_path);
     }
 
     public function getThumbnailUrlAttribute(): string
     {
         $pathInfo = pathinfo($this->file_path);
-        $thumbnailPath = $pathInfo['dirname'] . '/thumbs/' . $pathInfo['basename'];
-        
-        return asset('storage/' . $thumbnailPath);
+        $thumbnailPath = $pathInfo['dirname'].'/thumbs/'.$pathInfo['basename'];
+
+        return asset('storage/'.$thumbnailPath);
     }
 }

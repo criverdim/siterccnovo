@@ -1,116 +1,201 @@
-<!doctype html>
-<html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'RCC' }}</title>
-    @vite(['resources/css/app.css','resources/js/app.jsx'])
+    
+    <title>{{ config('app.name', 'RCC System') }} - @yield('title', 'Sistema de Gestão RCC')</title>
+    <meta name="description" content="@yield('description', 'Sistema completo de gestão para RCC - Moderno, eficiente e profissional')">
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
+    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
+    
+    <!-- Livewire -->
+    @livewireStyles
+    
+    <!-- Custom Styles -->
     <style>
-        .gold { color: #c9a043; }
-        .bg-gold { background-color: #c9a043; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .text-brand-green { color: #006036; }
+        .text-brand-yellow { color: #fdc800; }
+        .text-subtitle { font-size: 0.975rem; }
+        @media (max-width: 768px) {
+            .brand-title { font-size: 0.675rem; }
+            .brand-subtitle { font-size: 0.525rem; }
+        }
     </style>
+    
+    @stack('styles')
 </head>
-<body class="bg-white text-gray-900">
-    <header class="p-4 md:p-6 border-b bg-white/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="/" class="site-logo-wrap">
-                @php($brand = \App\Models\Setting::where('key','brand')->first())
-                @if(($brand?->value['logo'] ?? null))
-                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brand->value['logo']) }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1"
-                         loading="eager" decoding="async" fetchpriority="high" />
-                @else
-                    <img src="{{ asset('favicon.ico') }}" alt="Logo RCC" class="site-logo site-logo-contrast site-logo-ring rounded-md p-1" />
-                @endif
-                <div class="flex flex-col">
-                    <div class="text-xl md:text-2xl font-bold text-emerald-700">Grupo de Oração</div>
-                    <div class="text-xs text-emerald-600 font-medium">Renovação Carismática Católica</div>
+<body class="font-inter antialiased bg-gray-50 text-gray-900">
+    <!-- Navigation -->
+    <nav class="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-14 md:h-[4.18rem] lg:h-[5.28rem] overflow-hidden">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    @php($logoUrl = data_get($siteSettings ?? [], 'brand_logo'))
+                    <a href="{{ url('/') }}" class="flex items-center space-x-2 md:space-x-2">
+                        @if($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="Logo" class="site-logo shrink-0 h-[1.7rem] md:h-[2.4rem] w-auto max-w-[110px] md:max-w-[100px] object-contain" />
+                        @else
+                            <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                                <span class="text-white font-bold text-lg">RCC</span>
+                            </div>
+                        @endif
+                        <div class="block max-w-[38vw] md:max-w-[32vw] truncate whitespace-nowrap leading-tight md:leading-[1.0] overflow-hidden">
+                            <span class="brand-title font-bold text-brand-green md:text-sm">Renovação Carismática Católica</span>
+                            <p class="brand-subtitle text-brand-yellow md:text-xs -mt-0.5">Miguelópolis-SP</p>
+                        </div>
+                    </a>
                 </div>
-            </a>
-            <nav class="hidden md:flex items-center gap-6">
-                <a href="/" class="hover:text-emerald-700 font-medium">Início</a>
-                <a href="/events" class="hover:text-emerald-700 font-medium">Eventos</a>
-                <a href="/groups" class="hover:text-emerald-700 font-medium">Grupos</a>
-                <a href="/calendar" class="hover:text-emerald-700 font-medium">Calendário</a>
-                <div class="relative group">
-                    <button class="hover:text-emerald-700 font-medium flex items-center">
-                        Pastoreio <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{{ url('/calendar') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors" @if(request()->is('calendar*')) aria-current="page" @endif>Calendário</a>
+                    <a href="{{ route('events.index') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors" @if(request()->is('events*')) aria-current="page" @endif>Eventos</a>
+                    <a href="{{ url('/groups') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors" @if(request()->is('groups*')) aria-current="page" @endif>Grupos</a>
+                    <a href="{{ route('home') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Início</a>
+                    <div class="relative group">
+                        <button class="text-gray-700 hover:text-blue-600 font-medium">Mais</button>
+                        <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="{{ route('sobre') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Sobre</a>
+                            <a href="{{ route('servicos') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Serviços</a>
+                            <a href="{{ route('contato') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Contato</a>
+                        </div>
+                    </div>
+                    <a href="{{ url('/pastoreio') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors" @if(request()->is('pastoreio*')) aria-current="page" @endif>Pastoreio</a>
+                    <a href="{{ route('register') }}" class="bg-emerald-600 text-white px-3.5 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-semibold shadow-sm" @if(request()->is('register')) aria-current="page" @endif>Cadastro</a>
+                    <a href="{{ route('login') }}" class="bg-yellow-400 text-gray-900 px-3.5 py-2 rounded-lg hover:bg-yellow-500 transition-colors font-semibold shadow-sm" @if(request()->is('login')) aria-current="page" @endif>Login</a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-700 hover:text-blue-600 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
                     </button>
-                    <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                        <a href="/pastoreio" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 rounded-t-lg">Painel de Controle</a>
-                        <a href="/pastoreio" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50">Controle de Frequência</a>
-                        <a href="/pastoreio" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 rounded-b-lg">Sorteio de Grupos</a>
+                </div>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div id="mobile-menu" class="md:hidden hidden pb-4">
+                <div class="flex flex-col space-y-3">
+                    <a href="{{ url('/calendar') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Calendário</a>
+                    <a href="{{ route('events.index') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Eventos</a>
+                    <a href="{{ url('/groups') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Grupos</a>
+                    <a href="{{ route('home') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Início</a>
+                    <div class="pt-2 border-t border-gray-200">
+                        <div class="text-xs text-gray-500 mb-1 px-1">Mais</div>
+                        <a href="{{ route('sobre') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Sobre</a>
+                        <a href="{{ route('servicos') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Serviços</a>
+                        <a href="{{ route('contato') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2">Contato</a>
+                    </div>
+                    <a href="{{ route('register') }}" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-semibold text-center">Cadastro</a>
+                    <a href="{{ route('login') }}" class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-500 transition-colors font-semibold text-center">Login</a>
+                    <a href="{{ url('/pastoreio') }}" class="text-gray-700 hover:text-blue-600 font-medium py-2 text-center">Pastoreio</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main>
+        @yield('content')
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-3 mb-4">
+                        @php($logoUrl = $logoUrl ?? data_get($siteSettings ?? [], 'brand_logo'))
+                        @if($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="Logo" class="site-logo shrink-0 h-10 md:h-12 w-auto max-w-[180px] object-contain" />
+                        @else
+                            <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                                <span class="text-white font-bold text-lg">RCC</span>
+                            </div>
+                        @endif
+                        <div>
+                            <span class="text-xl font-bold text-brand-green">Renovação Carismática Católica</span>
+                            <p class="text-subtitle text-brand-yellow">Miguelópolis-SP</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mb-4 max-w-md">
+                        Sistema completo e moderno para gestão empresarial. 
+                        Tecnologia de ponta para otimizar seus processos e melhorar a eficiência.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="{{ data_get($siteSettings, 'social.instagram', '#') }}" class="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm10 2a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7a3 3 0 013-3h10zm-5 3a5 5 0 100 10 5 5 0 000-10zm6.5-.75a1 1 0 110 2 1 1 0 010-2z"/></svg>
+                        </a>
+                        <a href="{{ data_get($siteSettings, 'social.facebook', '#') }}" class="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 10-11.5 9.95v-7.04H7.9V12h2.6V9.8c0-2.56 1.52-3.98 3.85-3.98 1.12 0 2.29.2 2.29.2v2.52h-1.29c-1.27 0-1.66.79-1.66 1.6V12h2.83l-.45 2.91h-2.38v7.04A10 10 0 0022 12z"/></svg>
+                        </a>
+                        <a href="{{ data_get($siteSettings, 'social.youtube', '#') }}" class="text-gray-400 hover:text-white transition-colors" aria-label="YouTube">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.18a3 3 0 00-2.1-2.12C19.4 3.5 12 3.5 12 3.5s-7.4 0-9.4.56A3 3 0 00.5 6.18 31.9 31.9 0 000 12c0 5.82.5 5.82.5 5.82a3 3 0 002.1 2.12c2 .56 9.4.56 9.4.56s7.4 0 9.4-.56a3 3 0 002.1-2.12c.5-2 .5-5.82.5-5.82s0-3.82-.5-5.82zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>
+                        </a>
                     </div>
                 </div>
-                <a href="/register" class="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium">Cadastro</a>
-                <a href="/admin/dashboard" class="px-4 py-2 rounded border border-emerald-600 text-emerald-600 hover:bg-emerald-50 transition-colors font-medium">Admin</a>
-            </nav>
-            <button id="menuBtn" class="md:hidden p-2 rounded border"><i class="fa fa-bars"></i></button>
-        </div>
-        <div id="mobileMenu" class="md:hidden hidden mt-3 max-w-7xl mx-auto">
-            <div class="grid gap-2">
-                <a href="/" class="block p-2 rounded hover:bg-emerald-50 font-medium">Início</a>
-                <a href="/events" class="block p-2 rounded hover:bg-emerald-50 font-medium">Eventos</a>
-                <a href="/groups" class="block p-2 rounded hover:bg-emerald-50 font-medium">Grupos</a>
-                <a href="/calendar" class="block p-2 rounded hover:bg-emerald-50 font-medium">Calendário</a>
-                <div class="border-t border-gray-200 pt-2">
-                    <p class="text-sm text-gray-500 px-2 mb-1">Pastoreio</p>
-                    <a href="/pastoreio" class="block p-2 rounded hover:bg-emerald-50 text-sm ml-2">Painel de Controle</a>
-                    <a href="/pastoreio" class="block p-2 rounded hover:bg-emerald-50 text-sm ml-2">Controle de Frequência</a>
-                    <a href="/pastoreio" class="block p-2 rounded hover:bg-emerald-50 text-sm ml-2">Sorteio de Grupos</a>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Links Rápidos</h3>
+                    <ul class="space-y-2">
+                        <li><a href="{{ url('/') }}" class="text-gray-300 hover:text-white transition-colors">Início</a></li>
+                        <li><a href="{{ url('/sobre') }}" class="text-gray-300 hover:text-white transition-colors">Sobre Nós</a></li>
+                        <li><a href="{{ url('/servicos') }}" class="text-gray-300 hover:text-white transition-colors">Serviços</a></li>
+                        <li><a href="{{ url('/contato') }}" class="text-gray-300 hover:text-white transition-colors">Contato</a></li>
+                    </ul>
                 </div>
-                <a href="/register" class="block p-2 rounded bg-emerald-600 text-white font-medium">Cadastro</a>
-                <a href="/admin/dashboard" class="block p-2 rounded border border-emerald-600 text-emerald-600 font-medium">Admin</a>
-            </div>
-        </div>
-    </header>
-
-    <main class="min-h-screen">
-        @isset($slot)
-            {{ $slot }}
-        @else
-            @yield('content')
-        @endisset
-    </main>
-
-    <footer class="mt-16 border-t">
-        <div class="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
-            <div>
-                <div class="text-emerald-700 font-semibold mb-2">Contato</div>
-                @php($site = \App\Models\Setting::where('key','site')->first())
-                <div class="text-sm text-gray-700">Endereço: {{ data_get($site->value ?? [], 'address', env('SITE_ADDRESS', 'Rua Exemplo, 123 - Cidade/UF')) }}</div>
-                <div class="text-sm text-gray-700">Telefone: {{ data_get($site->value ?? [], 'phone', env('SITE_PHONE', '(00) 0000-0000')) }}</div>
-                <div class="text-sm text-gray-700">WhatsApp: {{ data_get($site->value ?? [], 'whatsapp', env('SITE_WHATSAPP', '(00) 90000-0000')) }}</div>
-            </div>
-            <div>
-                <div class="text-emerald-700 font-semibold mb-2">Redes</div>
-                <div class="flex items-center gap-4 text-2xl">
-                    @php($social = \App\Models\Setting::where('key','social')->first())
-                    <a href="{{ data_get($social->value ?? [], 'instagram', env('SOCIAL_INSTAGRAM','#')) }}" class="text-emerald-700 hover:gold" aria-label="Instagram"><i class="fab fa-instagram" title="Instagram"></i></a>
-                    <a href="{{ data_get($social->value ?? [], 'facebook', env('SOCIAL_FACEBOOK','#')) }}" class="text-emerald-700 hover:gold" aria-label="Facebook"><i class="fab fa-facebook" title="Facebook"></i></a>
-                    <a href="{{ data_get($social->value ?? [], 'youtube', env('SOCIAL_YOUTUBE','#')) }}" class="text-emerald-700 hover:gold" aria-label="YouTube"><i class="fab fa-youtube" title="YouTube"></i></a>
-                    <a href="{{ data_get($social->value ?? [], 'whatsapp', '#') }}" class="text-emerald-700 hover:gold" aria-label="WhatsApp"><i class="fab fa-whatsapp" title="WhatsApp"></i></a>
+                
+                <!-- Contact Info -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contato</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-center space-x-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+                            <span>{{ data_get($siteSettings, 'site.email') }}</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>
+                            <span>{{ data_get($siteSettings, 'site.phone') }}</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
-            <div>
-                <div class="text-emerald-700 font-semibold mb-2">Links Rápidos</div>
-                <div class="grid gap-2 text-sm">
-                    <a href="/events" class="hover:text-emerald-700">Eventos</a>
-                    <a href="/groups" class="hover:text-emerald-700">Grupos de Oração</a>
-                    <a href="/register" class="hover:text-emerald-700">Cadastro</a>
-                </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; {{ date('Y') }} RCC System. Todos os direitos reservados.</p>
             </div>
         </div>
-        <div class="p-4 text-center text-xs text-gray-500">© {{ date('Y') }} RCC • Excelência visual e simplicidade</div>
     </footer>
-
+    
+    <!-- Mobile Menu Script -->
     <script>
-        const menuBtn = document.getElementById('menuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        if (menuBtn) menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            var menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
     </script>
+    
+    @livewireScripts
+    @stack('scripts')
 </body>
 </html>

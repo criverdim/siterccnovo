@@ -12,7 +12,7 @@ class SiteSettingsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         Cache::flush();
@@ -52,7 +52,7 @@ class SiteSettingsTest extends TestCase
 
     public function test_cache_invalidation_on_setting_save(): void
     {
-        Setting::updateOrCreate(['key' => 'site'], ['value' => [ 'phone' => '(22) 2222-2222' ]]);
+        Setting::updateOrCreate(['key' => 'site'], ['value' => ['phone' => '(22) 2222-2222']]);
         $svc = app(SiteSettings::class);
         $this->assertSame('(22) 2222-2222', $svc->site()['phone']);
 
@@ -63,4 +63,3 @@ class SiteSettingsTest extends TestCase
         $this->assertSame('(33) 3333-3333', $svc->site()['phone']);
     }
 }
-

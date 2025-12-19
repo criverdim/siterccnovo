@@ -6,14 +6,14 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use App\Models\UserPhoto;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class UserResource extends Resource
 {
@@ -22,8 +22,11 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $navigationGroup = 'Gerenciamento';
+
     protected static ?string $navigationLabel = 'Usuários';
+
     protected static ?string $modelLabel = 'Usuário';
+
     protected static ?string $pluralModelLabel = 'Usuários';
 
     public static function form(Form $form): Form
@@ -168,103 +171,65 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->header(view('admin.users.header'))
             ->description('Listagem e gestão de usuários')
             // Visual profissional em linhas: removemos o grid de cartões
             ->columns([
-                Tables\Columns\Layout\Split::make([
-                    Tables\Columns\Layout\Stack::make([
-                        Tables\Columns\TextColumn::make('name')
-                            ->label('Nome')
-                            ->weight('bold')
-                            ->size('lg')
-                            ->searchable()
-                            ->limit(40)
-                            ->tooltip(fn ($state) => (string) $state),
-                        Tables\Columns\TextColumn::make('email')
-                            ->icon('heroicon-o-envelope')
-                            ->label('E-mail')
-                            ->wrap()
-                            ->lineClamp(2)
-                            ->limit(60)
-                            ->tooltip(fn ($state) => (string) $state)
-                            ->copyable()
-                            ->searchable()
-                            ->extraAttributes(['class' => 'text-gray-700 max-w-[320px]']),
-                        Tables\Columns\TextColumn::make('phone')
-                            ->label('Telefone')
-                            ->icon('heroicon-o-phone')
-                            ->toggleable()
-                            ->searchable()
-                            ->wrap()
-                            ->lineClamp(1)
-                            ->limit(30)
-                            ->tooltip(fn ($state) => (string) $state)
-                            ->extraAttributes(['class' => 'text-gray-700 max-w-[240px]']),
-                        Tables\Columns\TextColumn::make('whatsapp')
-                            ->label('WhatsApp')
-                            ->icon('heroicon-o-chat-bubble-left')
-                            ->toggleable()
-                            ->searchable()
-                            ->wrap()
-                            ->lineClamp(1)
-                            ->limit(30)
-                            ->tooltip(fn ($state) => (string) $state)
-                            ->extraAttributes(['class' => 'text-gray-700 max-w-[240px]']),
-                    ])->space(2)->extraAttributes(['class' => 'fi-ta-record-content']),
-                    Tables\Columns\Layout\Stack::make([
-                        Tables\Columns\TextColumn::make('group.name')
-                            ->label('Grupo principal')
-                            ->icon('heroicon-o-user-group')
-                            ->sortable(),
-                        Tables\Columns\TagsColumn::make('groups.name')
-                            ->label('Grupos')
-                            ->limit(3)
-                            ->toggleable(),
-                        Tables\Columns\TagsColumn::make('ministries.name')
-                            ->label('Ministérios')
-                            ->limit(3)
-                            ->toggleable(),
-                        Tables\Columns\TextColumn::make('role')
-                            ->label('Nível')
-                            ->badge()
-                            ->icon(fn ($state) => match ($state) {
-                                'admin' => 'heroicon-o-shield-check',
-                                'servo' => 'heroicon-o-hand-thumb-up',
-                                default => 'heroicon-o-user',
-                            })
-                            ->color(fn ($state) => match ($state) {
-                                'admin' => 'danger',
-                                'servo' => 'primary',
-                                default => 'gray',
-                            }),
-                        Tables\Columns\IconColumn::make('is_servo')
-                            ->label('Servo')
-                            ->boolean(),
-                        Tables\Columns\TextColumn::make('status')
-                            ->badge()
-                            ->icon(fn ($state) => match ($state) {
-                                'active' => 'heroicon-o-check-badge',
-                                'inactive' => 'heroicon-o-pause-circle',
-                                'blocked' => 'heroicon-o-exclamation-triangle',
-                            })
-                            ->color(fn ($state) => match ($state) {
-                                'active' => 'success',
-                                'inactive' => 'warning',
-                                'blocked' => 'danger',
-                            }),
-                        Tables\Columns\TextColumn::make('created_at')
-                            ->icon('heroicon-o-clock')
-                            ->dateTime('d/m/Y H:i')
-                            ->sortable()
-                            ->toggleable(isToggledHiddenByDefault: true),
-                        Tables\Columns\TextColumn::make('updated_at')
-                            ->icon('heroicon-o-clock')
-                            ->dateTime('d/m/Y H:i')
-                            ->sortable()
-                            ->toggleable(isToggledHiddenByDefault: true),
-                    ])->space(2)->extraAttributes(['class' => 'fi-ta-record-actions']),
-                ]),
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nome')
+                    ->weight('bold')
+                    ->size('lg')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(60)
+                    ->tooltip(fn ($state) => (string) $state),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('E-mail')
+                    ->copyable()
+                    ->searchable()
+                    ->toggleable()
+                    ->limit(60),
+                Tables\Columns\TextColumn::make('phone')
+                    ->label('Telefone')
+                    ->toggleable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('group.name')
+                    ->label('Grupo principal')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('role')
+                    ->label('Nível')
+                    ->badge()
+                    ->icon(fn ($state) => match ($state) {
+                        'admin' => 'heroicon-o-shield-check',
+                        'servo' => 'heroicon-o-hand-thumb-up',
+                        default => 'heroicon-o-user',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        'admin' => 'danger',
+                        'servo' => 'primary',
+                        default => 'gray',
+                    }),
+                Tables\Columns\IconColumn::make('is_servo')
+                    ->label('Servo')
+                    ->boolean()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->icon(fn ($state) => match ($state) {
+                        'active' => 'heroicon-o-check-badge',
+                        'inactive' => 'heroicon-o-pause-circle',
+                        'blocked' => 'heroicon-o-exclamation-triangle',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        'active' => 'success',
+                        'inactive' => 'warning',
+                        'blocked' => 'danger',
+                    }),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->icon('heroicon-o-clock')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -301,11 +266,11 @@ class UserResource extends Resource
                     ->form([
                         Forms\Components\FileUpload::make('photo')
                             ->image()
-                            ->acceptedFileTypes(['image/jpeg','image/png','image/jpg'])
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg'])
                             ->maxSize(5120)
                             ->disk('public')
                             ->visibility('public')
-                            ->directory(fn (User $record) => 'user-photos/' . $record->id)
+                            ->directory(fn (User $record) => 'user-photos/'.$record->id)
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Marcar como ativa')
@@ -316,12 +281,12 @@ class UserResource extends Resource
                         if ($file) {
                             $path = null;
                             if ($file instanceof TemporaryUploadedFile) {
-                                $path = $file->store('user-photos/' . $record->id, 'public');
+                                $path = $file->store('user-photos/'.$record->id, 'public');
                             } elseif (is_string($file)) {
                                 $path = $file;
                             }
                             if ($path) {
-                                if (!empty($data['is_active'])) {
+                                if (! empty($data['is_active'])) {
                                     $record->photos()->update(['is_active' => false]);
                                 }
                                 UserPhoto::create([
@@ -330,7 +295,7 @@ class UserResource extends Resource
                                     'file_name' => basename($path),
                                     'file_size' => method_exists($file, 'getSize') ? $file->getSize() : 0,
                                     'mime_type' => method_exists($file, 'getMimeType') ? $file->getMimeType() : 'image/jpeg',
-                                    'is_active' => !empty($data['is_active']),
+                                    'is_active' => ! empty($data['is_active']),
                                 ]);
                             }
                         }

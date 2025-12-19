@@ -2,6 +2,8 @@ import './bootstrap';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+const IMG_PH = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect fill="#ecfdf5" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#0b7a48" font-size="20">Imagem indisponível</text></svg>');
+
 function EventsApp() {
     const [data, setData] = React.useState({ data: [], meta: null });
     const [loading, setLoading] = React.useState(false);
@@ -45,7 +47,7 @@ function EventsApp() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {(data?.data ?? []).map((event)=> (
                         <div key={event.id} className="card card-hover">
-                            <img src={(event.photos?.[0]) ?? 'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=Catholic%20event%20celebration%2C%20warm%20lighting%2C%20joyful%20atmosphere&image_size=landscape_4_3'} alt={event.name} className="w-full h-44 object-cover rounded-t-xl" />
+                            <img src={(event.photos?.[0]) ?? 'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=Catholic%20event%20celebration%2C%20warm%20lighting%2C%20joyful%20atmosphere&image_size=landscape_4_3'} alt={event.name} className="w-full h-44 object-cover rounded-t-xl" onError={(e)=>{ e.currentTarget.src = IMG_PH; }} />
                             <div className="card-section">
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="text-xl font-semibold text-gray-900">{event.name}</h3>
@@ -190,6 +192,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const root = createRoot(homeMount);
         root.render(<HomeApp />);
     }
+    const loginForm = document.querySelector('form[action="/login"]');
+    if (loginForm) {
+        loginForm.addEventListener('submit', () => {
+            const redirectInput = loginForm.querySelector('input[name="redirect"]');
+            const areaInput = loginForm.querySelector('input[name="area"]') || document.createElement('input');
+            areaInput.type = 'hidden';
+            areaInput.name = 'area';
+            const redirectVal = redirectInput?.value || '';
+            areaInput.value = redirectVal.startsWith('/admin') ? 'admin' : '';
+            if (!loginForm.querySelector('input[name="area"]')) {
+                loginForm.appendChild(areaInput);
+            }
+        });
+    }
 });
 
 function GroupsApp() {
@@ -226,14 +242,18 @@ function GroupsApp() {
             ) : (
                 <div className="space-y-5">
                     {groups.map((g)=> {
-                        const photo = (g?.photos?.[0]) ? `/storage/${g.photos[0]}` : 'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=Catholic%20group%20logo%2C%20simple%20shield%20with%20cross%2C%20emerald%20palette%2C%20clean%20flat%20design&image_size=square_1_1';
+                        const photo = (g?.photos?.[0]) ? `/storage/${g.photos[0]}` : 'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=Catholic%20group%20logo%2C%20simple%20shield%20with%20cross%2C%20emerald%20palette%2C%20clean%20flat%20design&image_size=square_hd';
                         return (
                             <a key={g.id} href={`/groups/${g.id}`} className="group block w-full" aria-label={`Abrir grupo ${g.name}`}>
                                 <div className="card border bg-gradient-to-r from-emerald-50/40 to-white transition-all duration-200 group-hover:shadow-lg group-hover:-translate-y-0.5 min-h-[200px] md:min-h-[240px]">
                                     <div className="flex flex-col md:flex-row md:items-center gap-5 p-6">
-                                        <img src={photo} alt={`Logo do grupo ${g.name}`} loading="lazy" decoding="async" fetchpriority="low" sizes="(max-width: 768px) 100vw, 640px" width="256" height="256" className="w-full md:w-44 h-44 md:h-32 rounded-xl object-contain border bg-white transition-transform duration-200 group-hover:scale-[1.03] shadow-sm" />
+                                        <img src={photo} alt={`Logo do grupo ${g.name}`} loading="lazy" decoding="async" fetchpriority="low" sizes="(max-width: 768px) 100vw, 640px" width="256" height="256" className="w-full md:w-44 h-44 md:h-32 rounded-xl object-contain border bg-white transition-transform duration-200 group-hover:scale-[1.03] shadow-sm" onError={(e)=>{ e.currentTarget.src = IMG_PH; }} />
                                         <div className="flex-1">
-                                            <div className="text-2xl md:text-xl font-semibold text-gray-900">{g.name}</div>
+                                            <div className="text-2xl md:text-xl font-semibold text-gray-900 flex items-center gap-2">
+                                                <span aria-hidden="true" style={{width:'0.75rem',height:'0.75rem',borderRadius:'9999px',background:(g.color_hex||'#0b7a48'),border:'1px solid #e5e7eb',boxShadow:'0 0 0 1px #fff inset'}} />
+                                                <span className="sr-only">Cor do grupo {g.name}</span>
+                                                {g.name}
+                                            </div>
                                             <div className="mt-2 grid sm:grid-cols-3 gap-3 text-sm text-gray-700">
                                                 <div className="inline-flex items-center gap-2"><i className="fa-solid fa-calendar-day text-emerald-600"></i><span>{g.weekday}</span></div>
                                                 <div className="inline-flex items-center gap-2"><i className="fa-solid fa-clock text-emerald-600"></i><span>{g.time}</span></div>
@@ -368,7 +388,7 @@ function PastoreioApp() {
                     <input className="input w-full" placeholder="Buscar por nome, CPF, telefone" value={query} onChange={(e)=>setQuery(e.target.value)} />
                     <button className="btn btn-primary" onClick={async()=>{
                         const j = await submit('/pastoreio/search',{ query });
-                        setResults(Array.isArray(j) ? j : []);
+                        setResults(Array.isArray(j?.data) ? j.data : []);
                     }}>Buscar</button>
                 </div>
                 {results.length>0 && (
@@ -412,8 +432,8 @@ function PastoreioApp() {
                         const todayStr = `${String(todayPt.getDate()).padStart(2,'0')}/${String(todayPt.getMonth()+1).padStart(2,'0')}/${todayPt.getFullYear()}`;
                         const dnorm = (date||todayStr).replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3-$2-$1');
                         const j = await submit('/pastoreio/attendance',{ group_id: groupId, date: dnorm, name, cpf, phone });
-                        if (j?.status==='ok') {
-                            const msg = j?.created ? 'Presença registrada!' : 'Presença já estava registrada';
+                        if (j?.status==='ok' && j?.data) {
+                            const msg = j.data.created ? 'Presença registrada!' : 'Presença já estava registrada';
                             setStatus(msg);
                         } else {
                             setStatus(j?.message || 'Falha ao registrar');
@@ -434,9 +454,15 @@ function PastoreioApp() {
                     </select>
                     <input type="date" className="input" value={date} onChange={(e)=>setDate(e.target.value)} />
                     <input className="input" placeholder="Prêmio (opcional)" />
-                    <button className="btn btn-primary" disabled={!groupId} onClick={async()=>{
+                    <button className="btn btn-primary" disabled={!groupId || !date} onClick={async()=>{
+                        if (!groupId) { setStatus('Selecione o grupo'); return; }
+                        if (!date) { setStatus('Informe a data'); return; }
                         const j = await submit('/pastoreio/draw',{ group_id: groupId, date });
-                        setStatus(j?.status==='ok' ? `Sorteado: usuário #${j?.user_id}` : 'Sem presenças para sortear');
+                        if (j?.status === 'ok' && j?.data?.status === 'ok') {
+                            setStatus(`Sorteado: usuário #${j.data.user_id}`);
+                        } else {
+                            setStatus(j?.message || 'Sem presenças para sortear');
+                        }
                     }}>Sortear</button>
                 </div>
             </div>
@@ -816,15 +842,20 @@ function GroupShowApp() {
     const cover = info.photo ? `/storage/${info.photo}` : 'https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=Catholic%20prayer%20group%20banner%20with%20large%20logo%2C%20emerald%20palette%2C%20inviting%20professional%20design&image_size=landscape_16_9';
     const coverBg = (document.querySelector('[data-cover-bg-color]')?.getAttribute('data-cover-bg-color')) || '#0b7a48';
     const coverPos = (document.querySelector('[data-cover-object-position]')?.getAttribute('data-cover-object-position')) || 'center';
+    const groupColor = (document.querySelector('[data-group-color]')?.getAttribute('data-group-color')) || '#0b7a48';
     return (
         <div className="space-y-6">
             <div className="relative overflow-hidden rounded-2xl border" style={{ background: coverBg }}>
-                <img src={cover} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover blur-xl scale-110" style={{ objectPosition: coverPos }} />
+                    <img src={cover} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover blur-xl scale-110" style={{ objectPosition: coverPos }} onError={(e)=>{ e.currentTarget.src = IMG_PH; }} />
                 <div className="relative z-10 flex items-center justify-center">
                     <img src={cover} alt={`Imagem de capa do ${info.name}`} className="h-64 md:h-80 object-contain" style={{ objectPosition: coverPos }} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 z-20 p-6 bg-gradient-to-t from-black/50 to-transparent text-white">
-                    <div className="text-2xl md:text-3xl font-semibold">{info.name}</div>
+                    <div className="text-2xl md:text-3xl font-semibold flex items-center gap-2">
+                        <span aria-hidden="true" style={{width:'0.85rem',height:'0.85rem',borderRadius:'9999px',background:groupColor,border:'1px solid #e5e7eb',boxShadow:'0 0 0 1px #fff inset'}} />
+                        <span className="sr-only">Cor do grupo {info.name}</span>
+                        {info.name}
+                    </div>
                     <div className="mt-1 text-sm md:text-base opacity-90">{info.weekday} • {info.time}</div>
                 </div>
             </div>
@@ -835,8 +866,8 @@ function GroupShowApp() {
                     <div className="text-xs text-gray-500">Role lateralmente</div>
                 </div>
                 <div id="groupPhotosCarousel" className="flex gap-4 overflow-x-auto snap-x snap-mandatory p-1" tabIndex={0}>
-                    {info.photos.map((p,i)=> (
-                        <img key={i} src={`/storage/${p}`} alt={`Foto ${i+1} do ${info.name}`} className="w-56 h-36 object-cover rounded-xl border snap-start" loading="lazy" />
+                        {info.photos.map((p,i)=> (
+                        <img key={i} src={`/storage/${p}`} alt={`Foto ${i+1} do ${info.name}`} className="w-56 h-36 object-cover rounded-xl border snap-start" loading="lazy" onError={(e)=>{ e.currentTarget.src = IMG_PH; }} />
                     ))}
                 </div>
             </div>

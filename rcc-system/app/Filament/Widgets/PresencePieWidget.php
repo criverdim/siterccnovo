@@ -11,10 +11,20 @@ class PresencePieWidget extends ChartWidget
 
     protected static ?string $description = 'Distribuição de presenças recentes vs anteriores';
 
+    protected static ?string $maxHeight = '260px';
+
     protected function getData(): array
     {
-        $total = GroupAttendance::count();
-        $last30 = GroupAttendance::whereDate('date', '>=', now()->subDays(30))->count();
+        try {
+            $total = GroupAttendance::count();
+        } catch (\Throwable $e) {
+            $total = 0;
+        }
+        try {
+            $last30 = GroupAttendance::whereDate('date', '>=', now()->subDays(30))->count();
+        } catch (\Throwable $e) {
+            $last30 = 0;
+        }
         $older = max($total - $last30, 0);
 
         return [

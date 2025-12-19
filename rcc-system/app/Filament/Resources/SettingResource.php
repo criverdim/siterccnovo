@@ -26,6 +26,63 @@ class SettingResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Section::make('Home')
+                    ->schema([
+                        Forms\Components\TextInput::make('value.hero_title')->label('Título do Hero'),
+                        Forms\Components\TextInput::make('value.hero_subtitle')->label('Subtítulo do Hero'),
+                        Forms\Components\FileUpload::make('value.carousel')
+                            ->label('Imagens do Carrossel')
+                            ->directory('home')
+                            ->image()
+                            ->multiple()
+                            ->imageEditor()
+                            ->maxSize(4096)
+                            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp']),
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('value.carousel_limit')
+                                ->label('Quantidade de imagens')
+                                ->numeric()
+                                ->minValue(0)
+                                ->helperText('0 exibe todas as imagens'),
+                            Forms\Components\TextInput::make('value.carousel_speed_ms')
+                                ->label('Velocidade (ms)')
+                                ->numeric()
+                                ->minValue(500)
+                                ->default(6000),
+                        ]),
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\Toggle::make('value.carousel_autoplay')
+                                ->label('Autoplay')
+                                ->default(true),
+                            Forms\Components\Toggle::make('value.carousel_pause_on_hover')
+                                ->label('Pausar ao passar o mouse')
+                                ->default(true),
+                        ]),
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\Select::make('value.carousel_direction')
+                                ->label('Direção')
+                                ->options(['forward' => 'Direita', 'backward' => 'Esquerda'])
+                                ->native(false)
+                                ->default('forward'),
+                            Forms\Components\Toggle::make('value.carousel_start_random')
+                                ->label('Início aleatório')
+                                ->default(false),
+                        ]),
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\Toggle::make('value.carousel_show_arrows')
+                                ->label('Mostrar setas')
+                                ->default(true),
+                            Forms\Components\Toggle::make('value.carousel_show_dots')
+                                ->label('Mostrar indicadores')
+                                ->default(true),
+                        ]),
+                        Forms\Components\TextInput::make('value.carousel_transition_ms')
+                            ->label('Duração da transição (ms)')
+                            ->numeric()
+                            ->minValue(100)
+                            ->default(700),
+                    ])
+                    ->visible(fn (Forms\Get $get) => $get('key') === 'home'),
                 Forms\Components\Section::make('Marca')
                     ->schema([
                         Forms\Components\FileUpload::make('value.logo')
@@ -144,6 +201,7 @@ class SettingResource extends Resource
                 Forms\Components\Select::make('key')
                     ->label('Chave')
                     ->options([
+                        'home' => 'Homepage',
                         'brand' => 'Marca',
                         'site' => 'Site (Endereço & Contato)',
                         'email' => 'Email Server',
@@ -203,7 +261,11 @@ class SettingResource extends Resource
                             $n = \Filament\Notifications\Notification::make()
                                 ->title('Validação WhatsApp')
                                 ->body('Endpoint: '.$endpoint."\nStatus: ".$resp->status()."\nLatência: {$lat}ms");
-                            if ($resp->successful()) { $n->success()->send(); } else { $n->warning()->send(); }
+                            if ($resp->successful()) {
+                                $n->success()->send();
+                            } else {
+                                $n->warning()->send();
+                            }
                         } catch (\Throwable $e) {
                             \Filament\Notifications\Notification::make()->title('Falha na conexão')->body($e->getMessage())->danger()->send();
                         }
@@ -221,7 +283,9 @@ class SettingResource extends Resource
                         $enabled = (bool) ($cfg?->value['enabled'] ?? false);
                         $num = $cfg?->value['test_number'] ?? null;
                         $numSan = preg_replace('/\D+/', '', (string) ($num ?? ''));
-                        if (str_starts_with($numSan, '0')) { $numSan = ltrim($numSan, '0'); }
+                        if (str_starts_with($numSan, '0')) {
+                            $numSan = ltrim($numSan, '0');
+                        }
 
                         if (! $enabled) {
                             \Filament\Notifications\Notification::make()->title('WhatsApp desabilitado').body('Habilite nas Configurações para enviar.').warning()->send();
@@ -255,7 +319,7 @@ class SettingResource extends Resource
                                 'payload' => ['ui' => true, 'endpoint' => $endpoint, 'force_template' => true],
                                 'status' => 'pending',
                             ]);
-                            $u = new \App\Models\User();
+                            $u = new \App\Models\User;
                             $u->whatsapp = $numSan;
                             $wa->setRelation('user', $u);
                             $svc = app(\App\Services\WhatsAppService::class);
@@ -276,7 +340,7 @@ class SettingResource extends Resource
                                 // ignora falha de log para não impactar o envio
                             }
 
-                            if (in_array($status, ['sent','delivered'], true)) {
+                            if (in_array($status, ['sent', 'delivered'], true)) {
                                 \Filament\Notifications\Notification::make()->title('Mensagem enviada')->success()->send();
                             } else {
                                 \Filament\Notifications\Notification::make()->title('Falha ao enviar')->body(json_encode($wa->payload))->danger()->send();
@@ -485,27 +549,27 @@ class SettingResource extends Resource
     {
         $u = auth()->user();
 
-        return (bool) ($u?->is_master_admin);
+        return (bool) ($u?->can_access_admin || $u?->is_master_admin || ($u?->role === 'admin'));
     }
 
     public static function canCreate(): bool
     {
         $u = auth()->user();
 
-        return (bool) ($u?->is_master_admin);
+        return (bool) ($u?->can_access_admin || $u?->is_master_admin || ($u?->role === 'admin'));
     }
 
     public static function canEdit($record): bool
     {
         $u = auth()->user();
 
-        return (bool) ($u?->is_master_admin);
+        return (bool) ($u?->can_access_admin || $u?->is_master_admin || ($u?->role === 'admin'));
     }
 
     public static function canDelete($record): bool
     {
         $u = auth()->user();
 
-        return (bool) ($u?->is_master_admin);
+        return (bool) ($u?->can_access_admin || $u?->is_master_admin || ($u?->role === 'admin'));
     }
 }

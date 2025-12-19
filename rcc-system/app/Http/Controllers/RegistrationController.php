@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\UserPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 
 class RegistrationController extends Controller
 {
@@ -116,7 +115,7 @@ class RegistrationController extends Controller
         });
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('user-photos/' . $user->id, 'public');
+            $path = $request->file('photo')->store('user-photos/'.$user->id, 'public');
             $user->photos()->update(['is_active' => false]);
             UserPhoto::create([
                 'user_id' => $user->id,
@@ -132,7 +131,7 @@ class RegistrationController extends Controller
             $request->expectsJson() ||
             $request->wantsJson() ||
             $request->ajax() ||
-            app()->environment('testing')
+            (app()->environment('testing') && ! env('PLAYWRIGHT'))
         ) {
             return response()->json(['status' => 'ok', 'user_id' => $user->id]);
         }

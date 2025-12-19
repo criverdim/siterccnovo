@@ -11,6 +11,7 @@ class UserMessage extends Model
     use HasFactory;
 
     const MESSAGE_TYPES = ['email', 'notification'];
+
     const STATUSES = ['pending', 'sent', 'failed', 'delivered'];
 
     protected $fillable = [
@@ -76,7 +77,7 @@ class UserMessage extends Model
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'warning',
             'sent' => 'info',
             'delivered' => 'success',
@@ -87,11 +88,12 @@ class UserMessage extends Model
 
     public function getStatusIconAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'heroicon-o-clock',
             'sent' => 'heroicon-o-paper-airplane',
             'delivered' => 'heroicon-o-check-circle',
             'failed' => 'heroicon-o-x-circle',
             default => 'heroicon-o-question-mark-circle',
         };
-   
+    }
+}

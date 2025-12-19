@@ -2,7 +2,7 @@
     @can('manage_pastoreio')
     @php
         try {
-            $groups = \App\Models\Group::orderBy('name')->get(['id','name']);
+            $groups = \App\Models\Group::orderBy('name')->get(['id','name','color_hex']);
         } catch (\Throwable $e) {
             \Log::error('presenca-rapida groups load failed: '.$e->getMessage());
             $groups = collect();
@@ -18,7 +18,9 @@
                     <select id="group" name="group" class="block w-full rounded-md border border-gray-300 px-3 py-2" required>
                         <option value="" disabled selected>Selecione o grupo</option>
                         @foreach($groups as $g)
-                            <option value="{{ $g->id }}">{{ $g->name }}</option>
+                            <option value="{{ $g->id }}">
+                                {{ $g->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>

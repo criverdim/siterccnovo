@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { loginAdmin } from './utils'
 
 const baseURL = (globalThis as any).process?.env?.BASE_URL || 'http://127.0.0.1:8000'
 const ADMIN_EMAIL = (globalThis as any).process?.env?.ADMIN_EMAIL || (globalThis as any).process?.env?.TEST_ADMIN_EMAIL
@@ -8,19 +9,7 @@ test.describe('Admin Sidebar Layout', () => {
   test('sidebar is fixed and nav links hover smoothly', async ({ page, browserName }) => {
     test.skip(browserName === 'webkit', 'Only Chrome/Firefox')
     test.skip(!ADMIN_EMAIL || !ADMIN_PASSWORD, 'Admin credentials are required')
-
-    const loginUrl = `${baseURL}/testing/login-admin?email=${encodeURIComponent(ADMIN_EMAIL!)}`
-    await page.goto(loginUrl, { waitUntil: 'domcontentloaded' })
-    const ok = await page.locator('text=ok').count().catch(() => 0)
-    if (!ok) {
-      await page.goto(`${baseURL}/admin/login`, { waitUntil: 'domcontentloaded' })
-      await page.fill('input[type="email"]', ADMIN_EMAIL!)
-      await page.fill('input[type="password"]', ADMIN_PASSWORD!)
-      await Promise.all([
-        page.waitForURL('**/admin', { timeout: 45000 }).catch(() => {}),
-        page.click('button:has-text("Sign in"), button:has-text("Entrar"), button:has-text("Login")'),
-      ])
-    }
+    await loginAdmin(page, baseURL, ADMIN_EMAIL!, ADMIN_PASSWORD!)
 
     await page.goto(`${baseURL}/admin`, { waitUntil: 'domcontentloaded' })
     await page.waitForLoadState('networkidle')
@@ -78,5 +67,31 @@ test.describe('Admin Sidebar Layout', () => {
         await page.goBack({ waitUntil: 'domcontentloaded' })
       }
     }
+  })
+
+  test('settings items visible in sidebar', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'Only Chrome/Firefox')
+    test.skip(!ADMIN_EMAIL || !ADMIN_PASSWORD, 'Admin credentials are required')
+    await loginAdmin(page, baseURL, ADMIN_EMAIL!, ADMIN_PASSWORD!)
+    await page.goto(`${baseURL}/admin`, { waitUntil: 'domcontentloaded' })
+    await page.waitForLoadState('networkidle').catch(() => {})
+
+    const labels = [
+      /Homepage/i,
+      /Marca/i,
+      /Site/i,
+      /Email/i,
+      /SMS/i,
+      /Redes Sociais|Social/i,
+      /Mercado Pago/i,
+      /WhatsApp/i,
+      /Templates/i,
+    ]
+
+    let present = 0
+    for (const re of labels) {
+      present += await page.locator('.fi-sidebar a.fi-sidebar-item-button', { hasText: re }).count()
+    }
+    expect(present).toBeGreaterThanOrEqual(5)
   })
 })

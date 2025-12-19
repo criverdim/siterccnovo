@@ -1,176 +1,21 @@
 <x-filament::page>
     <div class="space-y-6">
-        {{-- Metrics Dashboard Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="stat-card stat-total">
-                <div class="stat-card-body">
-                    <div class="stat-icon">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Total de Usuários</p>
-                        <p class="stat-value" id="total-users">0</p>
-                        <p class="text-sm text-emerald-600 mt-1">
-                            <i class="fas fa-arrow-up mr-1"></i>+12% este mês
-                        </p>
-                    </div>
-                </div>
-            </div>
+        
+        
 
-            <div class="stat-card stat-servos">
-                <div class="stat-card-body">
-                    <div class="stat-icon">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Servos Ativos</p>
-                        <p class="stat-value" id="active-servos">0</p>
-                        <p class="text-sm text-blue-600 mt-1">
-                            <i class="fas fa-arrow-up mr-1"></i>+8% este mês
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card stat-ativos">
-                <div class="stat-card-body">
-                    <div class="stat-icon">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Usuários Ativos</p>
-                        <p class="stat-value" id="active-users">0</p>
-                        <p class="text-sm text-green-600 mt-1">
-                            <i class="fas fa-arrow-up mr-1"></i>+15% este mês
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card stat-admins">
-                <div class="stat-card-body">
-                    <div class="stat-icon">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                        </svg>
-                    </div>
-                    <div class="stat-content">
-                        <p class="stat-label">Administradores</p>
-                        <p class="stat-value" id="total-admins">0</p>
-                        <p class="text-sm text-orange-600 mt-1">
-                            <i class="fas fa-users mr-1"></i>Gestão completa
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Header with Search and Filters --}}
         <div class="header-section">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div>
-                    <h2 class="header-title">Gestão de Usuários</h2>
-                    <p class="header-subtitle">Visualize e gerencie todos os usuários do sistema</p>
-                </div>
-                
-                <div class="flex flex-col sm:flex-row gap-3">
-                    {{-- Search Input --}}
-                    <div class="search-container">
-                        <input 
-                            type="text" 
-                            id="search-input"
-                            placeholder="Buscar por nome, email ou telefone..."
-                            class="search-input"
-                        >
-                        <div class="search-icon">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    
-                    {{-- Filter Buttons --}}
-                    <button 
-                        id="filter-toggle"
-                        class="filter-button"
+            <div class="flex items-center justify-center">
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        id="search-input"
+                        placeholder="Pesquisar usuários..."
+                        class="search-input"
                     >
+                    <button type="button" class="search-icon" aria-label="Buscar">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
-                        Filtros
-                    </button>
-                    
-                    {{-- Bulk Actions --}}
-                    <div id="bulk-actions" class="bulk-actions hidden">
-                        <select 
-                            id="bulk-action-select"
-                            class="bulk-select"
-                        >
-                            <option value="">Ações em Massa</option>
-                            <option value="activate">Ativar Selecionados</option>
-                            <option value="deactivate">Desativar Selecionados</option>
-                            <option value="export">Exportar Selecionados</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            
-            {{-- Filter Panel --}}
-            <div id="filter-panel" class="filter-panel hidden">
-                <div class="filter-grid">
-                    <div class="filter-group">
-                        <label class="filter-label">Status</label>
-                        <select id="status-filter" class="filter-select">
-                            <option value="">Todos</option>
-                            <option value="active">Ativo</option>
-                            <option value="inactive">Inativo</option>
-                            <option value="pending">Pendente</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label class="filter-label">Função</label>
-                        <select id="role-filter" class="filter-select">
-                            <option value="">Todos</option>
-                            <option value="user">Usuário</option>
-                            <option value="admin">Administrador</option>
-                            <option value="leader">Líder</option>
-                            <option value="servant">Servo</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label class="filter-label">Grupo</label>
-                        <select id="group-filter" class="filter-select">
-                            <option value="">Todos</option>
-                            @foreach($groups as $group)
-                                <option value="{{ $group->id }}">{{ $group->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label class="filter-label">Acesso Admin</label>
-                        <select id="admin-access-filter" class="filter-select">
-                            <option value="">Todos</option>
-                            <option value="1">Com Acesso</option>
-                            <option value="0">Sem Acesso</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="flex justify-end mt-4">
-                    <button 
-                        id="clear-filters"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                    >
-                        Limpar Filtros
                     </button>
                 </div>
             </div>
@@ -299,37 +144,25 @@
         // JavaScript functionality will be added here
         document.addEventListener('DOMContentLoaded', function() {
             const apiToken = '{{ $apiToken }}';
+            window.apiToken = apiToken;
             
             // Initialize metrics
-            loadMetrics();
+            
             
             // Initialize the page
             loadUsers();
             
             // Search functionality
-            document.getElementById('search-input').addEventListener('input', debounce(loadUsers, 300));
+            document.getElementById('search-input').addEventListener('input', debounce(applySearchFilter, 150));
+            const iconBtn = document.querySelector('.search-icon');
+            if (iconBtn) {
+                iconBtn.addEventListener('click', function() {
+                    const input = document.getElementById('search-input');
+                    if (input) input.focus();
+                });
+            }
             
-            // Filter toggle
-            document.getElementById('filter-toggle').addEventListener('click', function() {
-                document.getElementById('filter-panel').classList.toggle('hidden');
-                this.classList.toggle('active');
-            });
-            
-            // Filter changes
-            document.getElementById('status-filter').addEventListener('change', loadUsers);
-            document.getElementById('role-filter').addEventListener('change', loadUsers);
-            document.getElementById('group-filter').addEventListener('change', loadUsers);
-            document.getElementById('admin-access-filter').addEventListener('change', loadUsers);
-            
-            // Clear filters
-            document.getElementById('clear-filters').addEventListener('click', function() {
-                document.getElementById('status-filter').value = '';
-                document.getElementById('role-filter').value = '';
-                document.getElementById('group-filter').value = '';
-                document.getElementById('admin-access-filter').value = '';
-                document.getElementById('search-input').value = '';
-                loadUsers();
-            });
+            // Filters removed
             
             // Modal functionality
             document.getElementById('close-modal').addEventListener('click', function() {
@@ -362,29 +195,7 @@
             });
         });
         
-        function loadMetrics() {
-            fetch('/admin/api/stats', {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('total-users').textContent = data.members.toLocaleString('pt-BR');
-                document.getElementById('active-servos').textContent = Math.floor(data.members * 0.3).toLocaleString('pt-BR');
-                document.getElementById('active-users').textContent = Math.floor(data.members * 0.85).toLocaleString('pt-BR');
-                document.getElementById('total-admins').textContent = Math.floor(data.members * 0.05).toLocaleString('pt-BR');
-            })
-            .catch(error => {
-                console.error('Error loading metrics:', error);
-                // Set default values if API fails
-                document.getElementById('total-users').textContent = '1,247';
-                document.getElementById('active-servos').textContent = '374';
-                document.getElementById('active-users').textContent = '1,060';
-                document.getElementById('total-admins').textContent = '62';
-            });
-        }
+        
         
         function debounce(func, wait) {
             let timeout;
@@ -397,8 +208,43 @@
                 timeout = setTimeout(later, wait);
             };
         }
+        function normalizeHex(hex){
+            if(!hex) return '#10B981';
+            let h=String(hex).trim();
+            if(h[0]!=='#') h='#'+h;
+            if(h.length===4){
+                const r=h[1],g=h[2],b=h[3];
+                h='#'+r+r+g+g+b+b;
+            }
+            return h.slice(0,9);
+        }
+        function hexToRgb(hex){
+            const h=normalizeHex(hex).replace('#','');
+            const r=parseInt(h.substring(0,2),16);
+            const g=parseInt(h.substring(2,4),16);
+            const b=parseInt(h.substring(4,6),16);
+            return {r,g,b};
+        }
+        function hexToRgba(hex,a){
+            const {r,g,b}=hexToRgb(hex);
+            return `rgba(${r}, ${g}, ${b}, ${a})`;
+        }
+        function getTextColor(hex){
+            const {r,g,b}=hexToRgb(hex);
+            const sr=r/255, sg=g/255, sb=b/255;
+            const toLin=v=> (v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4));
+            const L=0.2126*toLin(sr)+0.7152*toLin(sg)+0.0722*toLin(sb);
+            return L>0.6? '#1f2937' : '#ffffff';
+        }
+        function makeBadgeStyle(hex){
+            const h=normalizeHex(hex);
+            const tc=getTextColor(h);
+            const br=hexToRgba(h,0.45);
+            return `background:${h};color:${tc};border:1px solid ${br};box-shadow:0 1px 0 rgba(0,0,0,0.08) inset;padding:0.125rem 0.5rem;border-radius:9999px`;
+        }
         
         let currentPage = 1;
+        const usersById = new Map();
         function loadUsers(page = currentPage) {
             currentPage = page;
             showLoading();
@@ -406,25 +252,31 @@
             const params = new URLSearchParams({
                 page: page,
                 search: document.getElementById('search-input').value,
-                status: document.getElementById('status-filter').value,
-                role: document.getElementById('role-filter').value,
-                group_id: document.getElementById('group-filter').value,
-                can_access_admin: document.getElementById('admin-access-filter').value,
                 is_servo: 1,
                 per_page: 12
             });
             
+            const headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            };
+            if (window.apiToken) { headers['Authorization'] = 'Bearer ' + window.apiToken; }
             fetch(`/api/v1/admin/users?${params}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
+                headers,
+                credentials: 'same-origin'
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
                 hideLoading();
+                if (!data || !data.users) {
+                    showEmptyState();
+                    return;
+                }
                 renderUsers(data.users);
-                renderPagination(data.pagination);
+                renderPagination(data.pagination || {});
             })
             .catch(error => {
                 hideLoading();
@@ -459,17 +311,54 @@
             }
             
             users.forEach(user => {
-                grid.appendChild(createUserCard(user));
+                if (user && user.id != null) {
+                    usersById.set(user.id, user);
+                }
+                const card = createUserCard(user);
+                card.dataset.name = String(user.name || '');
+                card.dataset.cpf = String(user.cpf || '');
+                card.dataset.email = String(user.email || '');
+                card.dataset.phone = String(user.phone || '');
+                grid.appendChild(card);
             });
             requestAnimationFrame(() => fitNoWrapElements(grid));
+            applySearchFilter();
         }
         
+        function enhanceContactActions(root) {
+            if (!root) return;
+            const actions = root.querySelector('.uc-contact-actions');
+            if (!actions) return;
+            actions.style.gap = '.75rem';
+            const call = actions.querySelector('.uc-contact-btn.call');
+            if (call) {
+                call.style.color = '#0ea5e9';
+                call.style.display = 'inline-flex';
+                call.style.alignItems = 'center';
+                call.style.gap = '.5rem';
+                const callLabel = call.nextElementSibling;
+                if (callLabel && callLabel.classList.contains('uc-contact-label')) {
+                    call.appendChild(callLabel);
+                }
+            }
+            const wa = actions.querySelector('.uc-contact-btn.wa');
+            if (wa) {
+                wa.style.color = '#059669';
+                wa.style.display = 'inline-flex';
+                wa.style.alignItems = 'center';
+                wa.style.gap = '.5rem';
+                const waLabel = wa.nextElementSibling;
+                if (waLabel && waLabel.classList.contains('uc-contact-label')) {
+                    wa.appendChild(waLabel);
+                }
+            }
+        }
+
         function createUserCard(user) {
             const card = document.createElement('div');
             card.className = 'uc-card ' + getCardVariant(user.status);
             card.innerHTML = `
                 <div class="uc-card-media">
-                    <div class="uc-status-overlay"><span class="status-badge status-${user.status}">${getStatusLabel(user.status)}</span></div>
                     <img 
                         src="${user.profile_photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&color=7F9CF5&background=EBF4FF'}" 
                         alt="${user.name}"
@@ -477,70 +366,107 @@
                         loading="lazy" decoding="async" width="96" height="96" sizes="96px"
                     >
                 </div>
+                <div class="uc-status-overlay"><span class="status-badge status-${user.status}">${getStatusLabel(user.status)}</span></div>
                 <div class="uc-card-body">
-                    <div class="uc-header">
-                        <div class="uc-title">
-                            <div class="uc-name uc-fit">${formatName(user.name)}</div>
-                            <div class="uc-email uc-fit">${user.email}</div>
+                        <div class="uc-header">
+                            <div class="uc-title">
+                                <div class="uc-name uc-fit">${formatName(user.name)}</div>
+                            </div>
                         </div>
-                    </div>
                     <div class="uc-lines">
-                        <div class="uc-line uc-center">
-                            ${user.phone ? `<a class="uc-text" href="tel:${user.phone.replace(/\D/g,'')}">${user.phone}</a>` : '<span class="uc-text">Não informado</span>'}
-                            <span class="uc-contact-actions">
-                                ${user.phone ? `<a class=\"uc-contact-btn call\" href=\"tel:${user.phone.replace(/\D/g,'')}\" aria-label=\"Ligar\">\n                                    <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M2.003 5.884c-.11-1.093.708-2.05 1.8-2.16l3.19-.32c.86-.086 1.663.462 1.94 1.29l1.03 3.06c.233.693.04 1.46-.486 1.963l-1.38 1.3c.974 1.888 2.5 3.414 4.387 4.387l1.3-1.38c.503-.527 1.27-.719 1.964-.486l3.06 1.03c.828.277 1.376 1.08 1.29 1.94l-.32 3.19c-.11 1.092-1.067 1.91-2.16 1.8C10.53 22.357 1.643 13.47 2.003 5.884Z\"/></svg>\n                                </a><span class=\"uc-contact-label\">Ligação</span>` : ''}
-                                <a class="uc-contact-btn wa" href="${getWhatsappLink(user)}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">\n                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-9.14 14.25L2 22l5.9-1.54A10 10 0 1012 2zm5.16 14.16c-.23.64-1.35 1.25-1.86 1.29-.5.05-1.12.18-3.89-1.29-3.31-1.63-5.45-5.2-5.62-5.45-.18-.25-1.35-1.8-1.35-3.45s.86-2.45 1.21-2.79c.34-.34.73-.43.97-.43.25 0 .5 0 .72.03.23.02.54-.09.85.65.32.77 1.08 2.67 1.18 2.86.09.18.14.4.02.64-.11.25-.17.4-.34.63-.18.23-.36.5-.51.67-.16.18-.33.39-.14.75.18.36.82 1.35 1.76 2.19 1.21 1.07 2.23 1.41 2.59 1.6.36.18.58.16.79-.09.23-.25.9-1.05 1.14-1.41.25-.36.5-.3.83-.18.34.11 2.16 1.02 2.52 1.21.36.18.6.27.69.43.09.16.09.93-1.14 1.57z"/></svg>\n                                </a><span class="uc-contact-label">WhatsApp</span>
+                        <div class="uc-line uc-center" style="justify-content:center;text-align:center;width:100%">
+                            ${user.phone ? `<a class="uc-text uc-phone" href="tel:${user.phone.replace(/\D/g,'')}">${user.phone}</a>` : '<span class="uc-text">Não informado</span>'}
+                        </div>
+                        <div class="uc-line uc-center" style="justify-content:center;text-align:center;width:100%">
+                            <span class="uc-contact-actions" style="display:inline-flex;gap:.625rem;align-items:center;justify-content:center">
+                                ${user.phone ? `<a class=\"uc-contact-btn call\" href=\"tel:${user.phone.replace(/\D/g,'')}\" aria-label=\"Ligar\">\n                                    <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M2.003 5.884c-.11-1.093.708-2.05 1.8-2.16l3.19-.32c.86-.086 1.663.462 1.94 1.29l1.03 3.06c.233.693.04 1.46-.486 1.963l-1.38 1.3c.974 1.888 2.5 3.414 4.387 4.387l1.3-1.38c.503-.527 1.27-.719 1.964-.486l3.06 1.03c.828.277 1.376 1.08 1.29 1.94l-.32 3.19c-.11 1.092-1.067 1.91-2.16 1.8C10.53 22.357 1.643 13.47 2.003 5.884Z\"/></svg>\n                                </a><span class=\"uc-contact-label\">Ligação</span>` : ''}
+                                <a class="uc-contact-btn wa" href="${getWhatsappLink(user)}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">\n                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-9.14 14.25L2 22l5.9-1.54A10 10 0 1012 2zm5.16 14.16c-.23.64-1.35 1.25-1.86 1.29-.5.05-1.12.18-3.89-1.29-3.31-1.63-5.45-5.2-5.62-5.45-.18-.25-1.35-1.8-1.35-3.45s.86-2.45 1.21-2.79c.34-.34.73-.43.97-.43.25 0 .5 0 .72.03.23.02.54-.09.85.65.32.77 1.08 2.67 1.18 2.86.09.18.14.4.02.64-.11.25-.17.4-.34.63-.18.23-.36.5-.51.67-.16.18-.33.39-.14.75.18.36.82 1.35 1.76 2.19 1.21 1.07 2.23 1.41 2.59 1.6.36.18.58.16.79-.09.23-.25.9-1.05 1.14-1.41.25-.36.5-.3.83-.18.34.11 2.16 1.02 2.52 1.21.36.18.6.27.69.43.09.16.09.93-1.14 1.57z"/></svg>\n                                </a><span class="uc-contact-label">WhatsApp</span>
                             </span>
                         </div>
-                        ${(user.groups && user.groups.length) ? `
                         <div class="uc-line uc-center">
                             <svg class="uc-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 11-6 0 3 3 0 0 1 6 0zm6 3a2 2 0 11-4 0 2 2 0 0 1 4 0zM7 10a2 2 0 11-4 0 2 2 0 0 1 4 0z"></path>
                             </svg>
-                            <span class="uc-groups-badges">
+                            <span class="uc-groups-badges" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.25rem .5rem">
                                 ${([user.group, ...(user.groups||[])].filter(Boolean)
                                    .reduce((acc, g)=> {
                                        const id = g.id ?? g?.id;
                                        const name = g.name ?? g?.name;
-                                       if (!acc.find(x=>x.id===id)) acc.push({id, name});
+                                       const color = normalizeHex(g.color_hex || '#10B981');
+                                       if (!acc.find(x=>x.id===id)) acc.push({id, name, color});
                                        return acc;
                                    }, [])
-                                   .map((g, i) => `<span class=\"uc-group-badge ${i===0 ? 'uc-group-badge-primary' : ''} uc-fit\">${g.name}</span>`)
+                                   .sort((a,b)=> (a.name||'').localeCompare((b.name||''), 'pt-BR', { sensitivity: 'base', numeric: true }))
+                                   .map((g) => `
+                                       <span class=\"uc-group-badge\" style=\"display:inline-flex;align-items:center;gap:0.35rem;${makeBadgeStyle(g.color)}\">
+                                           <span aria-hidden=\"true\" style=\"width:0.65rem;height:0.65rem;border-radius:9999px;background:${normalizeHex(g.color)};border:1px solid ${hexToRgba(normalizeHex(g.color),0.45)};box-shadow:0 0 0 1px #fff inset\"></span>
+                                           <span class=\"sr-only\">Cor do grupo ${g.name}</span>
+                                           <span class=\"uc-group-name\">${g.name}</span>
+                                       </span>
+                                   `)
                                    .join(' '))}
                             </span>
                         </div>
-                        ` : (user.group ? `
-                        <div class="uc-line">
-                            <svg class="uc-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 11-6 0 3 3 0 0 1 6 0zm6 3a2 2 0 11-4 0 2 2 0 0 1 4 0zM7 10a2 2 0 11-4 0 2 2 0 0 1 4 0z"></path>
-                            </svg>
-                            <span class="uc-text uc-group uc-fit">${user.group.name}</span>
-                        </div>
-                        ` : '')}
                         ${user.ministries && user.ministries.length ? `
-                        <div class="uc-line">
-                            <svg class="uc-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 8a3 3 0 11-6 0 3 3 0 016 0zm6 7a6 6 0 10-12 0h12z" />
-                            </svg>
-                            <span class="uc-text uc-ministry uc-fit">${user.ministries.map(m => m.name).join(', ')}</span>
-                        </div>
+                        ${renderMinistry(user)}
                         ` : ''}
-                        <div class="uc-line">
-                            <svg class="uc-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span class="uc-text">Última atividade: ${formatLastActivity(user.activities)}</span>
-                        </div>
+                        
                     </div>
                     <div class="uc-footer">
-                        <span class="uc-date">Cadastrado em ${formatDate(user.created_at)}</span>
-                        <div class="uc-actions">
-                            <button onclick="openUserModal(${user.id})" class="btn-details">Visualizar</button>
-                        </div>
+                        <span class="uc-date" style="text-align:center;width:100%">Cadastrado em ${formatDate(user.created_at)}</span>
                     </div>
                 </div>
+                <div class="uc-actions" style="display:flex;justify-content:center;width:100%">
+                    <a href="/admin/users/${user.id}/profile" class="btn-details">Visualizar Ficha Completa</a>
+                </div>
             `;
+            enhanceContactActions(card);
             return card;
+        }
+        function pickMinistryName(user){
+            const list = Array.isArray(user.ministries) ? user.ministries : [];
+            const norm = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+            const prayer = list.find(m => norm(m?.name).includes('oracao'));
+            const chosen = prayer || list[0] || (user.ministry ? user.ministry : null);
+            const name = chosen?.name || '';
+            return String(name||'');
+        }
+        function renderMinistry(user){
+            const name = pickMinistryName(user);
+            if(!name) return '';
+            return `
+                <div class="uc-line uc-line-ministry">
+                    <svg class="uc-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 8a3 3 0 11-6 0 3 3 0 016 0zm6 7a6 6 0 10-12 0h12z" />
+                    </svg>
+                    <span class="uc-text uc-ministry uc-fit">${name}</span>
+                </div>
+            `;
+        }
+        function normalizeText(s){
+            return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+        }
+        function applySearchFilter(){
+            const q = document.getElementById('search-input').value || '';
+            const nameQ = normalizeText(q);
+            const cpfQ = q.replace(/\D/g,'');
+            const cards = document.querySelectorAll('.uc-card');
+            cards.forEach(card=>{
+                const name = normalizeText(card.dataset.name||'');
+                const cpf = String(card.dataset.cpf||'').replace(/\D/g,'');
+                const match = (nameQ && name.includes(nameQ)) || (cpfQ && cpf.includes(cpfQ)) || (!nameQ && !cpfQ);
+                if (match){
+                    card.classList.remove('uc-fade-out');
+                    card.style.display = '';
+                } else {
+                    card.classList.add('uc-fade-out');
+                    setTimeout(()=>{ card.style.display='none'; }, 200);
+                }
+            });
+        }
+        function formatRegisteredBy(user){
+            const a = user.registered_by_name || user.created_by_name || user.created_by || (user.registered_by && user.registered_by.name) || '';
+            return a ? String(a) : '—';
         }
         
         function getStatusColor(status) {
@@ -694,21 +620,52 @@
             }
         }
         
-        function openUserModal(userId) {
-            fetch(`/api/v1/admin/users/${userId}`, {
-                headers: {
+        async function openUserModal(userId) {
+            try {
+                const cached = usersById.get(userId);
+                if (cached) {
+                    renderUserModal(cached);
+                    document.getElementById('user-modal').classList.remove('hidden');
+                }
+                const headers = {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
+                };
+                if (window.apiToken) { headers['Authorization'] = 'Bearer ' + window.apiToken; }
+                const response = await fetch(`/api/v1/admin/users/${userId}`, {
+                    headers,
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) {
+                    if (!cached) throw new Error(`HTTP ${response.status}`);
+                    return;
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
+                const data = await response.json();
+                if (!data || !data.user) {
+                    if (!cached) throw new Error('Resposta inválida');
+                    return;
+                }
                 renderUserModal(data.user);
                 document.getElementById('user-modal').classList.remove('hidden');
-            })
-            .catch(error => {
+            } catch (error) {
+                const cached = usersById.get(userId);
+                if (cached) {
+                    renderUserModal(cached);
+                    document.getElementById('user-modal').classList.remove('hidden');
+                } else {
+                    const modalContent = document.getElementById('modal-content');
+                    modalContent.innerHTML = `
+                        <div class="p-6 text-center">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-2">Não foi possível carregar os detalhes</h4>
+                            <p class="text-gray-600 mb-4">Tente novamente mais tarde. Se o problema persistir, verifique se você tem permissão de acesso admin.</p>
+                            <button id="close-modal-fallback" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Fechar</button>
+                        </div>`;
+                    document.getElementById('user-modal').classList.remove('hidden');
+                    const btn = document.getElementById('close-modal-fallback');
+                    if (btn) btn.addEventListener('click', () => document.getElementById('user-modal').classList.add('hidden'));
+                }
                 console.error('Error loading user details:', error);
-            });
+            }
         }
         
         function renderUserModal(user) {
@@ -798,7 +755,11 @@
                     <div class="space-y-4">
                         <h5 class="font-medium text-gray-900">Informações Pessoais</h5>
                         <div class="space-y-2 text-sm">
-                            <div><span class="font-medium text-gray-700">Nome:</span> ${user.name}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-gray-700">Nome:</span> 
+                                ${user.name}
+                                ${user.group ? `<span aria-hidden=\"true\" style=\"width:0.6rem;height:0.6rem;border-radius:9999px;background:${user.group.color_hex||'#10B981'};border:1px solid #e5e7eb;box-shadow:0 0 0 1px #fff inset\"></span><span class=\"sr-only\">Cor do grupo ${user.group.name}</span>` : ''}
+                            </div>
                             <div><span class="font-medium text-gray-700">Email:</span> ${user.email}</div>
                             <div><span class="font-medium text-gray-700">Telefone:</span> ${user.phone || 'Não informado'}</div>
                             <div><span class="font-medium text-gray-700">WhatsApp:</span> ${user.whatsapp || 'Não informado'}</div>
@@ -971,7 +932,7 @@
                 }).then(async (res) => {
                     if (!res.ok) return;
                     const j = await res.json();
-                    openUserModal(userId);
+                    window.open(`/admin/users/${userId}/profile`, '_blank');
                 }).catch(()=>{});
             }
         });

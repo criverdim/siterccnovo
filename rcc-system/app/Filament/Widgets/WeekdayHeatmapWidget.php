@@ -11,6 +11,8 @@ class WeekdayHeatmapWidget extends ChartWidget
 
     protected static ?string $description = 'Total de presenças por dia';
 
+    protected static ?string $maxHeight = '260px';
+
     protected function getData(): array
     {
         $map = collect([
@@ -18,7 +20,11 @@ class WeekdayHeatmapWidget extends ChartWidget
         ]);
 
         $counts = $map->keys()->map(function ($day) {
-            return GroupAttendance::whereRaw('DAYOFWEEK(date) = ?', [$this->weekdayToNumber($day)])->count();
+            try {
+                return GroupAttendance::whereRaw('DAYOFWEEK(date) = ?', [$this->weekdayToNumber($day)])->count();
+            } catch (\Throwable $e) {
+                return 0;
+            }
         });
 
         return [

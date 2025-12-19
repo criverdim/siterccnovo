@@ -57,8 +57,8 @@ body { font-feature-settings: 'liga' on, 'kern' on; -webkit-font-smoothing: anti
 .site-logo { @apply block w-auto; object-fit: contain; image-rendering: -webkit-optimize-contrast; }
 .site-logo { height: clamp(2.5rem, 6vw, 6rem); }
 .site-logo { aspect-ratio: auto; }
-.site-logo-contrast { @apply bg-white; box-shadow: var(--shadow-soft); }
-.site-logo-ring { @apply ring-1 ring-emerald-100; }
+.site-logo-contrast {}
+.site-logo-ring {}
 .card-hover { @apply transition-transform hover:-translate-y-0.5 hover:shadow; }
 .card-hover:hover { box-shadow: 0 14px 30px rgba(0,0,0,.12); }
 .card-section { @apply p-6 md:p-8; }
@@ -79,20 +79,7 @@ body { font-feature-settings: 'liga' on, 'kern' on; -webkit-font-smoothing: anti
 .site-footer .copyright { @apply p-4 text-center text-xs text-gray-500; }
 
 /* Filament Admin accents */
-.fi-topbar { @apply border-b bg-white/80 backdrop-blur; }
-.fi-sidebar { @apply bg-white; position: sticky; top: 0; height: 100vh; min-width: 280px; box-shadow: var(--shadow-soft); }
-.fi-sidebar nav a { padding: 15px; border-radius: 10px; transition: background-color 200ms ease, color 200ms ease, box-shadow 200ms ease; }
-.fi-sidebar nav a:hover { background-color: #ecfdf5; color: var(--color-emerald-700); box-shadow: var(--shadow-soft); }
-.fi-sidebar .fi-logo { padding: 15px; }
-.fi-sidebar .fi-nav-group, .fi-sidebar .fi-nav-group-header { padding: 10px 15px; }
-.fi-sidebar .fi-nav-group-header { font-weight: 600; color: var(--color-emerald-700); }
-.fi-sidebar .fi-nav { gap: 6px; }
-.fi-simple-layout, .fi-body { font-family: var(--font-sans); }
 .fi-logo img { @apply rounded-md; }
-.fi-ta-header { @apply bg-emerald-50; }
-.fi-ta-container { @apply rounded-xl border; }
-.fi-ta-content-grid .fi-ta-record { @apply bg-white; }
-.fi-ac-container { @apply bg-emerald-50; }
 
 .input { @apply p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-600; }
 .input-muted { @apply text-gray-700; }

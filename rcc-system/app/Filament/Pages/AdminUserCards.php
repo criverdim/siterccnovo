@@ -9,15 +9,25 @@ use Illuminate\Support\Facades\Schema;
 class AdminUserCards extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-users';
+
     protected static ?string $navigationGroup = 'Gerenciamento';
-    protected static ?string $title = 'Usuários - Visualização em Cartões';
+
+    protected static ?string $title = null;
+    protected static ?string $navigationLabel = 'Usuários - Visualização em Cartões';
+
     protected static ?int $navigationSort = 1;
+
     protected static string $view = 'filament.pages.admin-user-cards';
 
     public static function canAccess(): bool
     {
         $u = auth()->user();
+
         return (bool) ($u?->can_access_admin || $u?->is_master_admin || ($u?->role === 'admin'));
+    }
+    public function getHeading(): string
+    {
+        return '';
     }
 
     protected function getViewData(): array
@@ -33,7 +43,7 @@ class AdminUserCards extends Page
 
         return [
             'apiToken' => $token,
-            'groups' => Group::query()->orderBy('name')->get(['id', 'name']),
+            'groups' => Group::query()->orderBy('name')->get(['id', 'name', 'color_hex']),
         ];
     }
 }

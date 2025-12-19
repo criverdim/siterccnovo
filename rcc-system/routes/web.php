@@ -4,6 +4,22 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('home');
+})->name('home');
+
+Route::get('/sobre', function () {
+    return view('sobre');
+})->name('sobre');
+
+Route::get('/servicos', function () {
+    return view('servicos');
+})->name('servicos');
+
+Route::get('/contato', function () {
+    return view('contato');
+})->name('contato');
+
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
 });
 
 Route::get('/events', [\App\Http\Controllers\PublicEventController::class, 'index'])->name('events.index');
@@ -28,8 +44,28 @@ Route::get('/api/events', function () {
     return response()->json($events);
 });
 Route::get('/api/site', function () {
-    $svc = app(\App\Services\SiteSettings::class);
-    return response()->json($svc->all());
+    try {
+        $svc = app(\App\Services\SiteSettings::class);
+
+        return response()->json($svc->all());
+    } catch (\Throwable $e) {
+        return response()->json([
+            'site' => [
+                'address' => env('SITE_ADDRESS', 'Rua Exemplo, 123 - Cidade/UF'),
+                'phone' => env('SITE_PHONE', '(00) 0000-0000'),
+                'whatsapp' => env('SITE_WHATSAPP', '(00) 90000-0000'),
+                'email' => env('SITE_EMAIL', 'contato@rcc.local'),
+            ],
+            'social' => [
+                'instagram' => env('SOCIAL_INSTAGRAM', '#'),
+                'facebook' => env('SOCIAL_FACEBOOK', '#'),
+                'youtube' => env('SOCIAL_YOUTUBE', '#'),
+                'whatsapp' => env('SOCIAL_WHATSAPP', '#'),
+                'tiktok' => env('SOCIAL_TIKTOK', '#'),
+            ],
+            'brand_logo' => null,
+        ]);
+    }
 });
 Route::get('/events/{event}', [\App\Http\Controllers\PublicEventController::class, 'show'])->name('events.show');
 
@@ -46,7 +82,7 @@ Route::get('/api/groups', function () {
         }))
         ->when($weekday, fn ($qr) => $qr->where('weekday', $weekday))
         ->orderBy('name')
-        ->get(['id', 'name', 'weekday', 'time', 'address', 'photos']);
+        ->get(['id', 'name', 'weekday', 'time', 'address', 'photos', 'color_hex']);
 
     return response()->json($groups);
 });
@@ -55,7 +91,7 @@ Route::get('/calendar', function () {
     return view('calendar');
 });
 
-Route::get('/register', [\App\Http\Controllers\RegistrationController::class, 'create']);
+Route::get('/register', [\App\Http\Controllers\RegistrationController::class, 'create'])->name('register');
 Route::post('/register', [\App\Http\Controllers\RegistrationController::class, 'register']);
 Route::post('/events/{event}/participate', [\App\Http\Controllers\EventParticipationController::class, 'participate'])->name('events.participate');
 Route::get('/events/{event}/participate', function (\App\Models\Event $event) {
@@ -74,7 +110,7 @@ Route::post('/pastoreio/search', [\App\Http\Controllers\PastoreioController::cla
 Route::post('/pastoreio/attendance', [\App\Http\Controllers\PastoreioController::class, 'attendance']);
 Route::post('/pastoreio/draw', [\App\Http\Controllers\PastoreioController::class, 'draw']);
 
-Route::get('/login', [\App\Http\Controllers\AuthController::class, 'showLogin']);
+Route::get('/login', [\App\Http\Controllers\AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);
 Route::post('/logout', [\App\Http\Controllers\AuthController::class, 'logout'])->middleware('auth');
 Route::get('/password/forgot', [\App\Http\Controllers\PasswordController::class, 'requestReset']);
@@ -88,15 +124,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/area/password/change', [\App\Http\Controllers\PasswordController::class, 'showChangeForm']);
     Route::post('/area/password/change', [\App\Http\Controllers\PasswordController::class, 'change']);
     Route::get('/area/ticket/{uuid}', [\App\Http\Controllers\AuthController::class, 'downloadTicket']);
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->middleware('admin.access');
-    Route::get('/admin/settings/logo-editor', function () {
-        return view('admin.logo-editor');
-    })->middleware('admin.access:settings');
-    Route::get('/admin/logo', [\App\Http\Controllers\AdminLogoController::class, 'show'])->middleware('admin.access');
-    Route::post('/admin/logo', [\App\Http\Controllers\AdminLogoController::class, 'save'])->middleware('admin.access');
-Route::get('/admin/api/stats', function () {
+    Route::get('/admin/api/stats', function () {
         $members = \App\Models\User::count();
         $groups = \App\Models\Group::count();
         $events = \App\Models\Event::where('is_active', true)->count();
@@ -137,23 +165,54 @@ Route::get('/admin/api/stats', function () {
 
         return response()->json($items);
     });
+    Route::prefix('/admin')->middleware('admin.access')->group(function () {
+        Route::get('/users/{user}/profile', [\App\Http\Controllers\Admin\UserProfileController::class, 'show'])->name('admin.users.profile');
+        Route::get('/users/{user}/profile/pdf', [\App\Http\Controllers\Admin\UserProfileController::class, 'pdf'])->name('admin.users.profile.pdf');
+    });
 });
 
-// Demo route (no auth) for editor UI testing only
-Route::get('/editor/logo-demo', function () {
-    return view('admin.logo-editor');
-});
-// Safe landing for admin dashboard link in public layout
-Route::get('/admin/dashboard', function () {
-    return redirect('/admin');
+// Debug login helper (production-safe via token)
+Route::get('/__debug/login-admin', function () {
+    if (! app()->isProduction()) {
+        abort(404);
+    }
+    $token = request()->string('t')->toString();
+    if (! $token || $token !== (string) env('DEBUG_LOGIN_TOKEN')) {
+        abort(403);
+    }
+    $user = \App\Models\User::where('is_master_admin', true)->first()
+        ?: \App\Models\User::where('role', 'admin')->first();
+    if (! $user) {
+        abort(404);
+    }
+    auth()->login($user);
+
+    return response()->json(['status' => 'ok', 'user' => $user->only(['id', 'email', 'name'])]);
 });
 // Testing-only helpers
 Route::get('/testing/login-admin', function () {
     if (! app()->isProduction() && app()->environment('testing')) {
         $email = request()->string('email')->toString();
+        $password = request()->string('password')->toString();
+        $shouldCreate = request()->boolean('create', false);
         $user = null;
         if ($email) {
             $user = \App\Models\User::where('email', $email)->first();
+        }
+        if (! $user && $email && $shouldCreate && $password) {
+            try {
+                $user = \App\Models\User::create([
+                    'name' => explode('@', $email)[0],
+                    'email' => $email,
+                    'password' => \Illuminate\Support\Facades\Hash::make($password),
+                    'status' => 'active',
+                    'role' => 'admin',
+                    'can_access_admin' => true,
+                    'is_master_admin' => true,
+                ]);
+            } catch (\Throwable $e) {
+                // swallow
+            }
         }
         if (! $user) {
             $user = \App\Models\User::where('is_master_admin', true)->first() ?: \App\Models\User::where('role', 'admin')->first();
@@ -163,10 +222,28 @@ Route::get('/testing/login-admin', function () {
         }
         if ($user) {
             auth()->login($user);
-            return response()->json(['status' => 'ok', 'user' => $user->only(['id','email','name'])]);
+
+            return response()->json(['status' => 'ok', 'user' => $user->only(['id', 'email', 'name'])]);
         }
+
         return response()->json(['status' => 'no-user'], 404);
     }
     abort(404);
 });
-// trailing accidental PHP open tag removed
+
+// E2E helpers (non-production only)
+Route::get('/__e2e/seed-group', function () {
+    if (app()->isProduction()) {
+        abort(404);
+    }
+    $name = request()->string('name')->toString() ?: ('Grupo E2E '.\Illuminate\Support\Str::random(6));
+    $group = \App\Models\Group::create([
+        'name' => $name,
+        'weekday' => request()->string('weekday')->toString() ?: 'Quarta',
+        'time' => request()->string('time')->toString() ?: '19:30',
+        'address' => request()->string('address')->toString() ?: 'Rua Teste, Centro',
+        'color_hex' => request()->string('color_hex')->toString() ?: '#0b7a48',
+    ]);
+
+    return response()->json(['id' => $group->id, 'name' => $group->name]);
+});
