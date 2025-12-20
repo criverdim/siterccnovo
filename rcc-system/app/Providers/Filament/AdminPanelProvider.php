@@ -124,6 +124,10 @@ class AdminPanelProvider extends PanelProvider
                 $css .= '.fi-wi-chart{max-width:100%}';
                 $css .= '.fi-wi-chart canvas{max-height:260px!important}';
                 $css .= '.fi-layout svg{width:20px!important;height:20px!important}';
+                $css .= '.fi-fo-select select,.fi-input-wrp select{appearance:none;-webkit-appearance:none;-moz-appearance:none;background:none!important;background-image:none!important;background-repeat:no-repeat!important;padding-right:2.25rem}';
+                $css .= '.fi-fo-select .choices[data-type*="select-one"]::after,.fi-fo-select .choices[data-type*="select-multiple"]::after{content:none!important;display:none!important}';
+                $css .= '.fi-fo-select .fi-input-wrp-suffix .fi-icon{display:none!important}';
+                $css .= '.fi-fo-select .choices__inner{padding-right:2.25rem}';
 
                 $links = '';
                 try {

@@ -27,6 +27,9 @@ return new class extends Migration
             $table->integer('capacity')->nullable();
             $table->boolean('show_on_homepage')->default(true);
             $table->boolean('is_active')->default(true);
+            $table->string('featured_image')->nullable();
+            $table->json('gallery_images')->nullable();
+            $table->string('map_embed_url')->nullable();
             $table->timestamps();
         });
     }

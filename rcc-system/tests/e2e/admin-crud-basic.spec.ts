@@ -18,8 +18,9 @@ test.describe('Admin - CRUD básico', () => {
       await page.goto(`${baseURL}/admin/users/create`, { waitUntil: 'domcontentloaded' })
     }
     const ts = Date.now()
+    const name = `Usuário E2E ${ts}`
     const email = `e2e.user.${ts}@example.com`
-    await page.fill('input[name="name"]', `Usuário E2E ${ts}`)
+    await page.fill('input[name="name"]', name)
     await page.fill('input[name="email"]', email)
     await page.fill('input[name="phone"]', '+55 11 99999-9999')
     await page.fill('input[name="whatsapp"]', '+55 11 99999-9999')
@@ -31,7 +32,7 @@ test.describe('Admin - CRUD básico', () => {
     await save.click().catch(async () => { await page.keyboard.press('Control+Enter') })
     await page.waitForLoadState('networkidle')
     await page.goto(`${baseURL}/admin/users`, { waitUntil: 'domcontentloaded' })
-    await expect(page.locator(`text=${email}`)).toHaveCount(1)
+    await expect(page.locator(`text=${name}`)).toHaveCount(1)
   })
 
   test('cria grupo de oração básico', async ({ page }) => {

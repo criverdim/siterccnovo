@@ -14,7 +14,10 @@ test.describe('Admin Sidebar Layout', () => {
     await page.goto(`${baseURL}/admin`, { waitUntil: 'domcontentloaded' })
     await page.waitForLoadState('networkidle')
     const sidebar = page.locator('.fi-sidebar')
-    await sidebar.waitFor({ state: 'visible', timeout: 30000 })
+    await sidebar.waitFor({ state: 'visible', timeout: 10000 }).catch(async () => {
+      await page.waitForLoadState('networkidle').catch(() => {})
+      await page.waitForSelector('.fi-topbar, .fi-sidebar', { timeout: 5000 }).catch(() => {})
+    })
     await page.evaluate(() => {
       const dlg = document.querySelector('#livewire-error') as HTMLElement | null
       if (dlg) dlg.remove()

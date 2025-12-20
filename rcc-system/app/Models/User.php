@@ -38,12 +38,15 @@ class User extends Authenticatable implements FilamentUser
         'gender',
         'group_id',
         'is_servo',
+        'is_coordinator',
+        'coordinator_ministry_id',
         'profile_completed_at',
         'consent_at',
         'status',
         'role',
         'can_access_admin',
         'is_master_admin',
+        'allowed_pages',
     ];
 
     /**
@@ -79,7 +82,9 @@ class User extends Authenticatable implements FilamentUser
             'profile_completed_at' => 'datetime',
             'consent_at' => 'datetime',
             'is_servo' => 'boolean',
+            'is_coordinator' => 'boolean',
             'role' => 'string',
+            'allowed_pages' => 'array',
         ];
     }
 
@@ -121,6 +126,11 @@ class User extends Authenticatable implements FilamentUser
     public function ministries()
     {
         return $this->belongsToMany(Ministry::class, 'user_ministries')->withTimestamps();
+    }
+
+    public function coordinatorMinistry()
+    {
+        return $this->belongsTo(Ministry::class, 'coordinator_ministry_id');
     }
 
     public function groups()
@@ -167,5 +177,12 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&color=7F9CF5&background=EBF4FF';
+    }
+
+    public function canAccessPage(string $path): bool
+    {
+        $allowed = (array) ($this->allowed_pages ?? []);
+
+        return in_array($path, $allowed, true);
     }
 }

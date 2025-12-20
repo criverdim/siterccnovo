@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin.access' => \App\Http\Middleware\AdminAccess::class,
+            'page.access' => \App\Http\Middleware\PageAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

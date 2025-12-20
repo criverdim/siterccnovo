@@ -18,4 +18,36 @@ test.describe('Admin - Responsividade', () => {
     await page.setViewportSize({ width: 375, height: 812 })
     await expect(page.locator('.fi-sidebar')).toBeVisible()
   })
+
+  test('users sem barra horizontal em múltiplos tamanhos', async ({ page }) => {
+    test.skip(!ADMIN_EMAIL || !ADMIN_PASSWORD, 'Credenciais admin ausentes')
+    await loginAdmin(page, baseURL, ADMIN_EMAIL!, ADMIN_PASSWORD!)
+    await page.goto(`${baseURL}/admin/users`, { waitUntil: 'domcontentloaded' })
+    const sizes = [
+      { width: 1280, height: 800 },
+      { width: 1600, height: 900 },
+      { width: 1920, height: 1080 },
+      { width: 768, height: 1024 },
+      { width: 1024, height: 768 },
+      { width: 390, height: 844 },
+      { width: 360, height: 780 },
+      { width: 412, height: 915 },
+    ]
+    const noOverflow = async () => {
+      const pageNoOverflow = await page.evaluate(() => {
+        const el = document.scrollingElement || document.documentElement
+        return el.scrollWidth <= el.clientWidth
+      })
+      const tableNoOverflow = await page.locator('.fi-ta-ctn').evaluateAll((nodes) => {
+        return nodes.every(n => (n.scrollWidth <= n.clientWidth))
+      }).catch(() => true)
+      return pageNoOverflow && tableNoOverflow
+    }
+    for (const s of sizes) {
+      await page.setViewportSize(s)
+      await page.waitForLoadState('networkidle').catch(() => {})
+      const ok = await noOverflow()
+      expect(ok).toBeTruthy()
+    }
+  })
 })

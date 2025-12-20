@@ -20,4 +20,10 @@ class Kernel extends ConsoleKernel
         // Validação MCP diária às 03:00
         $schedule->command('mcp:validate')->dailyAt('03:00');
     }
+
+    protected function commands(): void
+    {
+        $this->load(__DIR__.'/Commands');
+        require base_path('routes/console.php');
+    }
 }

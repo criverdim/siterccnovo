@@ -13,6 +13,7 @@ class AdminUserCards extends Page
     protected static ?string $navigationGroup = 'Gerenciamento';
 
     protected static ?string $title = null;
+
     protected static ?string $navigationLabel = 'Usuários - Visualização em Cartões';
 
     protected static ?int $navigationSort = 1;
@@ -25,6 +26,7 @@ class AdminUserCards extends Page
 
         return (bool) ($u?->can_access_admin || $u?->is_master_admin || ($u?->role === 'admin'));
     }
+
     public function getHeading(): string
     {
         return '';

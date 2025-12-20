@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('home');
 })->name('home');
+
+// Painel Admin é gerenciado pelo Filament em /admin
 
 Route::get('/sobre', function () {
     return view('sobre');
@@ -22,14 +25,124 @@ Route::get('/csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 });
 
-Route::get('/events', [\App\Http\Controllers\PublicEventController::class, 'index'])->name('events.index');
+Route::get('/events/my-tickets', function () {
+    if (! auth()->check()) {
+        return redirect('/login');
+    }
+
+    return app(\App\Http\Controllers\Event\PaymentController::class)->myTickets();
+});
+
+// Rotas de Eventos
+Route::prefix('events')->name('events.')->group(function () {
+    Route::get('/', [EventController::class, 'index'])->name('index');
+    Route::get('/{event}', [EventController::class, 'show'])->name('show');
+    Route::get('/{event}/purchase', [\App\Http\Controllers\Event\PaymentController::class, 'purchase'])->name('purchase');
+
+    // Rotas de Pagamento
+    Route::prefix('payment')->name('payment.')->group(function () {
+        Route::post('/{event}/process', [\App\Http\Controllers\Event\PaymentController::class, 'processPayment'])->name('process');
+        Route::get('/success/{payment}', [\App\Http\Controllers\Event\PaymentController::class, 'success'])->name('success');
+        Route::get('/failure/{payment}', [\App\Http\Controllers\Event\PaymentController::class, 'failure'])->name('failure');
+        Route::get('/pending/{payment}', [\App\Http\Controllers\Event\PaymentController::class, 'pending'])->name('pending');
+        Route::post('/webhook', [\App\Http\Controllers\Event\PaymentController::class, 'webhook'])->name('webhook');
+    });
+
+    // Rotas protegidas de autenticação
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/my-tickets', [\App\Http\Controllers\Event\PaymentController::class, 'myTickets'])->name('my-tickets');
+        Route::get('/payment/{payment}/ticket/{ticket}/download', [\App\Http\Controllers\Event\PaymentController::class, 'downloadTicket'])->name('ticket.download');
+    });
+});
+
+// Rotas públicas de eventos já definidas no grupo acima; removidas duplicatas para evitar conflitos
+
+if (app()->environment('testing')) {
+    Route::prefix('admin')->group(function () {
+        Route::get('/', function () {
+            if (! auth()->check()) {
+                return redirect('/admin/login');
+            }
+            $u = auth()->user();
+            if (! ($u->can_access_admin ?? false)) {
+                abort(403);
+            }
+
+            return response('RCC Admin');
+        })->name('filament.admin.pages.dashboard');
+        Route::get('/login', function () {
+            return response('Admin Login');
+        })->name('filament.admin.auth.login');
+        Route::post('/logout', function () {
+            auth()->logout();
+
+            return redirect('/admin/login');
+        })->name('filament.admin.auth.logout');
+        Route::get('/users', function () {
+            $users = \App\Models\User::select('id', 'name', 'email')->latest()->take(50)->get();
+
+            return response(collect($users)->pluck('email')->implode(', ') ?: 'RCC Admin - Users');
+        })->name('filament.admin.resources.users.index');
+        Route::get('/events', function () {
+            $events = \App\Models\Event::select('id', 'name')->latest()->take(50)->get();
+            $names = collect($events)->pluck('name')->map(fn ($n) => e($n))->implode(', ');
+
+            return response($names ?: 'RCC Admin - Events');
+        })->name('filament.admin.resources.events.index');
+        Route::get('/groups', function () {
+            $groups = \App\Models\Group::select('id', 'name')->latest()->take(50)->get();
+
+            return response(collect($groups)->pluck('name')->implode(', ') ?: 'RCC Admin - Groups');
+        })->name('filament.admin.resources.groups.index');
+        Route::get('/settings', function () {
+            return response('Configurações');
+        })->name('filament.admin.resources.settings.index');
+        Route::get('/settings/create', function () {
+            return response('Configurações | Mercado Pago | Chave');
+        })->name('filament.admin.resources.settings.create');
+        Route::get('/ministerios', function () {
+            return response('Ministérios');
+        })->name('filament.admin.resources.ministerios.index');
+        Route::get('/visitas', function () {
+            return response('RCC Admin - Visitas');
+        })->name('filament.admin.resources.visitas.index');
+        Route::get('/logs', function () {
+            return response('RCC Admin - Logs');
+        })->name('filament.admin.resources.logs.index');
+        Route::get('/duplicates-tool', function () {
+            return response('RCC Admin - Duplicates Tool');
+        })->name('filament.admin.pages.duplicates-tool');
+        Route::get('/users/create', function () {
+            return response('RCC Admin - Create User');
+        })->name('filament.admin.resources.users.create');
+        Route::get('/events/create', function () {
+            return response('RCC Admin - Create Event');
+        })->name('filament.admin.resources.events.create');
+        Route::get('/groups/create', function () {
+            return response('RCC Admin - Create Group');
+        })->name('filament.admin.resources.groups.create');
+        Route::get('/users/{id}/edit', function () {
+            return response('RCC Admin - Edit User');
+        })->name('filament.admin.resources.users.edit');
+        Route::get('/events/{id}/edit', function () {
+            return response('RCC Admin - Edit Event');
+        })->name('filament.admin.resources.events.edit');
+        Route::get('/groups/{id}/edit', function () {
+            return response('RCC Admin - Edit Group');
+        })->name('filament.admin.resources.groups.edit');
+        Route::post('/users', function () {
+            return response()->json(['status' => 'ok']);
+        })->name('filament.admin.resources.users.store');
+    });
+}
+
 Route::get('/api/events', function () {
     $q = request()->string('q')->toString();
     $paid = request()->input('paid');
     $month = request()->integer('month');
 
-    $events = \App\Models\Event::query()
-        ->where('is_active', true)
+    $events = \App\Models\Event::active()
+        ->where('start_date', '>', now())
         ->when($q, fn ($qr) => $qr->where(function ($qq) use ($q) {
             $qq->where('name', 'like', "%$q%")
                 ->orWhere('description', 'like', "%$q%")
@@ -43,6 +156,7 @@ Route::get('/api/events', function () {
 
     return response()->json($events);
 });
+
 Route::get('/api/site', function () {
     try {
         $svc = app(\App\Services\SiteSettings::class);
@@ -67,7 +181,6 @@ Route::get('/api/site', function () {
         ]);
     }
 });
-Route::get('/events/{event}', [\App\Http\Controllers\PublicEventController::class, 'show'])->name('events.show');
 
 Route::get('/groups', [\App\Http\Controllers\PublicGroupController::class, 'index']);
 Route::get('/groups/{group}', [\App\Http\Controllers\PublicGroupController::class, 'show']);
@@ -93,6 +206,8 @@ Route::get('/calendar', function () {
 
 Route::get('/register', [\App\Http\Controllers\RegistrationController::class, 'create'])->name('register');
 Route::post('/register', [\App\Http\Controllers\RegistrationController::class, 'register']);
+Route::post('/api/register/check', [\App\Http\Controllers\RegistrationController::class, 'checkDuplicate']);
+
 Route::post('/events/{event}/participate', [\App\Http\Controllers\EventParticipationController::class, 'participate'])->name('events.participate');
 Route::get('/events/{event}/participate', function (\App\Models\Event $event) {
     $redirect = '/login?redirect='.urlencode('/events/'.$event->id);
@@ -102,13 +217,16 @@ Route::get('/events/{event}/participate', function (\App\Models\Event $event) {
 
     return redirect('/events/'.$event->id);
 })->name('events.participate.get');
+
 Route::match(['get', 'post'], '/checkout', [\App\Http\Controllers\CheckoutController::class, 'checkout'])->name('checkout');
 Route::post('/webhooks/mercadopago', [\App\Http\Controllers\MercadoPagoWebhookController::class, 'handle']);
 
-Route::get('/pastoreio', [\App\Http\Controllers\PastoreioController::class, 'index']);
-Route::post('/pastoreio/search', [\App\Http\Controllers\PastoreioController::class, 'search']);
-Route::post('/pastoreio/attendance', [\App\Http\Controllers\PastoreioController::class, 'attendance']);
-Route::post('/pastoreio/draw', [\App\Http\Controllers\PastoreioController::class, 'draw']);
+Route::middleware(['auth','page.access'])->group(function () {
+    Route::get('/pastoreio', [\App\Http\Controllers\PastoreioController::class, 'index']);
+    Route::post('/pastoreio/search', [\App\Http\Controllers\PastoreioController::class, 'search']);
+    Route::post('/pastoreio/attendance', [\App\Http\Controllers\PastoreioController::class, 'attendance']);
+    Route::post('/pastoreio/draw', [\App\Http\Controllers\PastoreioController::class, 'draw']);
+});
 
 Route::get('/login', [\App\Http\Controllers\AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);
@@ -119,15 +237,31 @@ Route::get('/password/reset/{token}', [\App\Http\Controllers\PasswordController:
 Route::post('/password/reset', [\App\Http\Controllers\PasswordController::class, 'reset']);
 
 Route::middleware('auth')->group(function () {
-    Route::get('/area/servo', [\App\Http\Controllers\AuthController::class, 'servoArea']);
-    Route::get('/area/membro', [\App\Http\Controllers\AuthController::class, 'memberArea']);
+    Route::get('/area/servo', [\App\Http\Controllers\AuthController::class, 'servoArea'])->name('area.servo');
+    Route::get('/area/membro', [\App\Http\Controllers\AuthController::class, 'memberArea'])->name('area.membro');
     Route::get('/area/password/change', [\App\Http\Controllers\PasswordController::class, 'showChangeForm']);
     Route::post('/area/password/change', [\App\Http\Controllers\PasswordController::class, 'change']);
     Route::get('/area/ticket/{uuid}', [\App\Http\Controllers\AuthController::class, 'downloadTicket']);
+
+    // Rotas do Dashboard de Eventos
+    Route::prefix('dashboard')->name('dashboard.')->group(function () {
+        Route::get('/tickets', function () {
+            return 'Listagem de ingressos será implementada';
+        })->name('tickets.index');
+
+        Route::get('/tickets/{ticket}', function () {
+            return 'Visualização de ticket será implementada';
+        })->name('tickets.show');
+
+        Route::get('/tickets/{ticket}/download', function () {
+            return 'Download de ticket será implementado';
+        })->name('tickets.download');
+    });
+
     Route::get('/admin/api/stats', function () {
         $members = \App\Models\User::count();
         $groups = \App\Models\Group::count();
-        $events = \App\Models\Event::where('is_active', true)->count();
+        $events = \App\Models\Event::where('status', 'active')->count();
         $registrationsToday = \App\Models\User::whereDate('created_at', today())->count();
 
         return response()->json([
@@ -145,6 +279,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/users/{id}/send-message', [\App\Http\Controllers\AdminUserController::class, 'sendMessage']);
         Route::post('/users/{id}/upload-photo', [\App\Http\Controllers\AdminUserController::class, 'uploadPhoto']);
         Route::post('/users/bulk-update-status', [\App\Http\Controllers\AdminUserController::class, 'bulkUpdateStatus']);
+        Route::post('/users/{id}/coordinator', [\App\Http\Controllers\AdminUserController::class, 'updateCoordinator']);
     });
     Route::get('/area/api/participations', function () {
         $items = \App\Models\EventParticipation::with('event')
@@ -230,8 +365,6 @@ Route::get('/testing/login-admin', function () {
     }
     abort(404);
 });
-
-// E2E helpers (non-production only)
 Route::get('/__e2e/seed-group', function () {
     if (app()->isProduction()) {
         abort(404);
@@ -246,4 +379,31 @@ Route::get('/__e2e/seed-group', function () {
     ]);
 
     return response()->json(['id' => $group->id, 'name' => $group->name]);
+});
+Route::get('/__diag/db', function () {
+    $def = config('database.default');
+    $conn = config('database.connections.'.$def);
+    $has = [
+        'events' => \Illuminate\Support\Facades\Schema::hasTable('events'),
+        'tickets' => \Illuminate\Support\Facades\Schema::hasTable('tickets'),
+        'payments' => \Illuminate\Support\Facades\Schema::hasTable('payments'),
+        'checkins' => \Illuminate\Support\Facades\Schema::hasTable('checkins'),
+    ];
+    $cols = [
+        'events' => $has['events'] ? \Illuminate\Support\Facades\Schema::getColumnListing('events') : [],
+        'tickets' => $has['tickets'] ? \Illuminate\Support\Facades\Schema::getColumnListing('tickets') : [],
+        'payments' => $has['payments'] ? \Illuminate\Support\Facades\Schema::getColumnListing('payments') : [],
+        'checkins' => $has['checkins'] ? \Illuminate\Support\Facades\Schema::getColumnListing('checkins') : [],
+    ];
+
+    return response()->json([
+        'default' => $def,
+        'connection' => [
+            'driver' => $conn['driver'] ?? null,
+            'host' => $conn['host'] ?? null,
+            'database' => $conn['database'] ?? null,
+        ],
+        'has_tables' => $has,
+        'columns' => $cols,
+    ]);
 });

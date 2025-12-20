@@ -20,6 +20,7 @@ class UserActivity extends Model
         'group_attendance',
         'status_changed',
         'password_changed',
+        'duplicate_registration_attempt',
     ];
 
     protected $fillable = [
@@ -64,6 +65,7 @@ class UserActivity extends Model
             'group_attendance' => 'Presença em grupo',
             'status_changed' => 'Status alterado',
             'password_changed' => 'Senha alterada',
+            'duplicate_registration_attempt' => 'Tentativa de cadastro duplicado',
             default => 'Atividade realizada',
         };
     }
@@ -80,6 +82,7 @@ class UserActivity extends Model
             'group_attendance' => 'heroicon-o-user-group',
             'status_changed' => 'heroicon-o-arrow-path',
             'password_changed' => 'heroicon-o-key',
+            'duplicate_registration_attempt' => 'heroicon-o-shield-exclamation',
             default => 'heroicon-o-clock',
         };
     }

@@ -18,6 +18,7 @@ class AuthFlowTest extends TestCase
             'whatsapp' => '11999999999',
             'password' => 'secret123',
             'consent' => '1',
+            'gender' => 'male',
         ];
 
         $res = $this->post('/register', $payload);
@@ -45,6 +46,7 @@ class AuthFlowTest extends TestCase
             'is_servo' => 1,
             'ministries' => [$ministry->id],
             'consent' => '1',
+            'gender' => 'male',
         ];
 
         $res = $this->post('/register', $payload);

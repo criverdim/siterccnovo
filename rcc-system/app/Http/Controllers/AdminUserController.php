@@ -14,7 +14,7 @@ class AdminUserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::with(['group', 'groups', 'activePhoto', 'activities', 'ministries'])
+        $query = User::with(['group', 'groups', 'activePhoto', 'activities', 'ministries', 'coordinatorMinistry'])
             ->when($request->search, function ($q, $search) {
                 $q->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
@@ -75,6 +75,7 @@ class AdminUserController extends Controller
                         ->orderBy('created_at', 'desc');
                 },
                 'ministries',
+                'coordinatorMinistry',
             ])->findOrFail($id);
 
             $arr = $user->toArray();
@@ -118,6 +119,7 @@ class AdminUserController extends Controller
         ]);
 
         if ($validator->fails()) {
+
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $validator->errors(),
@@ -142,6 +144,57 @@ class AdminUserController extends Controller
         ]);
     }
 
+    public function updateCoordinator(Request $request, $id)
+    {
+        $actor = $request->user();
+        if (! $actor || ! ($actor->is_master_admin || $actor->role === 'admin')) {
+
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+        $user = User::findOrFail($id);
+        $validator = Validator::make($request->all(), [
+            'is_coordinator' => 'required|boolean',
+            'coordinator_ministry_id' => 'nullable|exists:ministries,id',
+        ]);
+        if ($validator->fails()) {
+
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+        $isCoord = (bool) $request->boolean('is_coordinator');
+        $ministryId = $request->input('coordinator_ministry_id');
+        if ($isCoord && ! $ministryId) {
+            return response()->json(['message' => 'Ministério obrigatório'], 422);
+        }
+        $user->is_coordinator = $isCoord;
+        $user->coordinator_ministry_id = $isCoord ? $ministryId : null;
+        $user->save();
+        if ($isCoord && $ministryId) {
+            $exists = $user->ministries()->where('ministries.id', $ministryId)->exists();
+            if (! $exists) {
+                $user->ministries()->attach($ministryId);
+            }
+        }
+        UserActivity::create([
+            'user_id' => $user->id,
+            'activity_type' => 'status_changed',
+            'details' => [
+                'field' => 'coordinator',
+                'is_coordinator' => $isCoord,
+                'coordinator_ministry_id' => $user->coordinator_ministry_id,
+                'changed_by' => $actor->id,
+            ],
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Coordinator updated',
+            'user' => $user->fresh(['coordinatorMinistry']),
+        ]);
+    }
+
     public function sendMessage(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -153,6 +206,7 @@ class AdminUserController extends Controller
         ]);
 
         if ($validator->fails()) {
+
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $validator->errors(),
@@ -194,6 +248,7 @@ class AdminUserController extends Controller
         ]);
 
         if ($validator->fails()) {
+
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $validator->errors(),

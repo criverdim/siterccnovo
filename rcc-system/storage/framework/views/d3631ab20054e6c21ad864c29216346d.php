@@ -35,7 +35,16 @@
         <div class="max-w-4xl mx-auto px-4">
             <h1 class="text-4xl md:text-6xl font-bold mb-4"><?php echo e($heroTitle); ?></h1>
             <p class="text-xl md:text-2xl mb-8"><?php echo e($heroSubtitle); ?></p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center"></div>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!auth()->check()): ?>
+                    <span class="inline-flex items-center text-emerald-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        Você está deslogado
+                    </span>
+                    <a href="<?php echo e(route('register')); ?>" class="bg-white text-emerald-700 px-6 py-3 rounded-xl font-semibold hover:bg-emerald-50 transition-colors">Cadastro</a>
+                    <a href="<?php echo e(route('login')); ?>" class="border-2 border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-emerald-700 transition-colors">Login</a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            </div>
         </div>
     </div>
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($showArrows): ?>
@@ -56,14 +65,14 @@
     
 </section>
 
-<section class="py-20 lg:py-32 bg-gray-50">
+<section class="py-16 lg:py-24 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl lg:text-5xl font-bold text-gray-900 mb-4">Nossa missão</h2>
+        <div class="text-center space-y-4 mb-12">
+            <h2 class="text-3xl lg:text-5xl font-bold text-gray-900">Nossa missão</h2>
             <p class="text-xl text-gray-600 max-w-3xl mx-auto">Vivermos a experiência do Batismo no Espírito Santo por meio do louvor, da Palavra e da oração.</p>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div class="bg-white rounded-2xl p-8 shadow-lg hover-lift transition-all group">
                 <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6">
                     <i class="fas fa-dove text-emerald-600 text-2xl"></i>
@@ -96,18 +105,27 @@
             <a href="<?php echo e(route('events.index')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Eventos</a>
             <a href="<?php echo e(url('/groups')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Grupos</a>
             <a href="<?php echo e(url('/calendar')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Calendário</a>
-            <a href="<?php echo e(route('register')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Cadastro</a>
-            <a href="<?php echo e(route('login')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Entrar</a>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!auth()->check()): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(Route::has('register')): ?>
+                    <a href="<?php echo e(route('register')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Cadastro</a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <a href="<?php echo e(route('login')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Entrar</a>
+            <?php else: ?>
+                <span class="p-4 rounded-xl border bg-white font-medium text-gray-800">Olá, <?php echo e(auth()->user()->name); ?></span>
+                <form id="logoutFormQuick" method="POST" action="<?php echo e(url('/logout')); ?>" class="p-4 rounded-xl border bg-white">
+                    <?php echo csrf_field(); ?>
+                    <button type="submit" class="font-medium text-gray-800">Logout</button>
+                </form>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             <a href="<?php echo e(url('/area/servo')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Área do Servo</a>
             <a href="<?php echo e(url('/area/membro')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Área do Membro</a>
-            <a href="<?php echo e(url('/pastoreio')); ?>" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Pastoreio</a>
         </div>
     </div>
 </section>
 
-<section class="py-20 lg:py-32 gradient-bg text-white">
+<section class="py-16 lg:py-24 gradient-bg text-white">
     <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl lg:5xl font-bold mb-6">Venha participar conosco</h2>
+        <h2 class="text-3xl lg:text-5xl font-bold mb-6">Venha participar conosco</h2>
         <p class="text-xl mb-8 text-blue-100 max-w-2xl mx-auto">Participe do nosso Grupo de Oração e experimente o amor de Deus de forma nova.</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="/groups" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all hover-lift inline-flex items-center justify-center">Conheça os grupos</a>
@@ -116,14 +134,13 @@
     </div>
 </section>
 
- 
-<section class="py-20 lg:py-32 bg-white">
+<section class="py-16 lg:py-24 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl lg:text-5xl font-bold text-gray-900 mb-4">Testemunhos</h2>
+        <div class="text-center space-y-4 mb-12">
+            <h2 class="text-3xl lg:text-5xl font-bold text-gray-900">Testemunhos</h2>
             <p class="text-xl text-gray-600 max-w-3xl mx-auto">O que Deus tem feito em nossas vidas por meio do Grupo de Oração.</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div class="bg-gray-50 rounded-2xl p-8 hover-lift transition-all">
                 <p class="text-gray-600 mb-4 leading-relaxed">“Senti uma paz e alegria novas ao participar do grupo. Deus tem agido poderosamente.”</p>
                 <div class="flex items-center">

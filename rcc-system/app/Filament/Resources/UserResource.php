@@ -121,8 +121,8 @@ class UserResource extends Resource
                             ->options([
                                 'male' => 'Masculino',
                                 'female' => 'Feminino',
-                                'other' => 'Outro',
-                            ]),
+                            ])
+                            ->required(),
                         Forms\Components\Select::make('role')
                             ->label('Nível de Acesso')
                             ->options([
@@ -132,37 +132,77 @@ class UserResource extends Resource
                             ])
                             ->default('fiel')
                             ->required(),
-                        Forms\Components\Toggle::make('can_access_admin')
-                            ->label('Pode acessar painel /admin')
-                            ->inline(false),
-                        Forms\Components\Toggle::make('is_master_admin')
-                            ->label('Administrador master')
-                            ->inline(false)
-                            ->helperText('Apenas o administrador master pode acessar Configurações'),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Toggle::make('can_access_admin')
+                                    ->label('Pode acessar painel /admin')
+                                    ->inline(false),
+                                Forms\Components\Toggle::make('is_master_admin')
+                                    ->label('Administrador master')
+                                    ->inline(false)
+                                    ->helperText('Apenas o administrador master pode acessar Configurações'),
+                            ]),
                         $groupField,
                         Forms\Components\Placeholder::make('group_id_sync_info')
                             ->label('Grupo principal')
                             ->content('O primeiro grupo selecionado será usado como grupo principal em filtros e integrações legadas.')
                             ->hintIcon('heroicon-o-information-circle'),
-                        Forms\Components\Toggle::make('is_servo')
-                            ->label('É Servo?')
-                            ->inline(false),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Toggle::make('is_servo')
+                                    ->label('É Servo?')
+                                    ->inline(false),
+                                Forms\Components\Toggle::make('is_coordinator')
+                                    ->label('É Coordenador?')
+                                    ->inline(false)
+                                    ->visible(fn () => auth()->user()?->isMasterAdmin() || auth()->user()?->role === 'admin'),
+                            ]),
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Select::make('status')
+                                    ->label('Status')
+                                    ->options([
+                                        'active' => 'Ativo',
+                                        'inactive' => 'Inativo',
+                                        'blocked' => 'Bloqueado',
+                                    ])
+                                    ->default('active')
+                                    ->required(),
+                                Forms\Components\DateTimePicker::make('profile_completed_at')
+                                    ->label('Perfil Completo em')
+                                    ->disabled(),
+                                Forms\Components\DateTimePicker::make('consent_at')
+                                    ->label('Consentimento LGPD em')
+                                    ->disabled(),
+                            ]),
                         $ministriesField,
-                        Forms\Components\Select::make('status')
-                            ->label('Status')
-                            ->options([
-                                'active' => 'Ativo',
-                                'inactive' => 'Inativo',
-                                'blocked' => 'Bloqueado',
-                            ])
-                            ->default('active')
-                            ->required(),
-                        Forms\Components\DateTimePicker::make('profile_completed_at')
-                            ->label('Perfil Completo em')
-                            ->disabled(),
-                        Forms\Components\DateTimePicker::make('consent_at')
-                            ->label('Consentimento LGPD em')
-                            ->disabled(),
+                        Forms\Components\Select::make('coordinator_ministry_id')
+                            ->label('Ministério sob coordenação')
+                            ->relationship('coordinatorMinistry', 'name')
+                            ->preload()
+                            ->searchable()
+                            ->visible(fn (\Filament\Forms\Get $get) => (bool) $get('is_coordinator'))
+                            ->required(fn (\Filament\Forms\Get $get) => (bool) $get('is_coordinator')),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Controle de Acesso')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('allowed_pages')
+                            ->label('Páginas autorizadas')
+                            ->options(self::getRestrictedPagesOptions())
+                            ->columns(2)
+                            ->helperText('Selecione quais páginas restritas este usuário pode acessar.'),
+                        Forms\Components\Placeholder::make('allowed_pages_info')
+                            ->label('Permissões atuais')
+                            ->content(function (User $record = null) {
+                                $opts = self::getRestrictedPagesOptions();
+                                $allowed = collect((array) ($record?->allowed_pages ?? []));
+                                return collect($opts)->map(function ($label, $path) use ($allowed) {
+                                    $has = $allowed->contains($path);
+                                    return sprintf('%s: %s', $label, $has ? 'permitido' : 'negado');
+                                })->implode(' | ');
+                            }),
                     ])
                     ->columns(2),
             ]);
@@ -177,27 +217,35 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nome')
                     ->weight('bold')
-                    ->size('lg')
+                    ->size('sm')
+                    ->lineClamp(1)
+                    ->wrap()
                     ->searchable()
                     ->sortable()
                     ->limit(60)
                     ->tooltip(fn ($state) => (string) $state),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-mail')
+                    ->wrap()
                     ->copyable()
                     ->searchable()
-                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->limit(60),
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Telefone')
-                    ->toggleable()
+                    ->visibleFrom('md')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('group.name')
                     ->label('Grupo principal')
+                    ->wrap()
+                    ->lineClamp(2)
+                    ->visibleFrom('lg')
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('role')
                     ->label('Nível')
+                    ->visibleFrom('md')
                     ->badge()
                     ->icon(fn ($state) => match ($state) {
                         'admin' => 'heroicon-o-shield-check',
@@ -211,7 +259,21 @@ class UserResource extends Resource
                     }),
                 Tables\Columns\IconColumn::make('is_servo')
                     ->label('Servo')
+                    ->hiddenFrom('sm')
                     ->boolean()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_coordinator')
+                    ->label('Coord.')
+                    ->visibleFrom('lg')
+                    ->boolean()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('coordinatorMinistry.name')
+                    ->label('Ministério')
+                    ->wrap()
+                    ->lineClamp(2)
+                    ->visibleFrom('lg')
+                    ->badge()
+                    ->color('warning')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -228,8 +290,25 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->icon('heroicon-o-clock')
                     ->dateTime('d/m/Y H:i')
+                    ->visibleFrom('lg')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('allowed_pages')
+                    ->label('Permissões')
+                    ->html()
+                    ->formatStateUsing(function ($state) {
+                        $opts = self::getRestrictedPagesOptions();
+                        $allowed = collect((array) ($state ?? []));
+                        $parts = collect($opts)->map(function ($label, $path) use ($allowed) {
+                            $has = $allowed->contains($path);
+                            $color = $has ? '#065f46' : '#b91c1c';
+                            $bg = $has ? '#ecfdf5' : '#fee2e2';
+                            $txt = $has ? 'permitido' : 'negado';
+                            return "<span style=\"display:inline-block;margin:.125rem;padding:.25rem .5rem;border-radius:.5rem;background:$bg;color:$color;border:1px solid rgba(0,0,0,.05)\">$label: $txt</span>";
+                        })->implode(' ');
+                        return $parts ?: '<span class="text-gray-400">—</span>';
+                    })
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -347,6 +426,13 @@ class UserResource extends Resource
             'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
+        ];
+    }
+
+    protected static function getRestrictedPagesOptions(): array
+    {
+        return [
+            '/pastoreio' => 'Pastoreio',
         ];
     }
 }

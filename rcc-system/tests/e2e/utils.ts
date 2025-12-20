@@ -1,5 +1,8 @@
 export async function loginAdmin(page: any, baseURL: string, email?: string, password?: string) {
-  const loginUrl = `${baseURL}/testing/login-admin?email=${encodeURIComponent(email || '')}`
+  const params = new URLSearchParams()
+  if (email) params.set('email', email)
+  if (password) { params.set('password', password); params.set('create', '1') }
+  const loginUrl = `${baseURL}/testing/login-admin?${params.toString()}`
   await page.goto(loginUrl, { waitUntil: 'domcontentloaded' }).catch(() => {})
   const ok = await page.locator('text=ok').count().catch(() => 0)
   if (!ok) {
@@ -21,9 +24,8 @@ export async function loginAdmin(page: any, baseURL: string, email?: string, pas
   }
   await page.goto(`${baseURL}/admin`, { waitUntil: 'domcontentloaded' })
   const sidebar = page.locator('.fi-sidebar')
-  await sidebar.waitFor({ state: 'visible', timeout: 30000 }).catch(async () => {
+  await sidebar.waitFor({ state: 'visible', timeout: 10000 }).catch(async () => {
     await page.waitForLoadState('networkidle').catch(() => {})
-    await page.reload({ waitUntil: 'domcontentloaded' })
-    await sidebar.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {})
+    await page.waitForSelector('.fi-topbar, .fi-sidebar', { timeout: 5000 }).catch(() => {})
   })
 }

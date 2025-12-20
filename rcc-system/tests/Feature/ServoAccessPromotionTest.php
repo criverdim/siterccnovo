@@ -64,6 +64,7 @@ class ServoAccessPromotionTest extends TestCase
             'whatsapp' => '11999999999',
             'password' => 'secret123',
             'consent' => true,
+            'gender' => 'male',
         ];
         $res = $this->post('/register', array_merge($payload, ['photo' => $file]));
         $res->assertStatus(200);

@@ -15,7 +15,7 @@
         .cv-topbar{display:table;width:100%;table-layout:fixed;margin:0 auto 0;padding:0 3mm;box-sizing:border-box;overflow:hidden}
         .cv-top-left{display:table-cell;vertical-align:middle;text-align:left}
         .cv-top-right{display:table-cell;vertical-align:middle;text-align:right}
-        .cv-logo{width:47.5mm;max-width:47.5mm;height:auto;object-fit:contain;transform:translate(-15%,-8%);transform-origin:center}
+        .cv-logo{width:47.5mm;max-width:47.5mm;height:auto;object-fit:contain;transform:translate(-15%,-12%);transform-origin:center}
         .cv-doc-title{font-size:17px;font-weight:900;color:var(--cv-dark)}
         .cv-header{display:flex;align-items:center;gap:1mm;border-bottom:1px solid var(--cv-line);padding-bottom:6px;margin:0 0 2mm 0}
         .cv-header-left{flex:0 0 auto;text-align:left}

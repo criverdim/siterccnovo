@@ -50,32 +50,63 @@ class EventResource extends Resource
                             ->label('Descrição')
                             ->required()
                             ->columnSpanFull(),
-                        Forms\Components\FileUpload::make('photos')
-                            ->label('Fotos do Evento')
+                        Forms\Components\FileUpload::make('featured_image')
+                            ->label('Imagem de capa')
+                            ->image()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios(['16:9','4:3','1:1','9:16'])
+                            ->disk('public')
+                            ->visibility('public')
+                            ->directory('events')
+                            ->maxSize(4096)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
+                        Forms\Components\FileUpload::make('folder_image')
+                            ->label('Imagem de folder')
+                            ->image()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios(['16:9','4:3','1:1','9:16'])
+                            ->disk('public')
+                            ->visibility('public')
+                            ->directory('events/folder')
+                            ->maxSize(4096)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
+                        Forms\Components\FileUpload::make('gallery_images')
+                            ->label('Galeria de fotos')
                             ->multiple()
                             ->image()
-                            ->directory('events')
+                            ->imageEditor()
+                            ->imageEditorAspectRatios(['16:9','4:3','1:1','9:16'])
+                            ->disk('public')
+                            ->visibility('public')
+                            ->directory('events/gallery')
                             ->maxFiles(10)
+                            ->maxSize(4096)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('location')
                             ->label('Local do Evento')
                             ->required()
                             ->maxLength(255),
                         Forms\Components\Textarea::make('arrival_info')->label('Chegada/Estacionamento')->columnSpanFull(),
-                        Forms\Components\TextInput::make('map_embed_url')->label('Mapa (embed URL)')->columnSpanFull(),
-                        Forms\Components\DatePicker::make('start_date')
-                            ->label('Data de Início')
+                        Forms\Components\TextInput::make('map_embed_url')
+                            ->label('Mapa (embed URL)')
+                            ->url()
+                            ->dehydrateStateUsing(fn ($state) => is_string($state) ? rtrim(trim($state), ',') : $state)
+                            ->columnSpanFull(),
+                        Forms\Components\DateTimePicker::make('start_date')
+                            ->label('Data e horário de início')
                             ->required()
                             ->native(false),
-                        Forms\Components\DatePicker::make('end_date')
-                            ->label('Data de Término')
+                        Forms\Components\DateTimePicker::make('end_date')
+                            ->label('Data e horário de término')
                             ->native(false),
                         Forms\Components\TimePicker::make('start_time')
                             ->label('Horário de Início')
-                            ->required()
+                            ->seconds(false)
                             ->native(false),
                         Forms\Components\TimePicker::make('end_time')
                             ->label('Horário de Término')
+                            ->seconds(false)
                             ->native(false),
                         Forms\Components\TextInput::make('days_count')->label('Qtd. de dias')->numeric(),
                         Forms\Components\TextInput::make('min_age')->label('Idade mínima')->numeric(),
@@ -96,28 +127,10 @@ class EventResource extends Resource
                         Forms\Components\Toggle::make('parceling_enabled')->label('Parcelamento')->inline(false),
                         Forms\Components\TextInput::make('parceling_max')->label('Máx. parcelas')->numeric()->visible(fn (Forms\Get $get) => (bool) $get('parceling_enabled')),
                         Forms\Components\Toggle::make('coupons_enabled')->label('Cupons de desconto')->inline(false),
-                        Forms\Components\Toggle::make('has_coffee')
-                            ->label('Inclui Café?')
-                            ->inline(false),
-                        Forms\Components\Toggle::make('has_lunch')
-                            ->label('Inclui Almoço?')
-                            ->inline(false),
-                        Forms\Components\Toggle::make('generates_ticket')
-                            ->label('Gera Ingresso?')
-                            ->inline(false)
-                            ->default(true),
-                        Forms\Components\Toggle::make('allows_online_payment')
-                            ->label('Permite Pagamento Online?')
-                            ->inline(false)
-                            ->default(true),
                         Forms\Components\TextInput::make('capacity')
                             ->label('Capacidade Máxima')
                             ->numeric()
                             ->minValue(1),
-                        Forms\Components\Toggle::make('show_on_homepage')
-                            ->label('Mostrar na Página Inicial?')
-                            ->inline(false)
-                            ->default(true),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Evento Ativo?')
                             ->inline(false)
@@ -220,7 +233,7 @@ class EventResource extends Resource
                     ->action(function () {
                         $parts = \App\Models\EventParticipation::whereNotNull('ticket_uuid')->get();
                         foreach ($parts as $p) {
-                            app(\App\Services\TicketService::class)->sendTicketEmail($p);
+                            app(\App\Services\TicketService::class)->generateAndSendTicket($p);
                         }
                         \Filament\Notifications\Notification::make()->title('Ingressos reenviados')->success()->send();
                     }),

@@ -28,6 +28,7 @@ class SiteSettings
         return $this->remember('site', function () use ($defaults) {
             try {
                 if (! Schema::hasTable('settings')) {
+
                     return $defaults;
                 }
                 $s = Setting::where('key', 'site')->first();
@@ -53,6 +54,7 @@ class SiteSettings
         return $this->remember('social', function () use ($defaults) {
             try {
                 if (! Schema::hasTable('settings')) {
+
                     return $defaults;
                 }
                 $s = Setting::where('key', 'social')->first();
@@ -70,6 +72,7 @@ class SiteSettings
         return $this->remember('brand_logo', function () {
             try {
                 if (! Schema::hasTable('settings')) {
+
                     return null;
                 }
                 $b = Setting::where('key', 'brand')->first();
@@ -78,18 +81,30 @@ class SiteSettings
                     $base = (string) config('filesystems.disks.public.url');
                     $cleanPath = ltrim($path, '/');
                     $reqHost = null;
-                    try { $reqHost = request()->getHost(); } catch (\Throwable $e2) {}
+                    try {
+                        $reqHost = request()->getHost();
+                    } catch (\Throwable $e2) {
+                    }
                     $isLocal = in_array($reqHost, ['127.0.0.1', 'localhost'], true);
                     if ($base) {
                         if ($isLocal) {
+
                             return '/storage/'.$cleanPath;
                         }
+
                         return rtrim($base, '/').'/'.$cleanPath;
                     }
                     $url = Storage::disk('public')->url($path);
                     $app = rtrim((string) config('app.url'), '/');
-                    if ($app && str_starts_with((string) $url, 'http://127.0.0.1')) {
-                        return $app.'/storage/'.basename($cleanPath);
+                    $startsLocal = function (string $u): bool {
+                        return str_starts_with($u, 'http://127.0.0.1')
+                            || str_starts_with($u, 'https://127.0.0.1')
+                            || str_starts_with($u, 'http://localhost')
+                            || str_starts_with($u, 'https://localhost');
+                    };
+                    if ($app && $startsLocal((string) $url)) {
+
+                        return $app.'/storage/'.$cleanPath;
                     }
 
                     return $url;

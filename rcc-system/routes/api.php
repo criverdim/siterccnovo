@@ -14,6 +14,7 @@ Route::prefix('v1')->group(function () {
             Route::post('users/{id}/send-message', [\App\Http\Controllers\AdminUserController::class, 'sendMessage']);
             Route::post('users/{id}/upload-photo', [\App\Http\Controllers\AdminUserController::class, 'uploadPhoto']);
             Route::post('users/bulk-update-status', [\App\Http\Controllers\AdminUserController::class, 'bulkUpdateStatus']);
+            Route::post('users/{id}/coordinator', [\App\Http\Controllers\AdminUserController::class, 'updateCoordinator']);
         });
     });
 });

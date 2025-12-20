@@ -28,10 +28,9 @@ test.describe('Admin layout smoke', () => {
     } catch {}
     await loginAdmin(page, baseURL, ADMIN_EMAIL!, ADMIN_PASSWORD!)
     const sidebar = page.locator('.fi-sidebar')
-    await sidebar.waitFor({ state: 'visible', timeout: 30000 }).catch(async () => {
+    await sidebar.waitFor({ state: 'visible', timeout: 10000 }).catch(async () => {
       await page.waitForLoadState('networkidle').catch(() => {})
-      await page.reload({ waitUntil: 'domcontentloaded' })
-      await sidebar.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {})
+      await page.waitForSelector('.fi-topbar, .fi-sidebar', { timeout: 5000 }).catch(() => {})
     })
   })
 

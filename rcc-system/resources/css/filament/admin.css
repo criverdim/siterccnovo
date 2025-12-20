@@ -1,4 +1,4 @@
-:root{--primary-50:#ecfdf5;--primary-100:#d1fae5;--primary-200:#a7f3d0;--primary-300:#6ee7b7;--primary-400:#34d399;--primary-500:#10b981;--primary-600:#059669;--primary-700:#047857;--primary-800:#065f46;--primary-900:#064e3b;--primary-950:#022c22;--radius:14px;--surface:#ffffff;--surface-2:#f8fafc;--text-strong:#0f172a;--text-muted:#475569}
+:root{--radius:14px;--surface:#ffffff;--surface-2:#f8fafc;--text-strong:#0f172a;--text-muted:#475569}
 .fi-body{font-family:'Segoe UI',system-ui,-apple-system,'SF Pro Text',Roboto,Helvetica,Arial,sans-serif}
 .fi-login-page{min-height:100vh;background:linear-gradient(180deg,var(--surface-2) 0%,#eef2f7 100%);display:grid;place-items:center;padding:2.5rem}
 .fi-login-page section{width:100%;max-width:480px}
@@ -29,7 +29,7 @@
 .dark .fi-login-page .fi-form{background:#0b1220;border-color:#1f2937;box-shadow:0 20px 40px rgba(0,0,0,.25)}
 .dark .fi-login-page{background:linear-gradient(180deg,#0b1220 0%,#0d1424 100%)}
 .fi-layout .animate-spin{width:32px!important;height:32px!important;border-width:3px!important}
-.fi-layout .fi-main{overflow:auto}
+.fi-layout .fi-main{overflow-y:auto;overflow-x:hidden}
 .fi-wi-stats-overview-stat-icon,.fi-wi-stats-overview-stat-description-icon{width:20px!important;height:20px!important}
 .fi-wi-stats-overview-stat-icon svg,.fi-wi-stats-overview-stat-description-icon svg{width:20px!important;height:20px!important}
 .fi-wi-stats-overview-stat-chart canvas{height:24px!important}
@@ -57,7 +57,7 @@
 .uc-lines{display:flex;flex-direction:column;gap:.625rem}
 .uc-line{display:flex;align-items:center;justify-content:center;gap:.5rem}
 .uc-center{justify-content:center}
-.uc-icon{width:18px;height:18px;color:#64748b}
+.uc-icon{width:24px;height:24px;color:#64748b}
 .uc-text{font-size:.875rem;color:#334155}
 .uc-footer{display:flex;flex-direction:column;align-items:center;gap:.5rem;border-top:1px solid #e5e7eb;padding-top:.75rem;min-height:84px}
 .uc-date{font-size:.75rem;color:#64748b}
@@ -81,3 +81,61 @@
 .search-input::placeholder{color:#94a3b8}
 .search-input:focus{outline:none;border-color:var(--primary-500);box-shadow:0 0 0 2px rgba(16,185,129,.15),0 8px 22px rgba(2,44,34,.09)}
 .search-icon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;min-width:36px;border:1px solid #e5e7eb;border-radius:9999px;background:var(--primary-50);color:var(--primary-600);box-shadow:0 6px 18px rgba(2,44,34,.06);cursor:pointer}
+button.fi-btn,a.fi-btn{background:linear-gradient(90deg,var(--primary-500),var(--primary-600));color:#fff;border:none;border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,.08);transition:filter .2s ease,transform .05s ease}
+button.fi-btn:hover,a.fi-btn:hover{filter:brightness(1.06)}
+button.fi-btn:active,a.fi-btn:active{transform:translateY(1px)}
+.fi-btn.fi-btn-outlined{background:transparent;color:var(--primary-600);border:1px solid var(--primary-600);box-shadow:none}
+.fi-btn.fi-btn-outlined:hover{background:rgba(0,0,0,.03)}
+.fi-icon-btn{border:1px solid #e5e7eb;border-radius:9999px;background:var(--primary-50);color:var(--primary-600);box-shadow:0 6px 18px rgba(2,44,34,.06)}
+.fi-icon-btn:hover{filter:brightness(1.06)}
+.fi-fo-select .choices__inner{border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;box-shadow:0 6px 18px rgba(2,44,34,.06)}
+.fi-fo-select .choices__input{color:#334155}
+.fi-fo-select .choices__list--dropdown{border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 12px 24px rgba(2,44,34,.08)}
+.fi-fo-select .choices__item--selectable.is-highlighted{background:var(--primary-50);color:var(--primary-700)}
+.fi-fo-select .choices__list--multiple .choices__item{background:var(--primary-50);color:var(--primary-700);border:1px solid #bbf7d0;border-radius:9999px}
+.fi-fo-radio input[type=radio]{accent-color:var(--primary-600);width:16px;height:16px}
+.fi-fo-field-wrp-label span{color:var(--text-strong);font-weight:600;letter-spacing:.15px}
+.fi-input-wrp input,.fi-input-wrp select,.fi-input-wrp textarea{border:1px solid #e5e7eb;border-radius:12px;background:#ffffff}
+.fi-fo-select select,.fi-input-wrp select{appearance:none;-webkit-appearance:none;-moz-appearance:none;background-repeat:no-repeat;background-image:none;padding-right:2.25rem}
+/* Remover seta duplicada do Choices.js e garantir posição correta */
+.fi-fo-select .choices[data-type*="select-one"]::after,
+.fi-fo-select .choices[data-type*="select-multiple"]::after{content:none!important;display:none!important}
+.fi-fo-select .choices__inner{padding-right:2.25rem}
+.fi-fo-select .choices__input{background-image:none!important}
+.fi-input-wrp-prefix .fi-icon{display:none}
+.fi-input-wrp input:focus,.fi-input-wrp select:focus,.fi-input-wrp textarea:focus{outline:none;border-color:var(--primary-500);box-shadow:0 0 0 2px rgba(16,185,129,.15)}
+.fi-sidebar-group-button:hover{background:var(--primary-50)}
+.fi-sidebar-group .fi-sidebar-group-label{color:var(--text-muted)}
+.fi-sidebar-group.fi-active .fi-sidebar-group-label{color:var(--primary-700)}
+.fi-section{position:relative;overflow:hidden;border-radius:var(--radius)}
+.fi-section::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary-500),var(--primary-600))}
+.fi-section-header-heading{color:var(--text-strong)}
+.fi-section-header-description{color:var(--text-muted)}
+
+/* Toggle (switch) – contraste e legibilidade */
+.fi-fo-toggle{background:#e5e7eb!important;border:1px solid #d1d5db!important}
+.fi-fo-toggle[aria-checked="true"]{background:linear-gradient(90deg,var(--primary-500),var(--primary-600))!important;border-color:var(--primary-600)!important}
+.fi-fo-toggle:hover{filter:brightness(1.03)}
+.fi-fo-toggle>span{box-shadow:0 2px 6px rgba(0,0,0,.14)!important;border:1px solid rgba(0,0,0,.06)!important}
+.fi-fo-toggle[aria-checked="true"] .fi-fo-toggle-on-icon{color:#fff!important}
+.fi-fo-toggle[aria-checked="false"] .fi-fo-toggle-off-icon{color:#94a3b8!important}
+.dark .fi-fo-toggle{background:#334155!important;border-color:#475569!important}
+
+/* Checkbox list – visibilidade e cor de destaque */
+.fi-fo-checkbox-list-option-label input[type=checkbox]{accent-color:var(--primary-600);width:18px;height:18px}
+.fi-ta-group-checkbox{accent-color:var(--primary-600)}
+
+/* Tabelas do admin – responsividade sem overflow horizontal */
+@media (max-width: 1024px){
+  .fi-ta .fi-ta-table{table-layout:fixed}
+  .fi-ta .fi-ta-table td,.fi-ta .fi-ta-table th{white-space:normal!important;word-break:break-word;overflow-wrap:anywhere}
+  .fi-ta .fi-ta-text{padding:10px 12px}
+  .fi-ta-header-toolbar{flex-wrap:wrap;gap:.5rem}
+  .fi-ta-filters-above-content-ctn{grid-template-columns:1fr;gap:.75rem}
+}
+@media (min-width: 768px) and (max-width: 1024px){
+  .fi-ta-filters-above-content-ctn{grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+}
+@media (max-width: 767px){
+  .fi-ta .fi-ta-table .fi-ta-text-item-label{font-size:.875rem}
+}
