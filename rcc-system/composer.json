@@ -53,6 +53,21 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "deploy": [
+            "bash scripts/deploy-production.sh"
+        ],
+        "deploy:pull": [
+            "bash scripts/deploy-production.sh --pull"
+        ],
+        "hooks:install": [
+            "bash scripts/install-git-hooks.sh"
+        ],
+        "hooks:enable": [
+            "bash scripts/enable-auto-deploy.sh"
+        ],
+        "auto:timer:install": [
+            "bash scripts/install-systemd-auto-deploy.sh"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",

@@ -18,6 +18,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -61,9 +62,7 @@ class AdminPanelProvider extends PanelProvider
             PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
             function (): string {
                 $url = url('/password/forgot');
-
-                return '<div class="fi-help"><a href="'.$url.'">Esqueci minha senha · Recuperar por e-mail</a></div>'
-                    .'<script>(function(){document.addEventListener("DOMContentLoaded",function(){var f=document.getElementById("form");if(!f)return;var actions=f.querySelector(".fi-form-actions");var rem=f.querySelector("[wire\\\\:key*=\'data.remember\']");if(actions&&rem){rem.classList.add("fi-remember");actions.insertAdjacentElement("afterend",rem);}});})();</script>';
+                return '<div class="fi-help"><a href="'.$url.'">Esqueci minha senha · Recuperar por e-mail</a></div>';
             }
         );
         $brandLogoFile = null;
@@ -114,10 +113,62 @@ class AdminPanelProvider extends PanelProvider
         $s600 = $lighten($secondaryHex, 0.08);
         $s700 = $darken($secondaryHex, 0.08);
         $s800 = $darken($secondaryHex, 0.18);
+        $toRgbString = function (string $hex) use ($toRgb): string {
+            [$r, $g, $b] = $toRgb($hex);
+
+            return $r.' '.$g.' '.$b;
+        };
+        $p50Rgb = $toRgbString($p50);
+        $p500Rgb = $toRgbString($p500);
+        $p600Rgb = $toRgbString($p600);
+        $p700Rgb = $toRgbString($p700);
+        $a500Rgb = $toRgbString($a500);
+        $a600Rgb = $toRgbString($a600);
+        $a700Rgb = $toRgbString($a700);
+        $s600Rgb = $toRgbString($s600);
+        $s700Rgb = $toRgbString($s700);
+        $s800Rgb = $toRgbString($s800);
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::STYLES_AFTER,
+            function () use ($p50Rgb, $p500Rgb, $p600Rgb, $p700Rgb, $a500Rgb, $a600Rgb, $a700Rgb, $s600Rgb, $s700Rgb, $s800Rgb): string {
+                static $cached = null;
+
+                if ($cached !== null) {
+                    return $cached;
+                }
+
+                $varsCss = ':root{--primary-50:'.$p50Rgb.';--primary-500:'.$p500Rgb.';--primary-600:'.$p600Rgb.';--primary-700:'.$p700Rgb.';--accent-500:'.$a500Rgb.';--accent-600:'.$a600Rgb.';--accent-700:'.$a700Rgb.';--secondary-600:'.$s600Rgb.';--secondary-700:'.$s700Rgb.';--secondary-800:'.$s800Rgb.'}';
+
+                try {
+                    $cached = '<style>'.$varsCss.'</style>'.Vite::toHtml(['resources/css/filament/admin.css']);
+
+                    return $cached;
+                } catch (\Throwable $e) {
+                    $candidates = glob(public_path('build/assets/admin-*.css')) ?: [];
+
+                    if (! count($candidates)) {
+                        $candidates = glob(public_path('build/assets/admin*.css')) ?: [];
+                    }
+
+                    if (count($candidates)) {
+                        usort($candidates, fn ($a, $b) => filemtime($b) <=> filemtime($a));
+                        $file = basename($candidates[0]);
+
+                        $cached = '<style>'.$varsCss.'</style><link rel="stylesheet" href="'.asset('build/assets/'.$file).'" />';
+
+                        return $cached;
+                    }
+
+                    $cached = '';
+
+                    return $cached;
+                }
+            }
+        );
         FilamentView::registerRenderHook(
             PanelsRenderHook::HEAD_END,
-            function () use ($p50, $p500, $p600, $p700, $a500, $a600, $a700, $s600, $s700, $s800, $whiteHex): string {
-                $css = ':root{--primary-50:'.$p50.';--primary-500:'.$p500.';--primary-600:'.$p600.';--primary-700:'.$p700.';--accent-500:'.$a500.';--accent-600:'.$a600.';--accent-700:'.$a700.';--secondary-600:'.$s600.';--secondary-700:'.$s700.';--secondary-800:'.$s800.';--surface:'.$whiteHex.'}';
+            function (): string {
+                $css = 'html .fi [x-cloak]{display:initial!important}';
                 $css .= '.fi-wi-stats-overview-stat-icon,.fi-wi-stats-overview-stat-description-icon{width:20px!important;height:20px!important}';
                 $css .= '.fi-wi-stats-overview-stat-icon svg,.fi-wi-stats-overview-stat-description-icon svg{width:20px!important;height:20px!important}';
                 $css .= '.fi-wi-stats-overview-stat-chart canvas{height:24px!important}';
@@ -128,25 +179,12 @@ class AdminPanelProvider extends PanelProvider
                 $css .= '.fi-fo-select .choices[data-type*="select-one"]::after,.fi-fo-select .choices[data-type*="select-multiple"]::after{content:none!important;display:none!important}';
                 $css .= '.fi-fo-select .fi-input-wrp-suffix .fi-icon{display:none!important}';
                 $css .= '.fi-fo-select .choices__inner{padding-right:2.25rem}';
-
-                $links = '';
-                try {
-                    $supportCss = public_path('css/filament/support/support.css');
-                    $formsCss = public_path('css/filament/forms/forms.css');
-                    $appCss = public_path('css/filament/filament/app.css');
-                    if (is_string($supportCss) && file_exists($supportCss)) {
-                        $links .= '<link rel="stylesheet" href="'.asset('css/filament/support/support.css').'" />';
-                    }
-                    if (is_string($formsCss) && file_exists($formsCss)) {
-                        $links .= '<link rel="stylesheet" href="'.asset('css/filament/forms/forms.css').'" />';
-                    }
-                    if (is_string($appCss) && file_exists($appCss)) {
-                        $links .= '<link rel="stylesheet" href="'.asset('css/filament/filament/app.css').'" />';
-                    }
-                } catch (\Throwable $e) {
-                }
-
-                return '<style>'.$css.'</style>'.$links;
+                $css .= '.fi-topbar a[href=\"/admin/settings\"],.fi-sidebar a[href=\"/admin/settings\"],.fi-header a[href=\"/admin/settings\"],.fi-breadcrumbs a[href=\"/admin/settings\"]{display:none!important}';
+                $css .= '.fi-login-page .fi-form .fi-fo-actions .fi-btn,.fi-login-page .fi-form button[type=submit]{background:linear-gradient(90deg,#10b981,#059669)!important;color:#fff!important;border:none!important;border-radius:12px!important}';
+                $css .= '.fi-login-page .fi-form .fi-fo-actions .fi-btn:hover,.fi-login-page .fi-form button[type=submit]:hover{filter:brightness(1.06)!important}';
+                $css .= 'button.fi-btn,a.fi-btn{background:linear-gradient(90deg,#10b981,#059669)!important;color:#fff!important}';
+                $css .= '.fi-btn.fi-btn-outlined{color:#059669!important;border-color:#059669!important}';
+                return '<style>'.$css.'</style>';
             }
         );
 
@@ -211,13 +249,6 @@ class AdminPanelProvider extends PanelProvider
                 \App\Http\Middleware\AdminAccess::class,
                 \Filament\Http\Middleware\Authenticate::class,
             ]);
-        try {
-            $manifest = public_path('build/manifest.json');
-            if (is_string($manifest) && file_exists($manifest)) {
-                $panelObj = $panelObj->viteTheme(['resources/css/filament/admin.css']);
-            }
-        } catch (\Throwable $e) {
-        }
 
         app()->setLocale('pt_BR');
         app()->setLocale('pt_BR');

@@ -16,7 +16,7 @@ class HomeLoginStateTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Cadastro');
         $response->assertSee('Login');
-        $response->assertSee('Você está deslogado');
+        $response->assertDontSee('Você está deslogado');
     }
 
     public function test_home_shows_username_and_logout_for_authenticated(): void
@@ -24,7 +24,7 @@ class HomeLoginStateTest extends TestCase
         $user = User::factory()->create(['name' => 'Maria Teste']);
         $response = $this->actingAs($user)->get('/');
         $response->assertStatus(200);
-        $response->assertSee('Logado como');
+        $response->assertSee('Olá,');
         $response->assertSee('Maria Teste');
         $response->assertSee('Logout');
         $response->assertDontSee('Cadastro');

@@ -45,7 +45,9 @@ class EventController extends Controller
 
         if (request()->wantsJson()) {
             $items = collect($events->items())->map(function (Event $e) {
-                $photo = $e->featured_image ?? (is_array($e->photos ?? null) && count($e->photos) ? $e->photos[0] : null);
+                $photo = $e->featured_image
+                    ?? ($e->folder_image ?: null)
+                    ?? (is_array($e->gallery_images ?? null) && count($e->gallery_images) ? $e->gallery_images[0] : null);
 
                 return [
                     'id' => $e->id,

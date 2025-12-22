@@ -15,11 +15,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet" />
     
     <!-- Scripts -->
-    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.jsx']); ?>
+    <?php ($viteManifest = public_path('build/manifest.json')); ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(file_exists($viteManifest)): ?>
+        <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.jsx']); ?>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     
     <!-- Livewire -->
-    <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(\Illuminate\Support\Facades\Route::has('livewire.update')): ?>
+        <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>
 
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     
     <!-- Custom Styles -->
     <style>
@@ -30,9 +35,6 @@
         .nav-link:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(16,185,129,.45); }
         .nav-link-active { color:#006036; }
         .nav-link-active::after { content:""; position:absolute; left:.5rem; right:.5rem; bottom:-.2rem; height:2px; background:#0b7a48; border-radius:2px; }
-        .nav-icon { color:#0b7a48; transition: color .2s ease-in-out; }
-        .nav-link:hover .nav-icon { color:#0c8a52; }
-        .nav-link-active .nav-icon { color:#006036; }
         .nav-group { display:flex; align-items:center; justify-content:center; gap:1.5rem; }
         .nav-chip { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border-radius:.625rem; font-weight:600; color:#374151; background:#f8fafc; border:1px solid #e5e7eb; transition: all .2s ease-in-out; white-space:nowrap; font-size:.875rem; }
         .nav-chip:hover { background:#eef2ff; color:#0b7a48; border-color:#d1d5db; }
@@ -98,13 +100,13 @@
                 </div>
                 <nav class="hidden md:flex items-center gap-6" role="navigation" aria-label="Navegação principal">
                     <div class="nav-group">
-                        <a href="<?php echo e(route('home')); ?>" class="nav-link <?php if(request()->routeIs('home')): ?> nav-link-active <?php endif; ?>" <?php if(request()->routeIs('home')): ?> aria-current="page" <?php endif; ?>><i class="fa fa-house nav-icon"></i>Início</a>
-                        <a href="<?php echo e(route('events.index')); ?>" class="nav-link <?php if(request()->is('events*')): ?> nav-link-active <?php endif; ?>" <?php if(request()->is('events*')): ?> aria-current="page" <?php endif; ?>><i class="fa fa-calendar-days nav-icon"></i>Eventos</a>
-                        <a href="<?php echo e(url('/groups')); ?>" class="nav-link <?php if(request()->is('groups*')): ?> nav-link-active <?php endif; ?>" <?php if(request()->is('groups*')): ?> aria-current="page" <?php endif; ?>><i class="fa fa-people-group nav-icon"></i>Grupos</a>
-                        <a href="<?php echo e(url('/calendar')); ?>" class="nav-link <?php if(request()->is('calendar*')): ?> nav-link-active <?php endif; ?>" <?php if(request()->is('calendar*')): ?> aria-current="page" <?php endif; ?>><i class="fa fa-calendar nav-icon"></i>Calendário</a>
+                        <a href="<?php echo e(route('home')); ?>" class="nav-link <?php if(request()->routeIs('home')): ?> nav-link-active <?php endif; ?>" <?php if(request()->routeIs('home')): ?> aria-current="page" <?php endif; ?>><i class="fa fa-house"></i>Início</a>
+                        <a href="<?php echo e(route('events.index')); ?>" class="nav-link <?php if(request()->is('events*')): ?> nav-link-active <?php endif; ?>" <?php if(request()->is('events*')): ?> aria-current="page" <?php endif; ?>><i class="fa fa-calendar-days"></i>Eventos</a>
+                        <a href="<?php echo e(url('/groups')); ?>" class="nav-link <?php if(request()->is('groups*')): ?> nav-link-active <?php endif; ?>" <?php if(request()->is('groups*')): ?> aria-current="page" <?php endif; ?>><i class="fa fa-people-group"></i>Grupos</a>
+                        <a href="<?php echo e(url('/calendar')); ?>" class="nav-link <?php if(request()->is('calendar*')): ?> nav-link-active <?php endif; ?>" <?php if(request()->is('calendar*')): ?> aria-current="page" <?php endif; ?>><i class="fa fa-calendar"></i>Calendário</a>
                     </div>
                     <div class="relative">
-                        <button id="btn-mais" class="nav-link" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu-mais"><i class="fa fa-ellipsis nav-icon"></i><span>Mais</span><i class="fas fa-chevron-down nav-caret"></i></button>
+                        <button id="btn-mais" class="nav-link" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu-mais"><i class="fa fa-ellipsis"></i><span>Mais</span><i class="fas fa-chevron-down nav-caret"></i></button>
                         <div id="menu-mais" class="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border menu-panel z-50" role="menu" aria-labelledby="btn-mais" data-open="false">
                             <a href="<?php echo e(route('sobre')); ?>" role="menuitem" tabindex="-1" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50">Sobre</a>
                             <a href="<?php echo e(route('servicos')); ?>" role="menuitem" tabindex="-1" class="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50">Serviços</a>
@@ -126,8 +128,10 @@
                             </div>
                         </div>
                     <?php else: ?>
-                        <a href="<?php echo e(route('register')); ?>" class="bg-emerald-600 text-white px-3.5 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-semibold shadow-sm" <?php if(request()->is('register')): ?> aria-current="page" <?php endif; ?>>Cadastro</a>
-                        <a href="<?php echo e(route('login')); ?>" class="bg-yellow-400 text-gray-900 px-3.5 py-2 rounded-lg hover:bg-yellow-500 transition-colors font-semibold shadow-sm" <?php if(request()->is('login')): ?> aria-current="page" <?php endif; ?>>Login</a>
+                        <?php ($hasRegister = \Illuminate\Support\Facades\Route::has('register')); ?>
+                        <?php ($hasLogin = \Illuminate\Support\Facades\Route::has('login')); ?>
+                        <a href="<?php echo e($hasRegister ? route('register') : url('/register')); ?>" class="bg-emerald-600 text-white px-3.5 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-semibold shadow-sm" <?php if(request()->is('register')): ?> aria-current="page" <?php endif; ?>>Cadastro</a>
+                        <a href="<?php echo e($hasLogin ? route('login') : url('/login')); ?>" class="bg-yellow-400 text-gray-900 px-3.5 py-2 rounded-lg hover:bg-yellow-500 transition-colors font-semibold shadow-sm" <?php if(request()->is('login')): ?> aria-current="page" <?php endif; ?>>Login</a>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->guard()->check()): ?>
                         <?php ($canPastoreio = auth()->user()?->canAccessPage('/pastoreio')); ?>
@@ -335,8 +339,10 @@
         });
     </script>
     
-    <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts(); ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(\Illuminate\Support\Facades\Route::has('livewire.update')): ?>
+        <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts(); ?>
 
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
 </html>

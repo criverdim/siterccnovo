@@ -14,6 +14,8 @@ class SettingResource extends Resource
 {
     protected static ?string $model = Setting::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     protected static ?string $navigationLabel = 'Configurações';
@@ -21,6 +23,11 @@ class SettingResource extends Resource
     protected static ?string $navigationGroup = 'Configurações';
 
     protected static ?int $navigationSort = 10;
+
+    public static function shouldRegisterNavigation(array $parameters = []): bool
+    {
+        return false;
+    }
 
     public static function form(Form $form): Form
     {

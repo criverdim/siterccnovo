@@ -4,7 +4,7 @@
 @section('description', 'Renovação Carismática Católica — Grupo de Oração')
 
 @section('content')
-@php($homeCfg = optional(\App\Models\Setting::where('key','home')->first())->value ?? [])
+@php($homeCfg = (function () { try { return (array) (\App\Models\Setting::where('key','home')->value('value') ?? []); } catch (\Throwable $e) { return []; } })())
 @php($heroTitle = $homeCfg['hero_title'] ?? 'Renovação Carismática Católica')
 @php($heroSubtitle = $homeCfg['hero_subtitle'] ?? 'Grupo de Oração — Louvor, Palavra e Intercessão')
 @php($carousel = array_values(array_filter((array)($homeCfg['carousel'] ?? []))))
@@ -38,14 +38,6 @@
             <h1 class="text-4xl md:text-6xl font-bold mb-4">{{ $heroTitle }}</h1>
             <p class="text-xl md:text-2xl mb-8">{{ $heroSubtitle }}</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                @if(!auth()->check())
-                    <span class="inline-flex items-center text-emerald-200">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        Você está deslogado
-                    </span>
-                    <a href="{{ route('register') }}" class="bg-white text-emerald-700 px-6 py-3 rounded-xl font-semibold hover:bg-emerald-50 transition-colors">Cadastro</a>
-                    <a href="{{ route('login') }}" class="border-2 border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-emerald-700 transition-colors">Login</a>
-                @endif
             </div>
         </div>
     </div>
@@ -107,18 +99,13 @@
             <a href="{{ route('events.index') }}" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Eventos</a>
             <a href="{{ url('/groups') }}" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Grupos</a>
             <a href="{{ url('/calendar') }}" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Calendário</a>
-            @if(!auth()->check())
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Cadastro</a>
-                @endif
-                <a href="{{ route('login') }}" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Entrar</a>
-            @else
+            @auth
                 <span class="p-4 rounded-xl border bg-white font-medium text-gray-800">Olá, {{ auth()->user()->name }}</span>
                 <form id="logoutFormQuick" method="POST" action="{{ url('/logout') }}" class="p-4 rounded-xl border bg-white">
                     @csrf
                     <button type="submit" class="font-medium text-gray-800">Logout</button>
                 </form>
-            @endif
+            @endauth
             <a href="{{ url('/area/servo') }}" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Área do Servo</a>
             <a href="{{ url('/area/membro') }}" class="p-4 rounded-xl border bg-white hover:bg-gray-50 font-medium text-gray-800">Área do Membro</a>
         </div>

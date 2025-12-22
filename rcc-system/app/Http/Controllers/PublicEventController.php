@@ -42,8 +42,10 @@ class PublicEventController extends Controller
 
         if (request()->wantsJson()) {
             $collection = $events->getCollection()->map(function (Event $ev) {
-                $firstPhoto = (is_array($ev->photos) && count($ev->photos)) ? $ev->photos[0] : null;
-                $thumb = $firstPhoto ? \Illuminate\Support\Str::of($firstPhoto)->replace('/original/', '/thumbs/')->toString() : null;
+                $photo = $ev->featured_image
+                    ?? ($ev->folder_image ?: null)
+                    ?? (is_array($ev->gallery_images ?? null) && count($ev->gallery_images) ? $ev->gallery_images[0] : null);
+                $url = $photo ? \Illuminate\Support\Facades\Storage::disk('public')->url($photo) : asset('favicon.ico');
 
                 return [
                     'id' => $ev->id,
@@ -54,7 +56,7 @@ class PublicEventController extends Controller
                     'price' => $ev->price,
                     'start_date' => optional($ev->start_date)->format('Y-m-d'),
                     'description' => \Illuminate\Support\Str::limit(strip_tags($ev->description ?? ''), 180),
-                    'photo_thumb_url' => $thumb ? asset('storage/'.$thumb) : asset('favicon.ico'),
+                    'photo_thumb_url' => $url,
                     'show_url' => route('events.show', $ev),
                     'participate_url' => route('events.participate.get', $ev),
                 ];

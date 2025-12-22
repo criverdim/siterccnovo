@@ -1,7 +1,7 @@
 {
     "base": "http://127.0.0.1:8000",
-    "visited_count": 17,
-    "broken_count": 41,
+    "visited_count": 23,
+    "broken_count": 26,
     "broken": [
         {
             "url": "https://fonts.googleapis.com",
@@ -24,11 +24,6 @@
             "external": true
         },
         {
-            "url": "https://youtube.com/@rcc",
-            "status": 404,
-            "external": true
-        },
-        {
             "url": "https://fonts.googleapis.com",
             "status": 404,
             "external": true
@@ -39,97 +34,12 @@
             "external": true
         },
         {
-            "url": "https://youtube.com/@rcc",
-            "status": 404,
-            "external": true
-        },
-        {
             "url": "https://fonts.googleapis.com",
             "status": 404,
             "external": true
         },
         {
             "url": "https://fonts.gstatic.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://youtube.com/@rcc",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.googleapis.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.gstatic.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://youtube.com/@rcc",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.googleapis.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.gstatic.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://youtube.com/@rcc",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.googleapis.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.gstatic.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://youtube.com/@rcc",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.googleapis.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.gstatic.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://youtube.com/@rcc",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.googleapis.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://fonts.gstatic.com",
-            "status": 404,
-            "external": true
-        },
-        {
-            "url": "https://youtube.com/@rcc",
             "status": 404,
             "external": true
         },
@@ -154,7 +64,12 @@
             "external": true
         },
         {
-            "url": "https://youtube.com/@rcc",
+            "url": "https://fonts.googleapis.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.gstatic.com",
             "status": 404,
             "external": true
         },
@@ -169,7 +84,12 @@
             "external": true
         },
         {
-            "url": "https://youtube.com/@rcc",
+            "url": "https://fonts.googleapis.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.gstatic.com",
             "status": 404,
             "external": true
         },
@@ -184,7 +104,12 @@
             "external": true
         },
         {
-            "url": "https://youtube.com/@rcc",
+            "url": "https://fonts.googleapis.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.gstatic.com",
             "status": 404,
             "external": true
         },

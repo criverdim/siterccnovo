@@ -1,22 +1,14 @@
 <?php ($title = $event->name . ' - RCC System'); ?>
-<?php ($ogImagePath = $event->folder_image ?: ($event->featured_image ?: null)); ?>
-<?php ($ogImageUrl = $ogImagePath ? \Illuminate\Support\Facades\Storage::disk('public')->url($ogImagePath) : null); ?>
-<?php ($og = [
-    'title' => $event->name,
-    'description' => strip_tags($event->short_description ?? $event->description ?? ''),
-    'image' => $ogImageUrl,
-    'url' => route('events.show', $event),
-]); ?>
 <?php if (isset($component)) { $__componentOriginal5863877a5171c196453bfa0bd807e410 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal5863877a5171c196453bfa0bd807e410 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.layouts.app','data' => ['title' => $title,'og' => $og]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.layouts.app','data' => ['title' => $title]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('layouts.app'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($title),'og' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($og)]); ?>
+<?php $component->withAttributes(['title' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($title)]); ?>
     <div class="min-h-screen bg-gray-50">
         <!-- Hero Section -->
         <div class="relative bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
@@ -293,7 +285,14 @@
                     
 
                     <!-- Mapa de Localização -->
-                    
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($event->map_embed_url): ?>
+                        <section>
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">Mapa de Localização</h2>
+                            <div class="rounded-xl overflow-hidden bg-gray-100 border">
+                                <iframe src="<?php echo e($event->map_embed_url); ?>" width="100%" style="height:420px;border:0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+                        </section>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                     <!-- Participantes / Interessados -->
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(isset($participants) && $participants->count() > 0): ?>
@@ -393,7 +392,7 @@
                 </div>
                 
                 <div class="lg:col-span-4">
-                    <div class="sticky top-8 space-y-6">
+                    <div class="sticky top-8 space-y-8">
                         
                         <!-- Card de Informações -->
                         <div class="bg-white rounded-2xl shadow-xl p-6 ring-1 ring-emerald-100">
@@ -488,57 +487,29 @@
                                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </div>
                         </div>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($event->map_embed_url): ?>
-                        <div class="bg-white rounded-2xl shadow-xl p-6 ring-1 ring-emerald-100">
-                            <?php ($addr = trim((string) ($event->address ?: $event->location))); ?>
-                            <?php ($embedSrc = $addr ? ('https://www.google.com/maps?q='.urlencode($addr).'&hl=pt-BR&z=16&output=embed') : ''); ?>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($embedSrc): ?>
-                                <div class="rounded-xl overflow-hidden bg-gray-100">
-                                    <iframe src="<?php echo e($embedSrc); ?>" width="100%" style="height:360px;border:0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                                </div>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            <div class="mt-4">
-                                <a href="#" onclick="openDirections()" class="block mx-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base md:text-lg px-7 py-3.5 rounded-xl w-full sm:w-[85%] md:w-[75%] text-center">
-                                    Clique aqui para ver o local
-                                </a>
-                            </div>
-                        </div>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         
                         <!-- Compartilhar -->
                         <div class="bg-white rounded-2xl shadow-lg p-6">
                             <h3 class="text-lg font-bold text-gray-900 mb-4">Compartilhar</h3>
-                            <?php ($pageUrl = route('events.show',$event)); ?>
-                            <?php ($encUrl = urlencode($pageUrl)); ?>
-                            <?php ($encTitle = urlencode($event->name)); ?>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <button onclick="shareNative()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white h-11 md:h-12 px-4 transition">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v14"/></svg>
-                                    <span class="text-sm md:text-base">Nativo</span>
+                            <div class="flex space-x-3">
+                                <button onclick="shareOnWhatsApp()" 
+                                        class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.397.099-.099.173-.223.087-.347-.086-.124-.67-.52-.92-.622-.223-.099-.48-.016-.67.11-.173.149-1.19 1.135-1.19 2.763 0 1.627 1.19 2.4 1.355 2.564.149.149 2.395 3.646 5.81 5.095 3.414 1.45 3.414.991 4.035.94.62-.05 1.995-.806 2.277-1.585.281-.78.281-1.45.198-1.585-.087-.135-.32-.223-.617-.372zM12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5.016L2 22l4.983-1.338A9.973 9.973 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm5.446 13.485c-.116.275-.744 1.32-1.316 1.316-.572-.004-1.074-.275-2.04-.838-.765-.446-1.705-1.414-1.95-1.95-.244-.536-.488-1.074.028-2.04.517-.966 1.135-1.074 1.652-1.074.244 0 .488.028.698.198.116.116.275.372.116.698-.028.028-.116.116-.198.198-.116.116-.52.372-.116.698.404.326.93.838 1.074 1.042.144.204.028.372-.116.488z"/>
+                                    </svg>
+                                    WhatsApp
                                 </button>
-                                <a href="https://wa.me/?text=<?php echo e($encTitle); ?>%20-%20<?php echo e($encUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 hover:bg-green-600 text-white h-11 md:h-12 px-4 transition">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.77 11.77 0 0012.06 0C5.4 0 .07 5.33.07 11.9A11.9 11.9 0 001.5 17.6L0 24l6.59-1.73a11.94 11.94 0 005.47 1.39h.01c6.56 0 11.9-5.33 11.9-11.9a11.77 11.77 0 00-3.45-8.28zm-8.46 19.2h-.01a9.84 9.84 0 01-5.02-1.38l-.36-.21-3.91 1.03 1.05-3.81-.24-.39A9.83 9.83 0 012.22 11.9c0-5.43 4.42-9.85 9.86-9.85 2.63 0 5.1 1.02 6.96 2.87a9.78 9.78 0 012.88 6.97c0 5.43-4.43 9.86-9.86 9.86zm5.44-7.4c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.64.08-.3-.15-1.28-.47-2.43-1.49-.9-.8-1.51-1.78-1.68-2.08-.17-.3-.02-.46.13-.61.14-.13.3-.35.46-.52.15-.17.2-.3.3-.4.1-.1.17-.22.09-.35-.08-.13-.62-.5-.85-.6-.21-.1-.46-.02-.63.1-.17.15-1.18 1.12-1.18 2.72s1.22 2.98 1.39 3.19c.17.21 2.41 3.87 5.85 5.42 3.44 1.56 3.3 1.05 3.89.99.6-.05 1.97-.8 2.26-1.58.29-.78.29-1.45.2-1.59-.09-.14-.33-.24-.63-.39z"/></svg>
-                                    <span class="text-sm md:text-base">WhatsApp</span>
-                                </a>
-                                <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo e($encUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white h-11 md:h-12 px-4 transition">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22.675 0h-21.35C.596 0 0 .596 0 1.333v21.334C0 23.404.596 24 1.325 24h11.49v-9.294H9.847v-3.622h2.967V8.413c0-2.938 1.793-4.543 4.41-4.543 1.253 0 2.33.093 2.645.135v3.066l-1.816.001c-1.424 0-1.699.677-1.699 1.671v2.189h3.396l-.442 3.622h-2.954V24h5.789C23.404 24 24 23.404 24 22.667V1.333C24 .596 23.404 0 22.675 0z"/></svg>
-                                    <span class="text-sm md:text-base">Facebook</span>
-                                </a>
-                                <a href="https://www.facebook.com/dialog/send?link=<?php echo e($encUrl); ?>&app_id=194411547592286&redirect_uri=<?php echo e($encUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white h-11 md:h-12 px-4 transition">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-6.627-5.373-12-12-12zm3.33 9.3c.02.292.03.593.03.903 0 9.23-7.025 15.86-15.86 15.86-3.15 0-6.087-.92-8.56-2.5.437.05.88.075 1.33.075 2.615 0 5.02-.892 6.93-2.39a5.59 5.59 0 01-5.22-3.88c.35.067.71.1 1.08.1.52 0 1.02-.07 1.49-.2a5.58 5.58 0 01-4.47-5.48v-.07c.75.416 1.61.666 2.52.694a5.58 5.58 0 01-2.49-4.65c0-1.02.28-1.97.77-2.79a15.8 15.8 0 0011.48 5.84 6.29 6.29 0 01-.14-1.28 5.58 5.58 0 015.58-5.58c1.61 0 3.06.68 4.07 1.78a11.01 11.01 0 003.54-1.35 5.6 5.6 0 01-2.45 3.08 11.15 11.15 0 003.2-.87 12.02 12.02 0 01-2.79 2.89z"/></svg>
-                                    <span class="text-sm md:text-base">Messenger</span>
-                                </a>
-                                <a href="https://twitter.com/intent/tweet?text=<?php echo e($encTitle); ?>&url=<?php echo e($encUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-xl bg-black hover:bg-gray-800 text-white h-11 md:h-12 px-4 transition">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2H21l-6.397 7.292L22 22h-7.244l-4.72-6.395L4.5 22H2l7.02-7.988L2 2h7.244l4.201 5.693L18.244 2zm-2.54 18h2.45l-5.332-7.234L19.5 4h-2.45l-4.95 5.83L9.45 4H7l5.012 6.8L5 20h2.45l5.19-6.11L15.704 20z"/></svg>
-                                    <span class="text-sm md:text-base">X</span>
-                                </a>
-                                <a href="https://www.linkedin.com/sharing/share-offsite/?url=<?php echo e($encUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white h-11 md:h-12 px-4 transition md:col-span-2 col-span-2">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.327-.027-3.034-1.849-3.034-1.851 0-2.134 1.445-2.134 2.939v5.664H9.355V9h3.414v1.561h.049c.476-.9 1.637-1.849 3.368-1.849 3.602 0 4.268 2.37 4.268 5.455v6.285zM5.337 7.433c-1.144 0-2.07-.927-2.07-2.07 0-1.145.926-2.071 2.07-2.071 1.145 0 2.07.926 2.07 2.07 0 1.144-.925 2.071-2.07 2.071zM6.936 20.452H3.739V9h3.197v11.452zM22.225 0H1.771C.792 0 0 .771 0 1.723v20.554C0 23.229.792 24 1.771 24h20.454C23.204 24 24 23.229 24 22.277V1.723C24 .771 23.204 0 22.225 0z"/></svg>
-                                    <span class="text-sm md:text-base">LinkedIn</span>
-                                </a>
-                                <button onclick="copyLink()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-600 hover:bg-gray-700 text-white h-11 md:h-12 px-4 transition col-span-2 md:col-span-3">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14L21 3"/><path d="M3 21l12-12"/></svg>
-                                    <span class="text-sm md:text-base">Copiar Link</span>
+                                <button onclick="copyLink()" 
+                                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Copiar Link
+                                </button>
+                                <button onclick="toggleFavorite()" 
+                                        class="flex-1 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                    Favoritar
                                 </button>
                             </div>
                         </div>
@@ -603,15 +574,7 @@
                 }, 300);
             }, 5000);
         })();
-        function openDirections(){
-            const dest = encodeURIComponent(`<?php echo e(($event->address ?: $event->location)); ?>`);
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
-            if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-                window.location.href = url;
-            } else {
-                window.open(url, '_blank');
-            }
-        }
+    </script>
         function shareOnWhatsApp() {
             const text = `Confira este evento: <?php echo e($event->name); ?> - <?php echo e(route('events.show', $event)); ?>`;
             const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -637,44 +600,6 @@
                 localStorage.setItem(key, '1');
                 alert('Evento adicionado aos favoritos');
             }
-        }
-
-        async function shareNative(){
-            const shareData = {
-                title: `<?php echo e($event->name); ?>`,
-                text: `<?php echo e($event->short_description ? strip_tags($event->short_description) : ''); ?>`,
-                url: `<?php echo e(route('events.show', $event)); ?>`,
-            };
-            if (navigator.share) {
-                try { await navigator.share(shareData); } catch(e) {}
-            } else {
-                shareVia('facebook');
-            }
-        }
-
-        function shareVia(platform){
-            const title = `<?php echo e($event->name); ?>`;
-            const pageUrl = `<?php echo e(route('events.show', $event)); ?>`;
-            const text = `${title} - ${pageUrl}`;
-            let url = '';
-            if (platform === 'whatsapp') {
-                const waNative = `whatsapp://send?text=${encodeURIComponent(text)}`;
-                const waWeb = `https://wa.me/?text=${encodeURIComponent(text)}`;
-                try { window.location.href = waNative; setTimeout(()=>window.open(waWeb,'_blank'), 600); } catch(e){ window.open(waWeb,'_blank'); }
-                return;
-            } else if (platform === 'messenger') {
-                const msNative = `fb-messenger://share/?link=${encodeURIComponent(pageUrl)}`;
-                const msWeb = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(pageUrl)}&app_id=194411547592286&redirect_uri=${encodeURIComponent(pageUrl)}`;
-                try { window.location.href = msNative; setTimeout(()=>window.open(msWeb,'_blank'), 600); } catch(e){ window.open(msWeb,'_blank'); }
-                return;
-            } else if (platform === 'facebook') {
-                url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
-            } else if (platform === 'twitter') {
-                url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(pageUrl)}`;
-            } else if (platform === 'linkedin') {
-                url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
-            }
-            if (url) window.open(url, '_blank');
         }
     </script>
  <?php echo $__env->renderComponent(); ?>

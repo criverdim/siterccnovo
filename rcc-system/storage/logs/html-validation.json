@@ -3,47 +3,47 @@
     "messages": [
         {
             "type": "info",
-            "lastLine": 17,
+            "lastLine": 15,
+            "lastColumn": 110,
+            "firstColumn": 5,
+            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
+            "extract": "eet\">\n    <link href=\"https:\/\/cdnjs.cloudflare.com\/ajax\/libs\/font-awesome\/6.6.0\/css\/all.min.css\" rel=\"stylesheet\" \/>\n    \n",
+            "hiliteStart": 10,
+            "hiliteLength": 106
+        },
+        {
+            "type": "info",
+            "lastLine": 18,
             "lastColumn": 96,
             "firstColumn": 5,
             "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
-            "extract": "s -->\n    <link rel=\"preload\" as=\"style\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-CK7XNs12.css\" \/><link ",
+            "extract": "s -->\n    <link rel=\"preload\" as=\"style\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-tMVsm1CW.css\" \/><link ",
             "hiliteStart": 10,
             "hiliteLength": 92
         },
         {
             "type": "info",
-            "lastLine": 17,
+            "lastLine": 18,
             "lastColumn": 194,
             "firstColumn": 97,
             "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
-            "extract": "12.css\" \/><link rel=\"modulepreload\" as=\"script\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-y3_sG6PN.js\" \/><link ",
+            "extract": "CW.css\" \/><link rel=\"modulepreload\" as=\"script\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-y3_sG6PN.js\" \/><link ",
             "hiliteStart": 10,
             "hiliteLength": 98
         },
         {
             "type": "info",
-            "lastLine": 17,
+            "lastLine": 18,
             "lastColumn": 307,
             "firstColumn": 195,
             "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
-            "extract": "6PN.js\" \/><link rel=\"stylesheet\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-CK7XNs12.css\" data-navigate-track=\"reload\" \/><scrip",
+            "extract": "6PN.js\" \/><link rel=\"stylesheet\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-tMVsm1CW.css\" data-navigate-track=\"reload\" \/><scrip",
             "hiliteStart": 10,
             "hiliteLength": 113
         },
         {
             "type": "info",
-            "lastLine": 70,
-            "lastColumn": 209,
-            "firstColumn": 53,
-            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
-            "extract": "          <img src=\"\/storage\/brand\/logo-rcc.png\" alt=\"Logo\" class=\"site-logo shrink-0 h-[1.7rem] md:h-[2.4rem] w-auto max-w-[110px] md:max-w-[100px] object-contain\" \/>\n     ",
-            "hiliteStart": 10,
-            "hiliteLength": 157
-        },
-        {
-            "type": "info",
-            "lastLine": 77,
+            "lastLine": 83,
             "lastColumn": 114,
             "firstColumn": 17,
             "subType": "warning",
@@ -51,16 +51,6 @@
             "extract": "          <nav class=\"hidden md:flex items-center gap-6\" role=\"navigation\" aria-label=\"Navega\u00e7\u00e3o principal\">\n     ",
             "hiliteStart": 10,
             "hiliteLength": 98
-        },
-        {
-            "type": "info",
-            "lastLine": 277,
-            "lastColumn": 204,
-            "firstColumn": 77,
-            "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
-            "extract": "          <img src=\"\/storage\/brand\/logo-rcc.png\" alt=\"Logo\" class=\"site-logo shrink-0 h-10 md:h-12 w-auto max-w-[180px] object-contain\" \/>\n     ",
-            "hiliteStart": 10,
-            "hiliteLength": 128
         }
     ],
     "language": "pt"

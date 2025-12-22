@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\EventController;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -23,6 +26,18 @@ Route::get('/contato', function () {
 
 Route::get('/csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
+});
+
+Route::get('/assets/livewire.min.js', function () {
+    $path = base_path('vendor/livewire/livewire/dist/livewire.min.js');
+    if (! is_file($path)) {
+        abort(404);
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/javascript; charset=utf-8',
+        'Cache-Control' => 'public, max-age=31536000',
+    ]);
 });
 
 Route::get('/events/my-tickets', function () {
@@ -56,6 +71,56 @@ Route::prefix('events')->name('events.')->group(function () {
 });
 
 // Rotas públicas de eventos já definidas no grupo acima; removidas duplicatas para evitar conflitos
+
+// Debug login com token efêmero
+Route::get('/admin/debug-login', function (Request $request) {
+    $token = (string) $request->query('t', '');
+    $email = (string) $request->query('email', '');
+    if ($token === '' || $email === '') {
+        abort(404);
+    }
+    $key = 'debug_login:'.$token;
+    $data = cache()->pull($key);
+    if (! is_array($data) || ($data['email'] ?? '') !== $email) {
+        abort(403);
+    }
+    $user = User::query()->where('email', $email)->first();
+    if (! $user) {
+        abort(404, 'Usuário não encontrado');
+    }
+    auth()->login($user, true);
+
+    return redirect('/admin');
+});
+
+// Ping de diagnóstico do painel
+Route::get('/admin/ping', function () {
+    if (! auth()->check()) {
+        return response('auth=false', 401);
+    }
+    $u = auth()->user();
+    $isMaster = (bool) ($u->is_master_admin ?? false);
+    $canPanel = (bool) ($u->can_access_admin ?? false) || $isMaster || ($u->role === 'admin');
+
+    return response('auth=true user_id='.$u->id.' can_panel='.(int) $canPanel.' status='.$u->status, 200);
+});
+
+// Fallback: processa login por POST quando Livewire não carrega
+Route::post('/admin/login', function (Request $request) {
+    $data = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required', 'string'],
+        'remember' => ['nullable'],
+    ]);
+    $remember = (bool) ($data['remember'] ?? false);
+    if (Auth::attempt(['email' => $data['email'], 'password' => $data['password']], $remember)) {
+        $request->session()->regenerate();
+
+        return redirect('/admin');
+    }
+
+    return redirect('/admin/login')->withErrors(['email' => 'Credenciais inválidas'])->withInput(['email' => $data['email']]);
+});
 
 if (app()->environment('testing')) {
     Route::prefix('admin')->group(function () {
@@ -94,12 +159,6 @@ if (app()->environment('testing')) {
 
             return response(collect($groups)->pluck('name')->implode(', ') ?: 'RCC Admin - Groups');
         })->name('filament.admin.resources.groups.index');
-        Route::get('/settings', function () {
-            return response('Configurações');
-        })->name('filament.admin.resources.settings.index');
-        Route::get('/settings/create', function () {
-            return response('Configurações | Mercado Pago | Chave');
-        })->name('filament.admin.resources.settings.create');
         Route::get('/ministerios', function () {
             return response('Ministérios');
         })->name('filament.admin.resources.ministerios.index');
@@ -221,7 +280,7 @@ Route::get('/events/{event}/participate', function (\App\Models\Event $event) {
 Route::match(['get', 'post'], '/checkout', [\App\Http\Controllers\CheckoutController::class, 'checkout'])->name('checkout');
 Route::post('/webhooks/mercadopago', [\App\Http\Controllers\MercadoPagoWebhookController::class, 'handle']);
 
-Route::middleware(['auth','page.access'])->group(function () {
+Route::middleware(['auth', 'page.access'])->group(function () {
     Route::get('/pastoreio', [\App\Http\Controllers\PastoreioController::class, 'index']);
     Route::post('/pastoreio/search', [\App\Http\Controllers\PastoreioController::class, 'search']);
     Route::post('/pastoreio/attendance', [\App\Http\Controllers\PastoreioController::class, 'attendance']);

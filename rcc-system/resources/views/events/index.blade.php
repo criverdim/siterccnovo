@@ -33,15 +33,20 @@
                     @foreach($events as $event)
                         <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                             <!-- Imagem do Evento -->
-                            <div class="relative h-48 bg-gradient-to-br from-emerald-500 to-teal-600">
-                                @if($event->featured_image)
-                                    <img src="{{ Storage::disk('public')->url($event->featured_image) }}" 
-                                         alt="{{ $event->name }}" 
-                                         class="w-full h-full object-cover">
+                            <div class="relative h-48 md:h-56 bg-gradient-to-br from-emerald-500 to-teal-600">
+                                @php($firstGallery = (is_array($event->gallery_images ?? null) && count($event->gallery_images)) ? array_values($event->gallery_images)[0] : null)
+                                @php($source = ($event->featured_image ? 'featured' : ($event->folder_image ? 'folder' : ($firstGallery ? 'gallery' : null))))
+                                @php($cardPath = $event->featured_image ?: ($event->folder_image ?: $firstGallery))
+                                @php($cardPath = (is_string($cardPath) && !str_contains($cardPath, '/')) ? ($source === 'featured' ? ('events/'.$cardPath) : ($source === 'folder' ? ('events/folder/'.$cardPath) : $cardPath)) : $cardPath)
+                                @php($cardUrl = $cardPath ? (\Illuminate\Support\Str::startsWith($cardPath, ['http://', 'https://', '/storage', 'storage/']) ? (str_starts_with($cardPath, 'storage/') ? '/'.$cardPath : $cardPath) : \Illuminate\Support\Facades\Storage::disk('public')->url($cardPath)) : null)
+                                @php($cardUrl = is_string($cardUrl) ? (string) \Illuminate\Support\Str::of($cardUrl)->trim()->trim("'")->trim('"')->trim('`') : $cardUrl)
+                                @php($cardUrl = is_string($cardUrl) && \Illuminate\Support\Str::startsWith($cardUrl, ['http://', 'https://']) ? (parse_url($cardUrl, PHP_URL_PATH) ?: $cardUrl) : $cardUrl)
+                                @if($cardUrl)
+                                    <div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ $cardUrl }}');"></div>
                                 @else
                                     <div class="absolute inset-0 flex items-center justify-center">
                                         <svg class="w-16 h-16 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5z"></path>
                                         </svg>
                                     </div>
                                 @endif

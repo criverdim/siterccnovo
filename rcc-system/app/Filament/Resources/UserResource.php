@@ -48,6 +48,7 @@ class UserResource extends Resource
                 ->multiple()
                 ->preload()
                 ->searchable()
+                ->extraAttributes(['class' => 'z-50'])
                 ->visible(fn (\Filament\Forms\Get $get): bool => (bool) $get('is_servo'))
             : Forms\Components\TextInput::make('ministries_info')
                 ->label('Ministérios')
@@ -115,6 +116,7 @@ class UserResource extends Resource
                     ->columns(2),
 
                 Forms\Components\Section::make('Configurações')
+                    ->extraAttributes(['style' => 'overflow: visible'])
                     ->schema([
                         Forms\Components\Select::make('gender')
                             ->label('Gênero')
@@ -175,18 +177,27 @@ class UserResource extends Resource
                                     ->label('Consentimento LGPD em')
                                     ->disabled(),
                             ]),
-                        $ministriesField,
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Ministérios')
+                    ->extraAttributes(['style' => 'overflow: visible'])
+                    ->schema([
+                        $ministriesField->columnSpanFull(),
                         Forms\Components\Select::make('coordinator_ministry_id')
                             ->label('Ministério sob coordenação')
                             ->relationship('coordinatorMinistry', 'name')
                             ->preload()
                             ->searchable()
+                            ->extraAttributes(['class' => 'z-50'])
                             ->visible(fn (\Filament\Forms\Get $get) => (bool) $get('is_coordinator'))
-                            ->required(fn (\Filament\Forms\Get $get) => (bool) $get('is_coordinator')),
+                            ->required(fn (\Filament\Forms\Get $get) => (bool) $get('is_coordinator'))
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
 
                 Forms\Components\Section::make('Controle de Acesso')
+                    ->extraAttributes(['style' => 'overflow: visible'])
                     ->schema([
                         Forms\Components\CheckboxList::make('allowed_pages')
                             ->label('Páginas autorizadas')
@@ -195,11 +206,13 @@ class UserResource extends Resource
                             ->helperText('Selecione quais páginas restritas este usuário pode acessar.'),
                         Forms\Components\Placeholder::make('allowed_pages_info')
                             ->label('Permissões atuais')
-                            ->content(function (User $record = null) {
+                            ->content(function (?User $record = null) {
                                 $opts = self::getRestrictedPagesOptions();
                                 $allowed = collect((array) ($record?->allowed_pages ?? []));
+
                                 return collect($opts)->map(function ($label, $path) use ($allowed) {
                                     $has = $allowed->contains($path);
+
                                     return sprintf('%s: %s', $label, $has ? 'permitido' : 'negado');
                                 })->implode(' | ');
                             }),
@@ -304,8 +317,10 @@ class UserResource extends Resource
                             $color = $has ? '#065f46' : '#b91c1c';
                             $bg = $has ? '#ecfdf5' : '#fee2e2';
                             $txt = $has ? 'permitido' : 'negado';
+
                             return "<span style=\"display:inline-block;margin:.125rem;padding:.25rem .5rem;border-radius:.5rem;background:$bg;color:$color;border:1px solid rgba(0,0,0,.05)\">$label: $txt</span>";
                         })->implode(' ');
+
                         return $parts ?: '<span class="text-gray-400">—</span>';
                     })
                     ->toggleable(),

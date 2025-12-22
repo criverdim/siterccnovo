@@ -30,11 +30,12 @@ class AdminPagesStatusTest extends TestCase
 
         $paths = [
             '/admin',
+            '/admin/ping',
             '/admin/users',
             '/admin/groups',
             '/admin/events',
             '/admin/ministerios',
-            '/admin/settings',
+            '/admin/settings-home',
             '/admin/logs',
             '/admin/payment-logs',
             '/admin/visitas',
@@ -53,6 +54,20 @@ class AdminPagesStatusTest extends TestCase
         }
     }
 
+    public function test_admin_ping_requires_auth_and_returns_true_when_authenticated(): void
+    {
+        $this->get('/admin/ping')
+            ->assertStatus(401)
+            ->assertSeeText('auth=false');
+
+        $this->actingAs($this->adminUser);
+
+        $this->get('/admin/ping')
+            ->assertOk()
+            ->assertSeeText('auth=true')
+            ->assertSeeText('can_panel=1');
+    }
+
     public function test_filament_route_names_exist(): void
     {
         $names = [
@@ -60,13 +75,13 @@ class AdminPagesStatusTest extends TestCase
             'filament.admin.resources.groups.index',
             'filament.admin.resources.events.index',
             'filament.admin.resources.ministerios.index',
-            'filament.admin.resources.settings.index',
             'filament.admin.resources.logs.index',
             'filament.admin.resources.payment-logs.index',
             'filament.admin.resources.visitas.index',
             'filament.admin.pages.pastoreio-history',
             'filament.admin.pages.presenca-rapida',
             'filament.admin.pages.duplicates-tool',
+            'filament.admin.pages.settings-home',
         ];
         foreach ($names as $name) {
             $this->assertTrue(\Illuminate\Support\Facades\Route::has($name), "Route name missing: $name");

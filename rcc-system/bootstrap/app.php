@@ -23,17 +23,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
             try {
                 if (str_starts_with($request->path(), 'admin')) {
-                    // Evita loops: se já estamos na página de login do painel (/admin),
-                    // não redirecionar novamente para ela.
-                    if ($request->is('admin')) {
+                    if ($request->is('admin/livewire/update')) {
                         return null;
                     }
                     \Illuminate\Support\Facades\Log::error('admin.error', [
                         'path' => $request->path(),
                         'message' => $e->getMessage(),
+                        'class' => get_class($e),
+                        'code' => (int) $e->getCode(),
+                        'file' => $e->getFile(),
+                        'line' => (int) $e->getLine(),
                     ]);
                     if ($e instanceof \Illuminate\Auth\AuthenticationException || $e instanceof \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException || $e instanceof \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException) {
-                        return redirect('/admin');
+                        return redirect('/admin/login?fresh=1');
                     }
                     if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
                         return response('Acesso negado', 403);
@@ -45,6 +47,9 @@ return Application::configure(basePath: dirname(__DIR__))
                         }
                         if ($status === 404) {
                             return response('Página não encontrada', 404);
+                        }
+                        if ($status === 419) {
+                            return redirect('/admin/login?fresh=1');
                         }
                     }
 

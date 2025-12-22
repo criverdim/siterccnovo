@@ -21,6 +21,10 @@ class AdminAccess
                 auth()->logout();
             }
 
+            if ($request->is('admin/livewire/update')) {
+                return $next($request);
+            }
+
             if ($request->is('admin/assets') || $request->is('admin/assets*')) {
                 return $next($request);
             }

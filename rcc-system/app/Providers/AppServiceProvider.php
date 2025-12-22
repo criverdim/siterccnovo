@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +26,29 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(\Illuminate\Console\Events\CommandStarting::class, function (\Illuminate\Console\Events\CommandStarting $event): void {
+            if (! app()->environment('production')) {
+                return;
+            }
+
+            if ((bool) env('ALLOW_DESTRUCTIVE_COMMANDS', false)) {
+                return;
+            }
+
+            $command = (string) ($event->command ?? '');
+            $blocked = [
+                'migrate:fresh',
+                'migrate:refresh',
+                'migrate:reset',
+                'db:wipe',
+                'schema:drop',
+            ];
+
+            if (in_array($command, $blocked, true)) {
+                throw new \RuntimeException('Comando bloqueado em produção: '.$command);
+            }
+        });
+
         Gate::define('manage_pastoreio', function (?User $user) {
             if (! $user) {
                 return false;
@@ -71,6 +95,12 @@ class AppServiceProvider extends ServiceProvider
                         'services.mercadopago.webhook_url' => $mp->value['webhook_url'] ?? config('services.mercadopago.webhook_url'),
                     ]);
                 }
+            }
+        } catch (\Throwable $e) {
+        }
+        try {
+            if (! config('services.mercadopago.webhook_url')) {
+                config(['services.mercadopago.webhook_url' => route('events.payment.webhook')]);
             }
         } catch (\Throwable $e) {
         }
@@ -152,6 +182,45 @@ class AppServiceProvider extends ServiceProvider
             $isLocalHost = in_array($reqHost, ['127.0.0.1', 'localhost'], true);
             if (! $isLocalHost && str_starts_with($appUrl, 'https://')) {
                 \Illuminate\Support\Facades\URL::forceScheme('https');
+            }
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            $reqHost = null;
+            try {
+                $reqHost = request()->getHost();
+            } catch (\Throwable $e2) {
+            }
+            if (is_string($reqHost) && $reqHost !== '') {
+                if (! in_array($reqHost, ['127.0.0.1', 'localhost'], true) && filter_var($reqHost, FILTER_VALIDATE_IP) === false) {
+                    $configuredDomain = (string) (config('session.domain') ?? '');
+                    $normalizedDomain = ltrim($configuredDomain, '.');
+
+                    if ($normalizedDomain === '') {
+                        $parts = array_values(array_filter(explode('.', $reqHost), fn ($p) => $p !== ''));
+                        $count = count($parts);
+                        if ($count >= 2) {
+                            $last2 = implode('.', array_slice($parts, -2));
+                            $base = $last2;
+                            if ($last2 === 'com.br' && $count >= 3) {
+                                $base = implode('.', array_slice($parts, -3));
+                            }
+                            config(['session.domain' => '.'.$base]);
+                        }
+                    } elseif (! str_ends_with($reqHost, $normalizedDomain)) {
+                        config(['session.domain' => null]);
+                    }
+                }
+                $secure = config('session.secure');
+                if ($secure === true) {
+                    try {
+                        if (! request()->isSecure()) {
+                            config(['session.secure' => false]);
+                        }
+                    } catch (\Throwable $e3) {
+                    }
+                }
             }
         } catch (\Throwable $e) {
         }

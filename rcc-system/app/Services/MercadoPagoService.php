@@ -34,7 +34,7 @@ class MercadoPagoService
                 Log::warning('Mercado Pago não configurado: MERCADOPAGO_ACCESS_TOKEN ausente');
             }
         } catch (\Throwable $e) {
-            Log::error('Falha ao inicializar SDK Mercado Pago', [ 'error' => $e->getMessage() ]);
+            Log::error('Falha ao inicializar SDK Mercado Pago', ['error' => $e->getMessage()]);
         }
     }
 

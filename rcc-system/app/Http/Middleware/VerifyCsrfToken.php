@@ -20,5 +20,7 @@ class VerifyCsrfToken extends Middleware
         '/api/register/check',
         'login',
         '/login',
+        'admin/login',
+        '/admin/login',
     ];
 }
