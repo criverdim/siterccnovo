@@ -12,6 +12,7 @@ class EventParticipation extends Model
     protected $fillable = [
         'user_id',
         'event_id',
+        'quantity',
         'payment_status',
         'payment_method',
         'mp_payment_id',
@@ -22,6 +23,7 @@ class EventParticipation extends Model
     ];
 
     protected $casts = [
+        'quantity' => 'integer',
         'mp_payload_raw' => 'array',
         'checked_in_at' => 'datetime',
     ];

@@ -109,17 +109,117 @@
                                 <span class="font-semibold text-gray-900" id="total-display">R$ <?php echo e(number_format($event->price, 2, ',', '.')); ?></span>
                             </div>
                         </div>
-                        </form>
                         <div class="mt-6">
-                            <form action="<?php echo e(route('events.payment.process', $event)); ?>" method="POST" id="purchase-submit-form" class="space-y-4">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="quantity" id="quantity-hidden" value="1">
-                                <input type="hidden" name="email" id="email-hidden" value="<?php echo e(auth()->user()->email ?? ''); ?>">
-                                <button type="submit" class="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors inline-flex items-center justify-center gap-2 whitespace-nowrap">
-                                    <i class="fas fa-ticket-alt mr-2"></i>Pagar com Mercado Pago
-                                </button>
-                            </form>
-                            <div id="purchase-error" class="mt-3 hidden text-sm text-red-600"></div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Método de pagamento</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <label class="inline-flex items-center gap-2 border rounded-md px-3 py-2 cursor-pointer">
+                                            <input type="radio" name="pay_method" value="pix" class="accent-emerald-600" checked>
+                                            <span>PIX</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 border rounded-md px-3 py-2 cursor-pointer">
+                                            <input type="radio" name="pay_method" value="credit_card" class="accent-emerald-600">
+                                            <span>Cartão</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 border rounded-md px-3 py-2 cursor-pointer">
+                                            <input type="radio" name="pay_method" value="boleto" class="accent-emerald-600">
+                                            <span>Boleto</span>
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1" id="pix-email-notice">
+                                        <span class="font-bold">Importante:</span> use um e-mail válido. Você receberá o comprovante oficial do Mercado Pago e o ingresso por aqui.
+                                    </p>
+                                </div>
+                                <div id="boleto-fields" class="mt-4 hidden space-y-3">
+                                    <div class="grid grid-cols-1 gap-3">
+                                        <div>
+                                            <label for="boleto-name" class="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
+                                            <input type="text" id="boleto-name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" value="<?php echo e(auth()->user()->name ?? ''); ?>">
+                                        </div>
+                                        <div>
+                                            <label for="boleto-cpf" class="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                                            <input type="text" id="boleto-cpf" maxlength="14" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        </div>
+                                        <div>
+                                            <label for="boleto-cep" class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                                            <input type="text" id="boleto-cep" maxlength="9" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        </div>
+                                        <div>
+                                            <label for="boleto-street" class="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
+                                            <input type="text" id="boleto-street" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        </div>
+                                        <div>
+                                            <label for="boleto-number" class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                                            <input type="text" id="boleto-number" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        </div>
+                                        <div>
+                                            <label for="boleto-neighborhood" class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+                                            <input type="text" id="boleto-neighborhood" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        </div>
+                                        <div>
+                                            <label for="boleto-city" class="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+                                            <input type="text" id="boleto-city" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        </div>
+                                        <div>
+                                            <label for="boleto-state" class="block text-sm font-medium text-gray-700 mb-1">Estado (UF)</label>
+                                            <input type="text" id="boleto-state" maxlength="2" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500">
+                                        Estes dados são exigidos pelo Mercado Pago para emissão do boleto.
+                                    </p>
+                                </div>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($event->parceling_enabled): ?>
+                                <div id="installments-block" class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Parcelamento (até <?php echo e((int) ($event->parceling_max ?? 12)); ?>x)</label>
+                                    <select id="installments" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php for($i=1; $i<=max(1,(int)($event->parceling_max ?? 12)); $i++): ?>
+                                            <option value="<?php echo e($i); ?>"><?php echo e($i); ?>x</option>
+                                        <?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    </select>
+                                </div>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <?php ($mpKey = config('services.mercadopago.public_key')); ?>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($mpKey)): ?>
+                                    <script src="https://sdk.mercadopago.com/js/v2"></script>
+                                    <div id="mp-bricks-loading" class="text-center py-4 text-gray-500">
+                                        <svg class="animate-spin h-8 w-8 mx-auto mb-2 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span class="text-sm">Carregando pagamentos...</span>
+                                    </div>
+                                    <div id="mp-card-brick" class="hidden"></div>
+                                    <div id="mp-pix-brick" class="hidden"></div>
+                                    <div id="mp-boleto-brick" class="hidden"></div>
+                                    <div id="pix-info" class="hidden space-y-2">
+                                        <div class="flex justify-center">
+                                            <img id="pix-qr" class="w-48 h-48 border rounded-md object-contain" alt="QR Code PIX" />
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <input id="pix-code" class="flex-1 px-2 py-1 border rounded" readonly />
+                                            <button id="pix-copy" type="button" class="px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors">Copiar</button>
+                                        </div>
+                                        <p class="text-xs text-center text-gray-500">Abra o app do seu banco e escaneie o QR Code ou copie o código.</p>
+                                    </div>
+                                    <div id="boleto-info" class="hidden space-y-2">
+                                        <div class="p-3 bg-gray-100 rounded text-center break-all font-mono text-sm" id="boleto-barcode"></div>
+                                        <button id="boleto-copy" type="button" class="w-full px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors">Copiar código de barras</button>
+                                        <div class="text-center">
+                                            <a id="boleto-link" href="#" target="_blank" class="text-emerald-600 hover:underline text-sm">Visualizar Boleto PDF</a>
+                                        </div>
+                                    </div>
+                                    <div class="pt-4">
+                                        <button id="confirm-payment" type="button" class="w-full px-4 py-3 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors inline-flex items-center justify-center gap-2 font-semibold shadow-md">
+                                            Confirmar Pagamento
+                                        </button>
+                                    </div>
+
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <div id="purchase-error" class="mt-3 hidden text-sm text-red-600"></div>
+                                <div id="purchase-success" class="mt-2 hidden text-sm text-emerald-700"></div>
+                            </div>
                         </div>
                         <script>
                             (function(){
@@ -127,8 +227,8 @@
                                 const qtyDisp = document.getElementById('quantity-display');
                                 const totalDisp = document.getElementById('total-display');
                                 const emailInput = document.getElementById('email');
-                                const form = document.getElementById('purchase-submit-form');
                                 const err = document.getElementById('purchase-error');
+                                const ok = document.getElementById('purchase-success');
                                 const unit = <?php echo e((float) $event->price); ?>;
                                 const fmt = (n)=> new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(n);
                                 const update = ()=> {
@@ -138,26 +238,449 @@
                                 };
                                 qtySel && qtySel.addEventListener('change', update);
                                 update();
-                                form && form.addEventListener('submit', async (e)=>{
-                                    e.preventDefault();
-                                    err.classList.add('hidden');
-                                    document.getElementById('quantity-hidden').value = qtySel.value;
-                                    document.getElementById('email-hidden').value = emailInput.value;
+                                
+                                const methodInputs = document.querySelectorAll('input[name=pay_method]');
+                                const instBlock = document.getElementById('installments-block');
+                                const instSel = document.getElementById('installments');
+                                const pixInfo = document.getElementById('pix-info');
+                                const pixQr = document.getElementById('pix-qr');
+                                const pixCode = document.getElementById('pix-code');
+                                const pixCopy = document.getElementById('pix-copy');
+                                const boletoInfo = document.getElementById('boleto-info');
+                                const boletoBarcode = document.getElementById('boleto-barcode');
+                                const boletoCopy = document.getElementById('boleto-copy');
+                                const boletoLink = document.getElementById('boleto-link');
+                                const confirmBtn = document.getElementById('confirm-payment');
+                                const boletoFields = document.getElementById('boleto-fields');
+                                const boletoCpf = document.getElementById('boleto-cpf');
+                                const boletoCep = document.getElementById('boleto-cep');
+                                const boletoState = document.getElementById('boleto-state');
+
+                                const toggleInstallments = ()=>{
+                                    const m = (document.querySelector('input[name=pay_method]:checked')?.value)||'pix';
+                                    if (instBlock) instBlock.classList.toggle('hidden', m!=='credit_card');
+                                    if (boletoFields) boletoFields.classList.toggle('hidden', m!=='boleto');
+                                };
+                                methodInputs.forEach(el=>el.addEventListener('change', ()=>{ toggleInstallments(); renderBricks(); }));
+                                toggleInstallments();
+                                
+                                if (boletoCpf) {
+                                    boletoCpf.addEventListener('input', () => {
+                                        let v = boletoCpf.value.replace(/\D/g, '').slice(0, 11);
+                                        if (v.length > 9) {
+                                            v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+                                        } else if (v.length > 6) {
+                                            v = v.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+                                        } else if (v.length > 3) {
+                                            v = v.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+                                        }
+                                        boletoCpf.value = v;
+                                    });
+                                }
+                                
+                                if (boletoCep) {
+                                    boletoCep.addEventListener('input', () => {
+                                        let v = boletoCep.value.replace(/\D/g, '').slice(0, 8);
+                                        if (v.length > 5) {
+                                            v = v.replace(/(\d{5})(\d{0,3})/, '$1-$2');
+                                        }
+                                        boletoCep.value = v;
+                                    });
+                                }
+                                
+                                if (boletoState) {
+                                    boletoState.addEventListener('input', () => {
+                                        boletoState.value = boletoState.value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
+                                    });
+                                }
+                                
+                                pixCopy?.addEventListener('click', () => {
+                                    if(pixCode?.value) { navigator.clipboard.writeText(pixCode.value); alert('Código PIX copiado!'); }
+                                });
+                                boletoCopy?.addEventListener('click', () => {
+                                    if(boletoBarcode?.textContent) { navigator.clipboard.writeText(boletoBarcode.textContent); alert('Código de barras copiado!'); }
+                                });
+
+                                let participationId = null;
+                                let lastPaymentId = null;
+                                let pixPollInterval = null;
+                                let pixStartTime = null;
+                                const PIX_TTL_MS = 15 * 60 * 1000;
+
+                                function stopPixPolling() {
+                                    if (pixPollInterval) {
+                                        clearInterval(pixPollInterval);
+                                        pixPollInterval = null;
+                                    }
+                                }
+
+                                async function checkPixStatus() {
+                                    if (!participationId) {
+                                        return;
+                                    }
+                                    if (pixStartTime && (Date.now() - pixStartTime) > PIX_TTL_MS) {
+                                        stopPixPolling();
+                                        if (pixInfo) pixInfo.classList.add('hidden');
+                                        if (pixQr) pixQr.src = '';
+                                        if (pixCode) pixCode.value = '';
+                                        if (ok) {
+                                            ok.textContent = 'O tempo do QR Code expirou. Clique em \"Confirmar Pagamento\" para gerar um novo código.';
+                                            ok.classList.remove('hidden');
+                                        }
+                                        confirmBtn.disabled = false;
+                                        confirmBtn.innerHTML = 'Confirmar Pagamento';
+                                        return;
+                                    }
                                     try {
-                                        const fd = new FormData(form);
-                                        const res = await fetch(form.action, { method:'POST', headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content || '') }, body: fd });
-                                        const j = await res.json().catch(()=>({}));
-                                        if (res.ok && j?.init_point) {
-                                            window.location.href = j.init_point;
+                                        const res = await fetch('/area/api/participations/' + participationId, {
+                                            headers: {
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            }
+                                        });
+                                        if (!res.ok) {
                                             return;
                                         }
-                                        err.textContent = (j?.error) || `Erro ${res.status}`;
-                                        err.classList.remove('hidden');
+                                        const data = await res.json();
+                                        const st = data.payment_status || '';
+                                        if (st === 'approved') {
+                                            stopPixPolling();
+                                            if (ok) {
+                                                ok.textContent = 'Pagamento confirmado! Seu ingresso estará em \"Meus Ingressos\" em instantes.';
+                                                ok.classList.remove('hidden');
+                                            }
+                                            setTimeout(() => {
+                                                window.location.href = "<?php echo e(route('events.my-tickets')); ?>";
+                                            }, 2000);
+                                        } else if (['rejected', 'cancelled', 'refunded'].includes(st)) {
+                                            stopPixPolling();
+                                            if (err) {
+                                                err.textContent = 'O pagamento foi ' + st + '. Tente gerar um novo QR Code.';
+                                                err.classList.remove('hidden');
+                                            }
+                                        }
                                     } catch (e) {
-                                        err.textContent = 'Falha de rede. Tente novamente.';
+                                    }
+                                }
+
+                                function startPixPolling() {
+                                    stopPixPolling();
+                                    pixStartTime = Date.now();
+                                    pixPollInterval = setInterval(checkPixStatus, 5000);
+                                }
+                                
+                                async function ensureParticipation(){
+                                    try {
+                                        const res = await fetch("<?php echo e(route('events.participate', $event)); ?>", { method:'POST', headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content || '') } });
+                                        if (!res.ok) throw new Error('Erro HTTP: '+res.status);
+                                        const j = await res.json();
+                                        participationId = j.participation_id || participationId;
+                                    } catch(e) {
+                                        console.error('Falha na participação:', e);
+                                        err.textContent = 'Não foi possível iniciar o processo de compra. Verifique sua conexão e recarregue a página.';
                                         err.classList.remove('hidden');
+                                        document.getElementById('mp-bricks-loading')?.classList.add('hidden');
+                                        throw e;
+                                    }
+                                }
+
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($mpKey)): ?>
+                                const mp = new MercadoPago("<?php echo e($mpKey); ?>", { locale: 'pt-BR' });
+                                const bricksBuilder = mp.bricks();
+                                let pixBrickController = null, cardBrickController = null, boletoBrickController = null;
+                                
+                                function validateBoletoFields() {
+                                    const nameInput = document.getElementById('boleto-name');
+                                    const cpfInput = boletoCpf;
+                                    const cepInput = boletoCep;
+                                    const streetInput = document.getElementById('boleto-street');
+                                    const numberInput = document.getElementById('boleto-number');
+                                    const neighborhoodInput = document.getElementById('boleto-neighborhood');
+                                    const cityInput = document.getElementById('boleto-city');
+                                    const stateInput = boletoState;
+
+                                    const fullName = (nameInput?.value || '').trim();
+                                    const cpf = (cpfInput?.value || '').replace(/\D/g, '');
+                                    const cep = (cepInput?.value || '').replace(/\D/g, '');
+                                    const street = (streetInput?.value || '').trim();
+                                    const number = (numberInput?.value || '').trim();
+                                    const neighborhood = (neighborhoodInput?.value || '').trim();
+                                    const city = (cityInput?.value || '').trim();
+                                    const state = (stateInput?.value || '').trim();
+
+                                    if (!fullName || fullName.split(' ').filter(Boolean).length < 2) {
+                                        err.textContent = 'Informe o nome completo para emissão do boleto.';
+                                        err.classList.remove('hidden');
+                                        return false;
+                                    }
+
+                                    if (cpf.length !== 11) {
+                                        err.textContent = 'Informe um CPF válido com 11 dígitos.';
+                                        err.classList.remove('hidden');
+                                        return false;
+                                    }
+
+                                    if (cep.length !== 8) {
+                                        err.textContent = 'Informe um CEP válido com 8 dígitos.';
+                                        err.classList.remove('hidden');
+                                        return false;
+                                    }
+
+                                    if (!street || !number || !neighborhood || !city || state.length !== 2) {
+                                        err.textContent = 'Preencha todos os dados de endereço para emissão do boleto.';
+                                        err.classList.remove('hidden');
+                                        return false;
+                                    }
+
+                                    return true;
+                                }
+                                
+                                async function renderBricks(){
+                                    const loading = document.getElementById('mp-bricks-loading');
+                                    
+                                    // Timeout de segurança para não ficar carregando infinitamente
+                                    const loadTimeout = setTimeout(() => {
+                                        if(loading && !loading.classList.contains('hidden')) {
+                                            loading.classList.add('hidden');
+                                            if(err && err.classList.contains('hidden')) {
+                                                err.textContent = 'O carregamento do pagamento está demorando. Verifique sua conexão ou recarregue a página.';
+                                                err.classList.remove('hidden');
+                                            }
+                                        }
+                                    }, 10000); // 10 segundos
+
+                                    try {
+                                        if (!participationId) await ensureParticipation();
+                                        
+                                        const unitAmount = <?php echo e((float) $event->price); ?>;
+                                        const quantity = parseInt(qtySel?.value || '1', 10) || 1;
+                                        const amount = unitAmount * quantity;
+                                        const method = (document.querySelector('input[name=pay_method]:checked')?.value)||'pix';
+                                        
+                                        if (ok) {
+                                            ok.textContent = '';
+                                            ok.classList.add('hidden');
+                                        }
+                                        
+                                        // Reset UI
+                                        document.getElementById('mp-card-brick')?.classList.add('hidden');
+                                        pixInfo?.classList.add('hidden');
+                                        boletoInfo?.classList.add('hidden');
+                                        err.classList.add('hidden');
+                                        
+                                        // Toggle aviso de email
+                                        const notice = document.getElementById('pix-email-notice');
+                                        if(notice) notice.style.display = (method === 'credit_card') ? 'none' : 'block';
+                                        
+                                        if (method === 'credit_card') {
+                                            document.getElementById('mp-card-brick')?.classList.remove('hidden');
+                                            confirmBtn?.classList.add('hidden');
+                                            
+                                            if (!cardBrickController) {
+                                                try {
+                                                    cardBrickController = await bricksBuilder.create('cardPayment', 'mp-card-brick', {
+                                                        initialization: { amount },
+                                                        callbacks: {
+                                                            onSubmit: async ({ formData }) => {
+                                                                const payload = { 
+                                                                    participation_id: participationId, 
+                                                                    payment_method: 'credit_card', 
+                                                                    payer: { 
+                                                                        email: formData.cardholderEmail, 
+                                                                        identification: formData.payer?.identification || { type: 'CPF', number: '' } 
+                                                                    }, 
+                                                                    quantity: parseInt(qtySel?.value || '1', 10) || 1,
+                                                                    token: formData.token, 
+                                                                    installments: (instSel?.value || 1), 
+                                                                    issuer_id: formData.issuerId, 
+                                                                    payment_method_id: formData.paymentMethodId 
+                                                                };
+                                                                
+                                                                const res = await fetch("<?php echo e(route('checkout')); ?>", { 
+                                                                    method: 'POST', 
+                                                                    headers: { 
+                                                                        'Content-Type': 'application/json',
+                                                                        'X-Requested-With': 'XMLHttpRequest',
+                                                                        'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content || '') 
+                                                                    }, 
+                                                                    body: JSON.stringify(payload) 
+                                                                });
+                                                                
+                                                                const j = await res.json();
+                                                                lastPaymentId = j?.payment?.id || lastPaymentId;
+                                                                
+                                                                if (!res.ok || j.status === 'error') {
+                                                                    let msg = j.message || j.error || 'Não foi possível processar o pagamento. Tente novamente em instantes.';
+                                                                    if (j.errors) msg += ': ' + Object.values(j.errors).flat().join(', ');
+                                                                    
+                                                                    if (msg.includes('Invalid users involved') || msg.includes('email forbidden') || msg.includes('UNAUTHORIZED')) {
+                                                                        msg += '\n\nDICA: No ambiente de testes (Sandbox), você não pode usar o mesmo e-mail da conta do vendedor (Mercado Pago). Tente usar um e-mail diferente no formulário.';
+                                                                    }
+                                                                    
+                                                                    err.textContent = msg;
+                                                                    err.classList.remove('hidden');
+                                                                } else {
+                                                                    if (ok) {
+                                                                        ok.textContent = 'Pagamento aprovado! Seus ingressos estarão em \"Meus Ingressos\" em instantes.';
+                                                                        ok.classList.remove('hidden');
+                                                                    }
+                                                                    setTimeout(() => {
+                                                                        window.location.href = "<?php echo e(route('events.my-tickets')); ?>";
+                                                                    }, 2000);
+                                                                }
+                                                            },
+                                                            onError: (error) => { 
+                                                                console.error(error);
+                                                                err.textContent = 'Falha ao processar cartão. Verifique os dados.'; 
+                                                                err.classList.remove('hidden'); 
+                                                            }
+                                                        }
+                                                    });
+                                                } catch (brickError) {
+                                                    console.error('Erro ao criar Brick:', brickError);
+                                                    err.textContent = 'Erro ao carregar formulário de cartão: ' + (brickError.message || 'Tente recarregar a página.');
+                                                    err.classList.remove('hidden');
+                                                }
+                                            }
+                                        } else {
+                                            // PIX or Boleto
+                                            confirmBtn?.classList.remove('hidden');
+                                        }
+                                        
+                                        loading?.classList.add('hidden');
+                                    } catch(e) {
+                                        console.error(e);
+                                        loading?.classList.add('hidden');
+                                        if (err.textContent === '') {
+                                            err.textContent = 'Não foi possível carregar o sistema de pagamentos. Verifique sua conexão e tente novamente.';
+                                            err.classList.remove('hidden');
+                                        }
+                                    } finally {
+                                        clearTimeout(loadTimeout);
+                                    }
+                                }
+                                
+                                renderBricks();
+                                
+                                confirmBtn && confirmBtn.addEventListener('click', async ()=>{
+                                    const method = (document.querySelector('input[name=pay_method]:checked')?.value)||'pix';
+                                    err.classList.add('hidden');
+                                    
+                                    try {
+                                        if (method === 'boleto') {
+                                            const ok = validateBoletoFields();
+                                            if (!ok) {
+                                                return;
+                                            }
+                                        }
+
+                                        confirmBtn.disabled = true;
+                                        confirmBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...';
+                                        
+                                        if (!participationId) await ensureParticipation();
+                                        
+                                        const quantity = parseInt(qtySel?.value || '1', 10) || 1;
+                                        let payload = { 
+                                            participation_id: participationId, 
+                                            payment_method: method,
+                                            quantity,
+                                            payer: { email: (document.getElementById('email')?.value || '<?php echo e(auth()->user()->email ?? 'user@local'); ?>') } 
+                                        };
+                                        
+                                        // Additional data for Boleto (mocked if missing, ideally should ask user)
+                                        if (method === 'boleto') {
+                                            const nameInput = document.getElementById('boleto-name');
+                                            const cpfInput = document.getElementById('boleto-cpf');
+                                            const cepInput = document.getElementById('boleto-cep');
+                                            const streetInput = document.getElementById('boleto-street');
+                                            const numberInput = document.getElementById('boleto-number');
+                                            const neighborhoodInput = document.getElementById('boleto-neighborhood');
+                                            const cityInput = document.getElementById('boleto-city');
+                                            const stateInput = document.getElementById('boleto-state');
+
+                                            const fullName = (nameInput?.value || '').trim();
+                                            const parts = fullName.split(' ').filter(Boolean);
+                                            const firstName = parts[0] || 'Nome';
+                                            const lastName = parts.length > 1 ? parts.slice(1).join(' ') : 'Sobrenome';
+
+                                            const cpf = (cpfInput?.value || '').replace(/\D/g, '');
+                                            const cep = (cepInput?.value || '').replace(/\D/g, '');
+
+                                            payload.payer = {
+                                                ...payload.payer,
+                                                first_name: firstName,
+                                                last_name: lastName,
+                                                identification: { type: 'CPF', number: cpf },
+                                                address: {
+                                                    street_name: (streetInput?.value || ''),
+                                                    street_number: (numberInput?.value || ''),
+                                                    zip_code: cep,
+                                                    neighborhood: (neighborhoodInput?.value || ''),
+                                                    state: (stateInput?.value || '').toUpperCase(),
+                                                    city: (cityInput?.value || '')
+                                                }
+                                            };
+                                        }
+                                        
+                                        const res = await fetch("<?php echo e(route('checkout')); ?>", { 
+                                            method: 'POST', 
+                                            headers: { 
+                                                'Content-Type': 'application/json',
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content || '') 
+                                            }, 
+                                            body: JSON.stringify(payload) 
+                                        });
+                                        
+                                        const j = await res.json();
+                                         lastPaymentId = j?.payment?.id || lastPaymentId;
+                                         
+                                         if (!res.ok || j.status === 'error') {
+                                             let msg = j.message || j.error || 'Não foi possível criar o pagamento. Tente novamente em instantes.';
+                                             if (j.errors) msg += ': ' + Object.values(j.errors).flat().join(', ');
+                                             
+                                             if (msg.includes('Invalid users involved') || msg.includes('email forbidden') || msg.includes('UNAUTHORIZED')) {
+                                                msg += '\n\nDICA: No ambiente de testes (Sandbox), você NÃO PODE usar o mesmo e-mail da conta do vendedor (Mercado Pago). Tente usar um e-mail diferente (ex: test_user_123@test.com) no campo de e-mail acima.';
+                                            }
+                                             
+                                             throw new Error(msg);
+                                         }
+                                         
+                                        const tx = (j?.payment?.point_of_interaction?.transaction_data) || {};
+                                       
+                                        if (method === 'pix') {
+                                            const code = tx.qr_code || '';
+                                            const base64 = tx.qr_code_base64 || '';
+                                            
+                                            if (code) {
+                                                if(pixCode) pixCode.value = code;
+                                                if(pixQr && base64) pixQr.src = 'data:image/png;base64,' + base64;
+                                                pixInfo?.classList.remove('hidden');
+                                                startPixPolling();
+                                            }
+                                        } else if (method === 'boleto') {
+                                            const barcode = (j?.payment?.barcode?.content) || (tx.ticket_url) || 'Código gerado';
+                                            const url = tx.ticket_url;
+                                            
+                                            if(boletoBarcode) boletoBarcode.textContent = barcode; // Or message
+                                            if(boletoLink && url) { boletoLink.href = url; boletoLink.classList.remove('hidden'); }
+                                            
+                                            boletoInfo?.classList.remove('hidden');
+                                            
+                                            // Open boleto in new tab
+                                            if(url) window.open(url, '_blank');
+                                        }
+                                        
+                                    } catch (e) {
+                                        console.error(e);
+                                        err.textContent = e.message || 'Não foi possível confirmar o pagamento. Verifique os dados e tente novamente.'; 
+                                        err.classList.remove('hidden');
+                                    } finally {
+                                        confirmBtn.disabled = false;
+                                        confirmBtn.innerHTML = 'Confirmar Pagamento';
                                     }
                                 });
+
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             })();
                         </script>
                     </div>

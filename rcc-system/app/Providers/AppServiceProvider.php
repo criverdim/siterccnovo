@@ -27,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::listen(\Illuminate\Console\Events\CommandStarting::class, function (\Illuminate\Console\Events\CommandStarting $event): void {
+            if (app()->runningUnitTests() || (env('APP_ENV') === 'testing')) {
+                return;
+            }
             if (! app()->environment('production')) {
                 return;
             }
@@ -100,7 +103,7 @@ class AppServiceProvider extends ServiceProvider
         }
         try {
             if (! config('services.mercadopago.webhook_url')) {
-                config(['services.mercadopago.webhook_url' => route('events.payment.webhook')]);
+                config(['services.mercadopago.webhook_url' => route('webhooks.mercadopago')]);
             }
         } catch (\Throwable $e) {
         }

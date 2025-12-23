@@ -16,9 +16,7 @@ class PublicEventFlowTest extends TestCase
         $response->assertStatus(200);
         // Simula post sem estar logado
         $post = $this->post('/events/'.$event->id.'/participate', []);
-        // Controller não força auth, então validamos o comportamento de front: redireciono ao login
-        // O teste de integração aqui foca no endpoint existir
-        $post->assertStatus(200);
+        $post->assertStatus(401);
     }
 
     public function test_logged_in_participate_creates_or_finds_participation(): void

@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.access' => \App\Http\Middleware\AdminAccess::class,
             'page.access' => \App\Http\Middleware\PageAccess::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/mercadopago*',
+            'events/payment/webhook*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {

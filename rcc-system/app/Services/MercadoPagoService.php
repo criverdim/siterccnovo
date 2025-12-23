@@ -6,10 +6,10 @@ use App\Models\Event;
 use App\Models\Payment;
 use App\Models\Ticket;
 use Illuminate\Support\Facades\Log;
-use MercadoPago\Item;
-use MercadoPago\Payer;
-use MercadoPago\Preference;
-use MercadoPago\SDK;
+use MercadoPago\MercadoPagoConfig;
+use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Client\Payment\PaymentClient;
+use MercadoPago\Exceptions\MPApiException;
 
 class MercadoPagoService
 {
@@ -25,10 +25,10 @@ class MercadoPagoService
 
         try {
             if ($this->accessToken) {
-                SDK::setAccessToken($this->accessToken);
+                MercadoPagoConfig::setAccessToken($this->accessToken);
                 $integratorId = (string) env('MERCADOPAGO_INTEGRATOR_ID', '');
                 if ($integratorId) {
-                    SDK::setIntegratorId($integratorId);
+                    MercadoPagoConfig::setIntegratorId($integratorId);
                 }
             } else {
                 Log::warning('Mercado Pago não configurado: MERCADOPAGO_ACCESS_TOKEN ausente');
@@ -47,22 +47,9 @@ class MercadoPagoService
                     'error' => 'Pagamento indisponível: configure o Mercado Pago.',
                 ];
             }
-            $preference = new Preference;
 
-            // Criar item
-            $item = new Item;
-            $item->id = $event->id;
-            $item->title = $event->name;
-            $item->quantity = $quantity;
-            $item->unit_price = floatval($event->price);
-            $item->currency_id = 'BRL';
-            $item->description = substr($event->description, 0, 250);
-
-            // Criar pagador
-            $payer = new Payer;
-            $payer->email = $userEmail;
-            $payer->name = auth()->user()->name ?? 'Comprador';
-
+            $client = new PreferenceClient();
+            
             // Calcular valor total
             $totalAmount = $event->price * $quantity;
 
@@ -82,36 +69,43 @@ class MercadoPagoService
                 'paid_at' => null,
             ]);
 
-            // Configurar URLs de retorno
-            $backUrls = [
-                'success' => route('events.payment.success', ['payment' => $payment->id]),
-                'failure' => route('events.payment.failure', ['payment' => $payment->id]),
-                'pending' => route('events.payment.pending', ['payment' => $payment->id]),
-            ];
-
-            // Configurar preferência
-            $preference->items = [$item];
-            $preference->payer = $payer;
-            $preference->back_urls = $backUrls;
-            $preference->auto_return = 'approved';
-            $preference->notification_url = route('events.payment.webhook');
-            $preference->external_reference = (string) $payment->id;
-            $preference->expires = false;
-            $preference->payment_methods = [
-                'excluded_payment_types' => [],
-                'installments' => 12,
-            ];
-            $preference->statement_descriptor = 'RCC EVENTOS';
-            $preference->binary_mode = false; // Permite pagamentos pendentes
-
-            // Salvar preferência
-            $preference->save();
+            $preference = $client->create([
+                "items" => [
+                    [
+                        "id" => (string) $event->id,
+                        "title" => $event->name,
+                        "quantity" => $quantity,
+                        "unit_price" => floatval($event->price),
+                        "currency_id" => "BRL",
+                        "description" => substr((string)$event->description, 0, 250)
+                    ]
+                ],
+                "payer" => [
+                    "email" => $userEmail,
+                    "name" => auth()->user()->name ?? 'Comprador'
+                ],
+                "back_urls" => [
+                    "success" => route('events.payment.success', ['payment' => $payment->id]),
+                    "failure" => route('events.payment.failure', ['payment' => $payment->id]),
+                    "pending" => route('events.payment.pending', ['payment' => $payment->id])
+                ],
+                "auto_return" => "approved",
+                "notification_url" => route('events.payment.webhook'),
+                "external_reference" => (string) $payment->id,
+                "expires" => false,
+                "payment_methods" => [
+                    "excluded_payment_types" => [],
+                    "installments" => 12
+                ],
+                "statement_descriptor" => "RCC EVENTOS",
+                "binary_mode" => false
+            ]);
 
             // Atualizar pagamento com preference_id
             $payment->update([
                 'mercado_pago_preference_id' => $preference->id,
                 'mercado_pago_data' => [
-                    'preference_data' => $preference->toArray(),
+                    'preference_id' => $preference->id,
                 ],
                 'external_reference' => (string) $payment->id,
             ]);
@@ -151,20 +145,41 @@ class MercadoPagoService
                 return false;
             }
 
-            // Buscar informações do pagamento no Mercado Pago
-            $payment = SDK::get('/v1/payments/'.$paymentId);
+            if ($paymentId === 'test_cli_ping') {
+                Log::info('Webhook ping recebido', ['data' => $data]);
 
-            if (! $payment || ! isset($payment['response'])) {
-                Log::error('Erro ao buscar pagamento no Mercado Pago', ['payment_id' => $paymentId]);
+                return true;
+            }
+
+            if (! is_numeric($paymentId)) {
+                Log::warning('Webhook com payment_id não numérico', [
+                    'payment_id' => $paymentId,
+                    'data' => $data,
+                ]);
 
                 return false;
             }
 
-            $paymentData = $payment['response'];
-            $externalReference = $paymentData['external_reference'] ?? null;
+            // Buscar informações do pagamento no Mercado Pago
+            $client = new PaymentClient();
+            try {
+                $paymentMP = $client->get((int) $paymentId);
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar pagamento no Mercado Pago', [
+                    'payment_id' => $paymentId,
+                    'error' => $e->getMessage()
+                ]);
+                return false;
+            }
+
+            if (! $paymentMP) {
+                return false;
+            }
+
+            $externalReference = $paymentMP->external_reference ?? null;
 
             if (! $externalReference) {
-                Log::warning('Pagamento sem external_reference', ['payment_data' => $paymentData]);
+                Log::warning('Pagamento sem external_reference', ['payment_id' => $paymentId]);
 
                 return false;
             }
@@ -179,30 +194,33 @@ class MercadoPagoService
             }
 
             // Atualizar status do pagamento
+            // Nota: Os campos retornados pelo SDK v3 são objetos/propriedades, não arrays
+            $status = $paymentMP->status;
+            $paymentTypeId = $paymentMP->payment_type_id;
+            $dateApproved = $paymentMP->date_approved;
+
             $paymentRecord->update([
                 'mercado_pago_id' => (string) $paymentId,
-                'payment_method' => $paymentData['payment_type_id'] ?? null,
-                'paid_at' => isset($paymentData['date_approved']) ?
-                    \Carbon\Carbon::parse($paymentData['date_approved']) : null,
-                'status' => $paymentData['status'],
+                'payment_method' => $paymentTypeId,
+                'paid_at' => $dateApproved ? \Carbon\Carbon::parse($dateApproved) : null,
+                'status' => $status,
                 'mercado_pago_data' => array_merge($paymentRecord->mercado_pago_data ?? [], [
-                    'webhook_data' => $paymentData,
+                    'webhook_data' => (array) $paymentMP,
                 ]),
             ]);
 
             // Se pagamento foi aprovado, criar ingressos
-            if ($paymentData['status'] === 'approved') {
+            if ($status === 'approved') {
                 $this->createTickets($paymentRecord);
             }
 
             Log::info('Webhook processado com sucesso', [
                 'payment_id' => $paymentId,
                 'external_reference' => $externalReference,
-                'status' => $paymentData['status'],
+                'status' => $status,
             ]);
 
             return true;
-
         } catch (\Exception $e) {
             Log::error('Erro ao processar webhook', [
                 'data' => $data,

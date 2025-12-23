@@ -2,6 +2,9 @@
 <div class="max-w-4xl mx-auto p-6 md:p-10">
     <?php ($hasParticipation = !empty($participation_id)); ?>
     <?php ($amount = $hasParticipation ? (optional(optional(\App\Models\EventParticipation::find($participation_id))->event)->price ?? 0) : 0); ?>
+    <?php ($defaultInstallments = (int) request()->integer('installments') ?: 1); ?>
+    <?php ($maxInstallments = (int) request()->integer('max_installments') ?: 12); ?>
+    <?php ($selectedMethod = ($payment_method ?? request()->string('method')->toString() ?? 'pix')); ?>
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($mp_public_key) && $hasParticipation): ?>
         <script src="https://sdk.mercadopago.com/js/v2"></script>
         <script>
@@ -61,7 +64,7 @@
                             onSubmit: async ({ formData }) => {
                                 const res = await fetch("<?php echo e(route('checkout')); ?>", {
                                     method:'POST', headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'') },
-                                    body: JSON.stringify({ participation_id: <?php echo e((int)($participation_id ?? 0)); ?>, payment_method:'credit_card', payer: { email: formData.cardholderEmail }, token: formData.token, installments: formData.installments, issuer_id: formData.issuerId })
+                                    body: JSON.stringify({ participation_id: <?php echo e((int)($participation_id ?? 0)); ?>, payment_method:'credit_card', payer: { email: formData.cardholderEmail, identification: formData.payer?.identification || { type:'CPF', number:'' } }, token: formData.token, installments: (formData.installments || <?php echo e($defaultInstallments); ?>), issuer_id: formData.issuerId, payment_method_id: formData.paymentMethodId })
                                 });
                                 const j = await res.json();
                                 alert('Status: '+(j?.status||'ok'));
@@ -70,9 +73,10 @@
                         }
                     });
                 };
-                renderCardBrick();
-                renderPixBrick();
-                renderBoletoBrick();
+                const method = '<?php echo e($selectedMethod); ?>';
+                if (method === 'credit_card') { renderCardBrick(); }
+                else if (method === 'pix') { renderPixBrick(); }
+                else if (method === 'boleto') { renderBoletoBrick(); }
             });
         </script>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -83,6 +87,7 @@
         </div>
     <?php else: ?>
         <div class="p-4 rounded-xl border bg-white">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(empty($payment_method)): ?>
             <form method="post" action="<?php echo e(route('checkout')); ?>" class="space-y-4">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="participation_id" value="<?php echo e($participation_id); ?>" />
@@ -101,8 +106,19 @@
                         <input type="email" name="payer[email]" placeholder="Email" class="rounded-md border px-3 py-2" required />
                     </div>
                 </div>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($maxInstallments>1): ?>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Parcelas (até <?php echo e($maxInstallments); ?>x)</label>
+                    <select name="installments" class="rounded-md border px-3 py-2">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php for($i=1;$i<=$maxInstallments;$i++): ?>
+                            <option value="<?php echo e($i); ?>" <?php if($i===$defaultInstallments): echo 'selected'; endif; ?>><?php echo e($i); ?>x</option>
+                        <?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </select>
+                </div>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 <button type="submit" class="px-4 py-2 rounded-md bg-emerald-600 text-white">Confirmar Pagamento</button>
             </form>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($payment_method ?? '')==='credit_card' && !empty($mp_public_key) && $hasParticipation): ?>
                 <div class="mt-8">
                     <h2 class="text-lg font-semibold mb-2">Cartão de Crédito (Bricks)</h2>

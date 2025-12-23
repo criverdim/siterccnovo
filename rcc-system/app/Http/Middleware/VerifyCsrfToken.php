@@ -22,5 +22,11 @@ class VerifyCsrfToken extends Middleware
         '/login',
         'admin/login',
         '/admin/login',
+        'webhooks/mercadopago',
+        '/webhooks/mercadopago',
+        'webhooks/mercadopago*',
+        'events/payment/webhook',
+        '/events/payment/webhook',
+        'events/payment/webhook*',
     ];
 }

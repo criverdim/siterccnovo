@@ -62,6 +62,7 @@ class AdminPanelProvider extends PanelProvider
             PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
             function (): string {
                 $url = url('/password/forgot');
+
                 return '<div class="fi-help"><a href="'.$url.'">Esqueci minha senha · Recuperar por e-mail</a></div>';
             }
         );
@@ -184,6 +185,7 @@ class AdminPanelProvider extends PanelProvider
                 $css .= '.fi-login-page .fi-form .fi-fo-actions .fi-btn:hover,.fi-login-page .fi-form button[type=submit]:hover{filter:brightness(1.06)!important}';
                 $css .= 'button.fi-btn,a.fi-btn{background:linear-gradient(90deg,#10b981,#059669)!important;color:#fff!important}';
                 $css .= '.fi-btn.fi-btn-outlined{color:#059669!important;border-color:#059669!important}';
+
                 return '<style>'.$css.'</style>';
             }
         );
@@ -194,6 +196,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->authGuard('web')
             ->login()
+            ->unsavedChangesAlerts(false)
             ->sidebarCollapsibleOnDesktop(true)
             ->brandName('RCC Admin')
             ->brandLogo($brandLogoUrl)

@@ -50,6 +50,10 @@
                                 <?php ($cardUrl = $cardPath ? (\Illuminate\Support\Str::startsWith($cardPath, ['http://', 'https://', '/storage', 'storage/']) ? (str_starts_with($cardPath, 'storage/') ? '/'.$cardPath : $cardPath) : \Illuminate\Support\Facades\Storage::disk('public')->url($cardPath)) : null); ?>
                                 <?php ($cardUrl = is_string($cardUrl) ? (string) \Illuminate\Support\Str::of($cardUrl)->trim()->trim("'")->trim('"')->trim('`') : $cardUrl); ?>
                                 <?php ($cardUrl = is_string($cardUrl) && \Illuminate\Support\Str::startsWith($cardUrl, ['http://', 'https://']) ? (parse_url($cardUrl, PHP_URL_PATH) ?: $cardUrl) : $cardUrl); ?>
+                                <?php ($normalizedCard = is_string($cardPath) ? (str_starts_with($cardPath, 'storage/') ? substr($cardPath, 8) : (str_starts_with($cardPath, '/storage/') ? substr($cardPath, 9) : ltrim($cardPath, '/'))) : null); ?>
+                                <?php ($cardExists = $normalizedCard ? \Illuminate\Support\Facades\Storage::disk('public')->exists($normalizedCard) : false); ?>
+                                <?php ($cardUrlFallback = $normalizedCard ? asset('storage/'.ltrim($normalizedCard, '/')) : null); ?>
+                                <?php ($cardUrl = $cardUrl ?: ($cardExists ? \Illuminate\Support\Facades\Storage::disk('public')->url($normalizedCard) : $cardUrlFallback)); ?>
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($cardUrl): ?>
                                     <div class="absolute inset-0 bg-center bg-cover" style="background-image: url('<?php echo e($cardUrl); ?>');"></div>
                                 <?php else: ?>

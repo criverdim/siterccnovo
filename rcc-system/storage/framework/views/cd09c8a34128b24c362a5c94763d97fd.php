@@ -14,13 +14,51 @@
         <div class="relative bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
             <div class="absolute inset-0 bg-black/30"></div>
             
-            <!-- Carrossel de Fundo -->
             <?php ($gallery = is_array($event->gallery_images ?? null) ? array_values(array_filter($event->gallery_images)) : []); ?>
-            <?php ($heroImages = count($gallery) ? $gallery : ([$event->featured_image] ?? [])); ?>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count(array_filter($heroImages))): ?>
-                <img id="hero-image" src="<?php echo e(Storage::disk('public')->url($heroImages[0])); ?>" 
-                     alt="<?php echo e($event->name); ?>" 
-                     class="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700">
+            <?php ($heroList = $gallery); ?>
+            <?php ($heroUrls = collect($heroList)->map(function ($p) {
+                $p = is_array($p) ? (isset($p[0]) ? $p[0] : (isset($p['path']) ? $p['path'] : null)) : $p;
+                if (! is_string($p) || $p === '') {
+                    return null;
+                }
+                if (\Illuminate\Support\Str::startsWith($p, ['http://', 'https://'])) {
+                    return $p;
+                }
+                if (\Illuminate\Support\Str::startsWith($p, ['/storage', 'storage/'])) {
+                    $np = \Illuminate\Support\Str::startsWith($p, '/storage/') ? substr($p, 9) : (str_starts_with($p, 'storage/') ? substr($p, 8) : ltrim($p, '/'));
+                    return asset('storage/'.ltrim($np, '/'));
+                }
+                $np = ltrim($p, '/');
+                if (! \Illuminate\Support\Str::contains($np, '/')) {
+                    $np = 'events/gallery/'.$np;
+                }
+                try {
+                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($np)) {
+                        return \Illuminate\Support\Facades\Storage::disk('public')->url($np);
+                    }
+                } catch (\Throwable $e) {
+                }
+                return asset('storage/'.ltrim($np, '/'));
+            })->filter()->values()->all()); ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($heroUrls)): ?>
+                <div id="hero-carousel" class="absolute inset-0">
+                    <div class="absolute inset-0 w-full h-full bg-center bg-cover opacity-40 transition-opacity duration-700" style="background-image: url('<?php echo e($heroUrls[0]); ?>');"></div>
+                </div>
+            <?php endif; ?>
+            <?php if(count($heroUrls) > 1): ?>
+                <script>
+                    (function () {
+                        var imgs = <?php echo json_encode($heroUrls, 15, 512) ?>;
+                        var root = document.getElementById('hero-carousel');
+                        if (!root || !imgs || imgs.length < 2) return;
+                        var el = root.querySelector('div');
+                        var i = 0;
+                        setInterval(function () {
+                            i = (i + 1) % imgs.length;
+                            el.style.backgroundImage = "url('"+imgs[i]+"')";
+                        }, 5000);
+                    })();
+                </script>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             
             <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
@@ -152,11 +190,46 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div class="lg:col-span-8 space-y-12">
-                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden md:h-[420px]">
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden md:h-[336px]">
                         <div class="flex flex-col md:flex-row md:items-stretch">
-                            <div class="relative flex-1 h-72 md:h-full md:self-stretch overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($event->featured_image): ?>
-                                    <img src="<?php echo e(Storage::disk('public')->url($event->folder_image ?? $event->featured_image)); ?>" alt="<?php echo e($event->name); ?>" class="absolute inset-0 w-full h-full object-cover">
+                            <div class="relative flex-1 h-[230px] md:h-full md:self-stretch overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 min-h-[240px] md:min-h-[336px]">
+                                <?php (
+                                    $imgCandidate = $event->folder_image ?: $event->featured_image
+                                ); ?>
+                                <?php (
+                                    $path = is_array($imgCandidate)
+                                        ? (isset($imgCandidate[0]) ? $imgCandidate[0] : (isset($imgCandidate['path']) ? $imgCandidate['path'] : null))
+                                        : (string) $imgCandidate
+                                ); ?>
+                                <?php (
+                                    $isUrl = is_string($path) && str_starts_with($path, 'http')
+                                ); ?>
+                                <?php (
+                                    $normalized = is_string($path)
+                                        ? (str_starts_with($path, 'storage/')
+                                            ? substr($path, 8)
+                                            : (str_starts_with($path, '/storage/')
+                                                ? substr($path, 9)
+                                                : ltrim($path, '/')))
+                                        : null
+                                ); ?>
+                                <?php (
+                                    $normalized = is_string($normalized) && !str_contains($normalized, '/') ? ('events/folder/'.$normalized) : $normalized
+                                ); ?>
+                                <?php (
+                                    $imgUrl = null
+                                ); ?>
+                                <?php (
+                                    $imgUrl = $isUrl ? $path : ($normalized ? ('/storage/'.ltrim($normalized, '/')) : null)
+                                ); ?>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($imgUrl): ?>
+                                    <div class="absolute inset-0 bg-center bg-cover" style="background-image: url('<?php echo e($imgUrl); ?>');"></div>
+                                <?php else: ?>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <svg class="w-16 h-16 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5z"></path>
+                                        </svg>
+                                    </div>
                                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 <div class="absolute top-4 left-4">
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($event->isSoldOut()): ?>
@@ -281,6 +354,19 @@
                             </div>
                         </section>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($heroUrls)): ?>
+                        <section>
+                            <h2 class="text-3xl font-bold text-gray-900 mb-6">Galeria</h2>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $heroUrls; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $u): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <a href="<?php echo e($u); ?>" target="_blank" rel="noopener" class="block rounded-xl overflow-hidden border bg-gray-100">
+                                        <img src="<?php echo e($u); ?>" alt="" class="w-full h-36 md:h-44 object-cover">
+                                    </a>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </div>
+                        </section>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     
                     
 
@@ -290,6 +376,11 @@
                             <h2 class="text-3xl font-bold text-gray-900 mb-6">Mapa de Localização</h2>
                             <div class="rounded-xl overflow-hidden bg-gray-100 border">
                                 <iframe src="<?php echo e($event->map_embed_url); ?>" width="100%" style="height:420px;border:0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+                            <div class="mt-4">
+                                <button type="button" onclick="openGpsRoute()" class="block mx-auto bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-base md:text-lg px-7 py-3.5 rounded-xl w-full sm:w-[85%] md:w-[75%] text-center">
+                                    Me leve até o local
+                                </button>
                             </div>
                         </section>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -491,25 +582,18 @@
                         <!-- Compartilhar -->
                         <div class="bg-white rounded-2xl shadow-lg p-6">
                             <h3 class="text-lg font-bold text-gray-900 mb-4">Compartilhar</h3>
-                            <div class="flex space-x-3">
-                                <button onclick="shareOnWhatsApp()" 
-                                        class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.397.099-.099.173-.223.087-.347-.086-.124-.67-.52-.92-.622-.223-.099-.48-.016-.67.11-.173.149-1.19 1.135-1.19 2.763 0 1.627 1.19 2.4 1.355 2.564.149.149 2.395 3.646 5.81 5.095 3.414 1.45 3.414.991 4.035.94.62-.05 1.995-.806 2.277-1.585.281-.78.281-1.45.198-1.585-.087-.135-.32-.223-.617-.372zM12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5.016L2 22l4.983-1.338A9.973 9.973 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm5.446 13.485c-.116.275-.744 1.32-1.316 1.316-.572-.004-1.074-.275-2.04-.838-.765-.446-1.705-1.414-1.95-1.95-.244-.536-.488-1.074.028-2.04.517-.966 1.135-1.074 1.652-1.074.244 0 .488.028.698.198.116.116.275.372.116.698-.028.028-.116.116-.198.198-.116.116-.52.372-.116.698.404.326.93.838 1.074 1.042.144.204.028.372-.116.488z"/>
-                                    </svg>
+                            <div class="grid grid-cols-3 gap-3">
+                                <button onclick="shareOnWhatsApp()" class="h-10 bg-[#25D366] hover:bg-[#1ebe57] text-white px-4 rounded-lg text-xs font-medium whitespace-nowrap transition-colors duration-200 flex items-center justify-center">
+                                    <svg aria-hidden="true" focusable="false" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.397.099-.099.173-.223.087-.347-.086-.124-.67-.52-.92-.622-.223-.099-.48-.016-.67.11-.173.149-1.19 1.135-1.19 2.763 0 1.627 1.19 2.4 1.355 2.564.149.149 2.395 3.646 5.81 5.095 3.414 1.45 3.414.991 4.035.94.62-.05 1.995-.806 2.277-1.585.281-.78.281-1.45.198-1.585-.087-.135-.32-.223-.617-.372z"/></svg>
                                     WhatsApp
                                 </button>
-                                <button onclick="copyLink()" 
-                                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                    </svg>
-                                    Copiar Link
+                                <button onclick="shareOnFacebook()" class="h-10 bg-[#1877F2] hover:bg-[#166fe0] text-white px-4 rounded-lg text-xs font-medium whitespace-nowrap transition-colors duration-200 flex items-center justify-center">
+                                    <svg aria-hidden="true" focusable="false" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M22.675 0h-21.35C.597 0 0 .597 0 1.326v21.348C0 23.403.597 24 1.326 24h11.495v-9.294H9.691V11.01h3.13V8.414c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.794.143v3.24l-1.918.001c-1.504 0-1.796.715-1.796 1.763v2.31h3.587l-.467 3.696h-3.12V24h6.116C23.403 24 24 23.403 24 22.674V1.326C24 .597 23.403 0 22.675 0z"/></svg>
+                                    Facebook
                                 </button>
-                                <button onclick="toggleFavorite()" 
-                                        class="flex-1 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                    Favoritar
+                                <button onclick="copyLink()" class="h-10 bg-gray-600 hover:bg-gray-700 text-white px-4 rounded-lg text-xs font-medium whitespace-nowrap transition-colors duration-200 flex items-center justify-center">
+                                    <svg aria-hidden="true" focusable="false" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    Copiar Link
                                 </button>
                             </div>
                         </div>
@@ -575,10 +659,16 @@
             }, 5000);
         })();
     </script>
+    <script>
         function shareOnWhatsApp() {
             const text = `Confira este evento: <?php echo e($event->name); ?> - <?php echo e(route('events.show', $event)); ?>`;
             const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
+        }
+        function shareOnFacebook() {
+            const u = encodeURIComponent(`<?php echo e(route('events.show', $event)); ?>`);
+            const url = `https://www.facebook.com/sharer/sharer.php?u=${u}`;
+            window.open(url, '_blank', 'noopener');
         }
         
         function copyLink() {
@@ -600,6 +690,41 @@
                 localStorage.setItem(key, '1');
                 alert('Evento adicionado aos favoritos');
             }
+        }
+
+        function openGpsRoute(){
+            const destRaw = `<?php echo e(($event->address ?: $event->location)); ?>`;
+            const dest = encodeURIComponent(destRaw);
+            const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent);
+            const isAndroid = /Android/i.test(navigator.userAgent);
+
+            const fallbackWeb = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+
+            const tryLaunch = (primary, fallback) => {
+                let handled = false;
+                const timer = setTimeout(() => { if (!handled) window.open(fallback, '_blank'); }, 800);
+                const onVis = () => { if (document.hidden) { handled = true; clearTimeout(timer); document.removeEventListener('visibilitychange', onVis); } };
+                document.addEventListener('visibilitychange', onVis);
+                window.location.href = primary;
+            };
+
+            if (isIOS) {
+                const google = `comgooglemaps://?daddr=${dest}&directionsmode=driving`;
+                const apple = `maps://?daddr=${dest}`;
+                tryLaunch(google, fallbackWeb);
+                setTimeout(() => tryLaunch(apple, fallbackWeb), 300);
+                return;
+            }
+
+            if (isAndroid) {
+                const geo = `geo:0,0?q=${destRaw}`;
+                const intent = `google.navigation:q=${destRaw}`;
+                tryLaunch(intent, fallbackWeb);
+                setTimeout(() => tryLaunch(geo, fallbackWeb), 300);
+                return;
+            }
+
+            window.open(fallbackWeb, '_blank');
         }
     </script>
  <?php echo $__env->renderComponent(); ?>

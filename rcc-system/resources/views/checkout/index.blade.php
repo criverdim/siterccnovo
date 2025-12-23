@@ -4,6 +4,9 @@
 <div class="max-w-4xl mx-auto p-6 md:p-10">
     @php($hasParticipation = !empty($participation_id))
     @php($amount = $hasParticipation ? (optional(optional(\App\Models\EventParticipation::find($participation_id))->event)->price ?? 0) : 0)
+    @php($defaultInstallments = (int) request()->integer('installments') ?: 1)
+    @php($maxInstallments = (int) request()->integer('max_installments') ?: 12)
+    @php($selectedMethod = ($payment_method ?? request()->string('method')->toString() ?? 'pix'))
     @if(!empty($mp_public_key) && $hasParticipation)
         <script src="https://sdk.mercadopago.com/js/v2"></script>
         <script>
@@ -63,7 +66,7 @@
                             onSubmit: async ({ formData }) => {
                                 const res = await fetch("{{ route('checkout') }}", {
                                     method:'POST', headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'') },
-                                    body: JSON.stringify({ participation_id: {{ (int)($participation_id ?? 0) }}, payment_method:'credit_card', payer: { email: formData.cardholderEmail }, token: formData.token, installments: formData.installments, issuer_id: formData.issuerId })
+                                    body: JSON.stringify({ participation_id: {{ (int)($participation_id ?? 0) }}, payment_method:'credit_card', payer: { email: formData.cardholderEmail, identification: formData.payer?.identification || { type:'CPF', number:'' } }, token: formData.token, installments: (formData.installments || {{ $defaultInstallments }}), issuer_id: formData.issuerId, payment_method_id: formData.paymentMethodId })
                                 });
                                 const j = await res.json();
                                 alert('Status: '+(j?.status||'ok'));
@@ -72,9 +75,10 @@
                         }
                     });
                 };
-                renderCardBrick();
-                renderPixBrick();
-                renderBoletoBrick();
+                const method = '{{ $selectedMethod }}';
+                if (method === 'credit_card') { renderCardBrick(); }
+                else if (method === 'pix') { renderPixBrick(); }
+                else if (method === 'boleto') { renderBoletoBrick(); }
             });
         </script>
     @endif
@@ -85,6 +89,7 @@
         </div>
     @else
         <div class="p-4 rounded-xl border bg-white">
+            @if(empty($payment_method))
             <form method="post" action="{{ route('checkout') }}" class="space-y-4">
                 @csrf
                 <input type="hidden" name="participation_id" value="{{ $participation_id }}" />
@@ -103,8 +108,19 @@
                         <input type="email" name="payer[email]" placeholder="Email" class="rounded-md border px-3 py-2" required />
                     </div>
                 </div>
+                @if($maxInstallments>1)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Parcelas (até {{ $maxInstallments }}x)</label>
+                    <select name="installments" class="rounded-md border px-3 py-2">
+                        @for($i=1;$i<=$maxInstallments;$i++)
+                            <option value="{{ $i }}" @selected($i===$defaultInstallments)>{{ $i }}x</option>
+                        @endfor
+                    </select>
+                </div>
+                @endif
                 <button type="submit" class="px-4 py-2 rounded-md bg-emerald-600 text-white">Confirmar Pagamento</button>
             </form>
+            @endif
             @if(($payment_method ?? '')==='credit_card' && !empty($mp_public_key) && $hasParticipation)
                 <div class="mt-8">
                     <h2 class="text-lg font-semibold mb-2">Cartão de Crédito (Bricks)</h2>

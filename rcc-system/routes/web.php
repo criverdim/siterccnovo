@@ -6,6 +6,86 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/debug-mp', function () {
+    if (! app()->environment('local') && ! auth()->check()) {
+       abort(403, 'Acesso restrito');
+    }
+
+    $accessToken = config('services.mercadopago.access_token');
+    $publicKey = config('services.mercadopago.public_key');
+    $webhookUrl = config('services.mercadopago.webhook_url');
+
+    $results = [
+        'environment' => app()->environment(),
+        'access_token_configured' => !empty($accessToken),
+        'access_token_preview' => $accessToken ? substr($accessToken, 0, 10) . '...' : null,
+        'public_key_configured' => !empty($publicKey),
+        'public_key_preview' => $publicKey ? substr($publicKey, 0, 10) . '...' : null,
+        'webhook_url' => $webhookUrl,
+        'sdk_version' => class_exists(\MercadoPago\MercadoPagoConfig::class) ? 'v3' : (class_exists(\MercadoPago\SDK::class) ? 'v2' : 'none'),
+        'connection_test' => null,
+        'error' => null,
+    ];
+
+    try {
+        if (class_exists(\MercadoPago\MercadoPagoConfig::class)) {
+            \MercadoPago\MercadoPagoConfig::setAccessToken($accessToken);
+            $client = new \MercadoPago\Client\PaymentMethod\PaymentMethodClient();
+            $methods = $client->list();
+            // In v3, list returns a Result object which might iterate or have data property
+            $results['connection_test'] = 'success';
+                    $results['payment_methods_data_type'] = get_class($methods);
+                    
+                    // Try to create a dummy preference or payment to test authorization
+                    $paymentClient = new \MercadoPago\Client\Payment\PaymentClient();
+                    try {
+                        $request = [
+                            "transaction_amount" => 1.00,
+                            "description" => "Debug Payment",
+                            "payment_method_id" => "pix",
+                            "payer" => [
+                                "email" => "test_user_123456@test.com",
+                                "first_name" => "Test",
+                                "last_name" => "User",
+                                "identification" => [
+                                    "type" => "CPF",
+                                    "number" => "19119119100"
+                                ]
+                            ],
+                            "notification_url" => $webhookUrl
+                        ];
+                        // We won't actually create it to avoid spam, or we can create and capture exception
+                        // Actually, let's create it. It's sandbox.
+                        $payment = $paymentClient->create($request);
+                        $results['payment_creation_test'] = 'success';
+                        $results['created_payment_id'] = $payment->id;
+                    } catch (\Throwable $pe) {
+                         $results['payment_creation_test'] = 'failed';
+                         $results['payment_creation_error'] = $pe->getMessage();
+                         if (method_exists($pe, 'getApiResponse')) {
+                            $results['payment_creation_api_response'] = $pe->getApiResponse()->getContent();
+                         }
+                    }
+
+                } elseif (class_exists(\MercadoPago\SDK::class)) {
+            \MercadoPago\SDK::setAccessToken($accessToken);
+            $methods = \MercadoPago\SDK::get('/v1/payment_methods');
+            $results['connection_test'] = 'success';
+            $results['payment_methods_count'] = count($methods);
+        } else {
+            $results['error'] = 'SDK not found';
+        }
+    } catch (\Throwable $e) {
+        $results['connection_test'] = 'failed';
+        $results['error'] = $e->getMessage();
+        if (method_exists($e, 'getApiResponse')) {
+             $results['api_response'] = $e->getApiResponse()->getContent();
+        }
+    }
+
+    return response()->json($results);
+});
+
 Route::get('/', function () {
     return view('home');
 })->name('home');
@@ -60,7 +140,12 @@ Route::prefix('events')->name('events.')->group(function () {
         Route::get('/success/{payment}', [\App\Http\Controllers\Event\PaymentController::class, 'success'])->name('success');
         Route::get('/failure/{payment}', [\App\Http\Controllers\Event\PaymentController::class, 'failure'])->name('failure');
         Route::get('/pending/{payment}', [\App\Http\Controllers\Event\PaymentController::class, 'pending'])->name('pending');
-        Route::post('/webhook', [\App\Http\Controllers\Event\PaymentController::class, 'webhook'])->name('webhook');
+        Route::post('/webhook', [\App\Http\Controllers\Event\PaymentController::class, 'webhook'])
+            ->name('webhook')
+            ->withoutMiddleware([
+                \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+                \App\Http\Middleware\VerifyCsrfToken::class,
+            ]);
     });
 
     // Rotas protegidas de autenticação
@@ -278,7 +363,12 @@ Route::get('/events/{event}/participate', function (\App\Models\Event $event) {
 })->name('events.participate.get');
 
 Route::match(['get', 'post'], '/checkout', [\App\Http\Controllers\CheckoutController::class, 'checkout'])->name('checkout');
-Route::post('/webhooks/mercadopago', [\App\Http\Controllers\MercadoPagoWebhookController::class, 'handle']);
+Route::post('/webhooks/mercadopago', [\App\Http\Controllers\MercadoPagoWebhookController::class, 'handle'])
+    ->name('webhooks.mercadopago')
+    ->withoutMiddleware([
+        \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        \App\Http\Middleware\VerifyCsrfToken::class,
+    ]);
 
 Route::middleware(['auth', 'page.access'])->group(function () {
     Route::get('/pastoreio', [\App\Http\Controllers\PastoreioController::class, 'index']);
@@ -359,6 +449,7 @@ Route::middleware('auth')->group(function () {
 
         return response()->json($items);
     });
+    Route::get('/area/api/participations/{participation}', [\App\Http\Controllers\EventParticipationController::class, 'status']);
     Route::prefix('/admin')->middleware('admin.access')->group(function () {
         Route::get('/users/{user}/profile', [\App\Http\Controllers\Admin\UserProfileController::class, 'show'])->name('admin.users.profile');
         Route::get('/users/{user}/profile/pdf', [\App\Http\Controllers\Admin\UserProfileController::class, 'pdf'])->name('admin.users.profile.pdf');

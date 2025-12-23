@@ -511,15 +511,27 @@ class SettingResource extends Resource
                         $mp = \App\Models\Setting::where('key', 'mercadopago')->first();
                         $url = $mp?->value['webhook_url'] ?? null;
                         if (! $url) {
-                            \Filament\Notifications\Notification::make()->title('Defina o Webhook URL em Mercado Pago').warning()->send();
+                            \Filament\Notifications\Notification::make()->title('Defina o Webhook URL em Mercado Pago')->warning()->send();
 
                             return;
                         }
                         try {
-                            $resp = \Http::timeout(5)->post($url, ['type' => 'payment', 'data' => ['id' => 'test_webhook', 'status' => 'approved'], 'action' => 'payment.updated']);
-                            \Filament\Notifications\Notification::make()->title('Webhook ping').body('Status: '.$resp->status())->success()->send();
+                            $resp = \Http::timeout(5)->post($url, [
+                                'type' => 'order',
+                                'data' => [
+                                    'id' => 'order_admin_ping',
+                                    'payments' => [
+                                        [
+                                            'id' => 'test_webhook',
+                                            'status' => 'approved',
+                                        ],
+                                    ],
+                                ],
+                                'action' => 'order.updated',
+                            ]);
+                            \Filament\Notifications\Notification::make()->title('Webhook ping')->body('Status: '.$resp->status())->success()->send();
                         } catch (\Throwable $e) {
-                            \Filament\Notifications\Notification::make()->title('Falha ao pingar webhook').body($e->getMessage())->danger()->send();
+                            \Filament\Notifications\Notification::make()->title('Falha ao pingar webhook')->body($e->getMessage())->danger()->send();
                         }
                     }),
                 Tables\Actions\Action::make('simulate_webhook')
@@ -528,9 +540,17 @@ class SettingResource extends Resource
                     ->visible(fn ($record) => $record->key === 'mercadopago')
                     ->action(function () {
                         $req = request()->create('/webhooks/mercadopago', 'POST', [
-                            'type' => 'payment',
-                            'data' => ['id' => 'sim_'.uniqid(), 'status' => 'approved'],
-                            'action' => 'payment.updated',
+                            'type' => 'order',
+                            'data' => [
+                                'id' => 'order_sim_'.uniqid(),
+                                'payments' => [
+                                    [
+                                        'id' => 'sim_'.uniqid(),
+                                        'status' => 'approved',
+                                    ],
+                                ],
+                            ],
+                            'action' => 'order.updated',
                         ]);
                         app()->handle($req);
                         \Filament\Notifications\Notification::make()->title('Webhook simulado').success()->send();

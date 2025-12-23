@@ -35,12 +35,21 @@ class ValidateMercadoPago extends Command
             'mode' => $report['mode'],
         ]));
 
-        // Ping webhook
         if (! empty($report['webhook_url'])) {
             $this->info('Pingando webhook...');
             try {
                 $resp = Http::timeout(5)->post($report['webhook_url'], [
-                    'type' => 'payment', 'data' => ['id' => 'test_cli_ping', 'status' => 'pending'], 'action' => 'payment.updated',
+                    'type' => 'order',
+                    'data' => [
+                        'id' => 'order_cli_ping',
+                        'payments' => [
+                            [
+                                'id' => 'test_cli_ping',
+                                'status' => 'approved',
+                            ],
+                        ],
+                    ],
+                    'action' => 'order.updated',
                 ]);
                 $report['webhook_ping'] = ['status' => $resp->status()];
                 $this->info('Webhook ping status: '.$resp->status());
@@ -56,17 +65,35 @@ class ValidateMercadoPago extends Command
         if (($vals['mode'] ?? 'sandbox') === 'sandbox' && ! empty($vals['access_token'])) {
             try {
                 $this->info('Criando pagamento sandbox PIX...');
-                Config::setAccessToken($vals['access_token']);
-                $client = new PaymentClient;
-                $payment = $client->create([
-                    'transaction_amount' => 1.0,
-                    'description' => 'Teste de integração',
-                    'payment_method_id' => 'pix',
-                    'payer' => ['email' => 'test@testuser.com'],
-                    'external_reference' => 'cli_validate_'.uniqid(),
-                    'notification_url' => $vals['webhook_url'] ?? null,
-                ]);
-                $report['sandbox_payment'] = ['id' => $payment->id ?? null, 'status' => $payment->status ?? null];
+                if (class_exists(\MercadoPago\Config::class)) {
+                    Config::setAccessToken($vals['access_token']);
+                    $client = new PaymentClient;
+                    $payment = $client->create([
+                        'transaction_amount' => 1.0,
+                        'description' => 'Teste de integração',
+                        'payment_method_id' => 'pix',
+                        'payer' => ['email' => 'test@testuser.com'],
+                        'external_reference' => 'cli_validate_'.uniqid(),
+                        'notification_url' => $vals['webhook_url'] ?? null,
+                    ]);
+                    $report['sandbox_payment'] = ['id' => $payment->id ?? null, 'status' => $payment->status ?? null];
+                } else {
+                    $resp = \Illuminate\Support\Facades\Http::withToken($vals['access_token'])->post('https://api.mercadopago.com/v1/payments', [
+                        'transaction_amount' => 1.0,
+                        'description' => 'Teste de integração',
+                        'payment_method_id' => 'pix',
+                        'payer' => ['email' => 'test_user_123@testuser.com'],
+                        'external_reference' => 'cli_validate_'.uniqid(),
+                        'notification_url' => $vals['webhook_url'] ?? null,
+                        'binary_mode' => false,
+                    ]);
+                    $status = $resp->status();
+                    if ($status >= 200 && $status < 300) {
+                        $report['sandbox_payment'] = ['id' => $resp->json('id'), 'status' => $resp->json('status')];
+                    } else {
+                        $report['sandbox_payment'] = ['error' => 'http_status_'.$status];
+                    }
+                }
                 $this->info('Pagamento sandbox criado: '.json_encode($report['sandbox_payment']));
             } catch (\Throwable $e) {
                 $report['sandbox_payment'] = ['error' => $e->getMessage()];

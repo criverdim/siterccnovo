@@ -17,6 +17,9 @@ class PaymentController extends Controller
 
     public function purchase(Event $event)
     {
+        if (! auth()->check()) {
+            return redirect('/login?redirect='.urlencode(route('events.purchase', $event)));
+        }
         if (! $event->isActive()) {
             return redirect()->route('events.show', $event)
                 ->with('error', 'Este evento não está disponível para compra.');
@@ -115,7 +118,7 @@ class PaymentController extends Controller
         }
 
         $event = $payment->event;
-        $tickets = $payment->tickets;
+        $tickets = $payment->ticket ? [$payment->ticket] : [];
 
         return view('events.payment-success', compact('payment', 'event', 'tickets'));
     }
