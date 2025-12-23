@@ -50,7 +50,11 @@
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                 </svg>
-                                <span><?php echo e($event->availableTickets()); ?> ingressos disponíveis</span>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($event->capacity): ?>
+                                    <span><?php echo e($event->availableTickets()); ?> ingressos disponíveis</span>
+                                <?php else: ?>
+                                    <span>Ingressos ilimitados</span>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </div>
                         </div>
                         
@@ -341,8 +345,8 @@
                                             return;
                                         }
                                         const data = await res.json();
-                                        const st = data.payment_status || '';
-                                        if (st === 'approved') {
+                                        const st = (data.payment_status || '').toLowerCase();
+                                        if (['approved','completed','paid','processed'].includes(st)) {
                                             stopPixPolling();
                                             if (ok) {
                                                 ok.textContent = 'Pagamento confirmado! Seu ingresso estará em \"Meus Ingressos\" em instantes.';

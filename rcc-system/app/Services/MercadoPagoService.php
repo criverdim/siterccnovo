@@ -69,17 +69,18 @@ class MercadoPagoService
                 'paid_at' => null,
             ]);
 
-            $preference = $client->create([
-                "items" => [
-                    [
-                        "id" => (string) $event->id,
-                        "title" => $event->name,
-                        "quantity" => $quantity,
-                        "unit_price" => floatval($event->price),
-                        "currency_id" => "BRL",
-                        "description" => substr((string)$event->description, 0, 250)
-                    ]
-                ],
+                $preference = $client->create([
+                    "items" => [
+                        [
+                            "id" => (string) $event->id,
+                            "title" => $event->name,
+                            "quantity" => $quantity,
+                            "unit_price" => floatval($event->price),
+                            "currency_id" => "BRL",
+                            "category_id" => (string) ($event->category ?? 'event'),
+                            "description" => substr((string) $event->description, 0, 250)
+                        ]
+                    ],
                 "payer" => [
                     "email" => $userEmail,
                     "name" => auth()->user()->name ?? 'Comprador'

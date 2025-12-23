@@ -8,6 +8,7 @@
     @php($maxInstallments = (int) request()->integer('max_installments') ?: 12)
     @php($selectedMethod = ($payment_method ?? request()->string('method')->toString() ?? 'pix'))
     @if(!empty($mp_public_key) && $hasParticipation)
+        <script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
         <script src="https://sdk.mercadopago.com/js/v2"></script>
         <script>
             const mp = new MercadoPago("{{ $mp_public_key }}", { locale: 'pt-BR' });
@@ -25,9 +26,15 @@
                         callbacks: {
                             onReady: ()=>{},
                             onSubmit: async ({ formData }) => {
+                                const deviceId = window.MP_DEVICE_SESSION_ID || null;
                                 const res = await fetch("{{ route('checkout') }}", {
                                     method:'POST', headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'') },
-                                    body: JSON.stringify({ participation_id: {{ (int)($participation_id ?? 0) }}, payment_method:'pix', payer: { email: formData.payer?.email || 'user@local' } })
+                                    body: JSON.stringify({
+                                        participation_id: {{ (int)($participation_id ?? 0) }},
+                                        payment_method:'pix',
+                                        payer: { email: formData.payer?.email || 'user@local' },
+                                        device_id: deviceId
+                                    })
                                 });
                                 const j = await res.json();
                                 alert('PIX status: '+(j?.status||'ok'));
@@ -47,9 +54,31 @@
                             onReady: ()=>{},
                             onSubmit: async ({ formData }) => {
                                 const addr = formData.payer?.address || {};
+                                const deviceId = window.MP_DEVICE_SESSION_ID || null;
                                 const res = await fetch("{{ route('checkout') }}", {
                                     method:'POST', headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'') },
-                                    body: JSON.stringify({ participation_id: {{ (int)($participation_id ?? 0) }}, payment_method:'boleto', payer: { email: formData.payer?.email || 'user@local', first_name: formData.payer?.firstName || 'Teste', last_name: formData.payer?.lastName || 'Usuário', identification: { type: formData.payer?.identification?.type || 'CPF', number: formData.payer?.identification?.number || '00000000000' }, address: { street_name: addr.street_name || 'Rua', street_number: addr.street_number || 'S/N', zip_code: addr.zip_code || '00000000', neighborhood: addr.neighborhood || 'Centro', state: addr.state || 'SP', city: addr.city || 'São Paulo' } })
+                                    body: JSON.stringify({
+                                        participation_id: {{ (int)($participation_id ?? 0) }},
+                                        payment_method:'boleto',
+                                        payer: {
+                                            email: formData.payer?.email || 'user@local',
+                                            first_name: formData.payer?.firstName || 'Teste',
+                                            last_name: formData.payer?.lastName || 'Usuário',
+                                            identification: {
+                                                type: formData.payer?.identification?.type || 'CPF',
+                                                number: formData.payer?.identification?.number || '00000000000'
+                                            },
+                                            address: {
+                                                street_name: addr.street_name || 'Rua',
+                                                street_number: addr.street_number || 'S/N',
+                                                zip_code: addr.zip_code || '00000000',
+                                                neighborhood: addr.neighborhood || 'Centro',
+                                                state: addr.state || 'SP',
+                                                city: addr.city || 'São Paulo'
+                                            }
+                                        },
+                                        device_id: deviceId
+                                    })
                                 });
                                 const j = await res.json();
                                 alert('Boleto status: '+(j?.status||'ok'));
@@ -64,9 +93,22 @@
                         callbacks: {
                             onReady: ()=>{},
                             onSubmit: async ({ formData }) => {
+                                const deviceId = window.MP_DEVICE_SESSION_ID || null;
                                 const res = await fetch("{{ route('checkout') }}", {
                                     method:'POST', headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'') },
-                                    body: JSON.stringify({ participation_id: {{ (int)($participation_id ?? 0) }}, payment_method:'credit_card', payer: { email: formData.cardholderEmail, identification: formData.payer?.identification || { type:'CPF', number:'' } }, token: formData.token, installments: (formData.installments || {{ $defaultInstallments }}), issuer_id: formData.issuerId, payment_method_id: formData.paymentMethodId })
+                                    body: JSON.stringify({
+                                        participation_id: {{ (int)($participation_id ?? 0) }},
+                                        payment_method:'credit_card',
+                                        payer: {
+                                            email: formData.cardholderEmail,
+                                            identification: formData.payer?.identification || { type:'CPF', number:'' }
+                                        },
+                                        token: formData.token,
+                                        installments: (formData.installments || {{ $defaultInstallments }}),
+                                        issuer_id: formData.issuerId,
+                                        payment_method_id: formData.paymentMethodId,
+                                        device_id: deviceId
+                                    })
                                 });
                                 const j = await res.json();
                                 alert('Status: '+(j?.status||'ok'));

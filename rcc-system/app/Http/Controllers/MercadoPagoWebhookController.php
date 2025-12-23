@@ -108,13 +108,33 @@ class MercadoPagoWebhookController extends Controller
         }
 
         if ($status) {
-            $p->payment_status = $status;
+            $normalizedStatus = $status;
+            if ($normalizedStatus === 'processed') {
+                $normalizedStatus = 'approved';
+            } elseif ($normalizedStatus === 'action_required') {
+                $normalizedStatus = 'pending';
+            }
+            $p->payment_status = $normalizedStatus;
         }
 
-        if (($p->payment_status === 'approved') && empty($p->ticket_uuid) && ($p->event?->generates_ticket)) {
+        $shouldGenerateTicket = ($p->payment_status === 'approved') && ($p->event?->generates_ticket);
+
+        if ($shouldGenerateTicket && empty($p->ticket_uuid)) {
             $p->ticket_uuid = (string) \Illuminate\Support\Str::uuid();
         }
+
         $p->save();
+
+        if ($shouldGenerateTicket && empty($p->ticket_qr_hash) && ! app()->environment('testing')) {
+            try {
+                app(\App\Services\TicketService::class)->generateAndSend($p);
+            } catch (\Throwable $e) {
+                Log::error('Ticket generation failed after webhook', [
+                    'participation_id' => $p->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return response()->json(['ok' => true]);
     }

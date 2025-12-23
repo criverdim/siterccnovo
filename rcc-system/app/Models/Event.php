@@ -133,7 +133,7 @@ class Event extends Model
     public function availableTickets(): int
     {
         if ($this->capacity === null) {
-            return 0;
+            return PHP_INT_MAX;
         }
 
         return max(0, ((int) $this->capacity) - ((int) $this->tickets_sold));

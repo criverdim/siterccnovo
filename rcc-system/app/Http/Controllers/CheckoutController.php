@@ -203,6 +203,7 @@ class CheckoutController extends Controller
             'payer' => ['required', 'array'],
             'payer.email' => ['required', 'email'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'device_id' => ['nullable', 'string'],
         ];
         // Condicionais por método
         if ($request->input('payment_method') === 'boleto') {
@@ -264,6 +265,7 @@ class CheckoutController extends Controller
             try {
                 $token = (string) config('services.mercadopago.access_token');
                 $isSandbox = str_starts_with($token, 'TEST-');
+                $deviceId = trim($request->string('device_id')->toString());
                 $payer = $data['payer'];
                 if ($isSandbox && isset($payer['email']) && is_string($payer['email'])) {
                     $email = $payer['email'];
@@ -282,8 +284,15 @@ class CheckoutController extends Controller
                     $quantity = (int) ($participation->quantity ?? 1) ?: 1;
                 }
 
+                $event = $participation->event;
+                $eventName = (string) ($event->name ?? 'Evento');
+                $eventCategory = (string) ($event->category ?? 'event');
+                $unitPrice = (float) ($event->price ?? 0.0);
+                $itemId = 'event_'.$participation->id;
+                $itemDescription = 'Inscrição no evento '.$eventName;
+
                 if (in_array($data['payment_method'], ['pix', 'boleto'], true)) {
-                    $amount = (float) ($participation->event->price ?? 0.0) * $quantity;
+                    $amount = $unitPrice * $quantity;
                     if ($amount <= 0) {
                         throw new \RuntimeException('Valor inválido para pagamento.');
                     }
@@ -304,6 +313,13 @@ class CheckoutController extends Controller
                             ]],
                         ],
                         'payer' => $payer,
+                        'items' => [[
+                            'title' => $eventName,
+                            'description' => $itemDescription,
+                            'category_id' => $eventCategory ?: 'others',
+                            'quantity' => $quantity,
+                            'unit_price' => number_format($unitPrice, 2, '.', ''),
+                        ]],
                     ];
 
                     if ($data['payment_method'] === 'boleto') {
@@ -312,9 +328,14 @@ class CheckoutController extends Controller
 
                     \Illuminate\Support\Facades\Log::info('MP Creating Order Payload', $orderPayload);
 
+                    $orderHeaders = ['X-Idempotency-Key' => Str::uuid()->toString()];
+                    if ($deviceId !== '') {
+                        $orderHeaders['X-Meli-Session-Id'] = $deviceId;
+                    }
+
                     $resp = Http::withToken($token)
                         ->acceptJson()
-                        ->withHeaders(['X-Idempotency-Key' => Str::uuid()->toString()])
+                        ->withHeaders($orderHeaders)
                         ->post('https://api.mercadopago.com/v1/orders', $orderPayload);
 
                     if (! $resp->successful()) {
@@ -350,7 +371,6 @@ class CheckoutController extends Controller
                         throw new \RuntimeException('Order criada, mas o pagamento ainda está em processamento. Tente novamente em instantes.');
                     }
                 } else {
-                    $unitPrice = (float) ($participation->event->price ?? 0.0);
                     $amount = $unitPrice * $quantity;
 
                     if ($amount <= 0) {
@@ -359,14 +379,17 @@ class CheckoutController extends Controller
 
                     $payload = [
                         'transaction_amount' => $amount,
-                        'description' => 'Pagamento de evento '.(string) ($participation->event->name ?? ''),
+                        'description' => 'Pagamento de evento '.$eventName,
                         'payment_method_id' => $request->string('payment_method_id')->toString() ?: $data['payment_method'],
                         'payer' => $payer,
                         'notification_url' => config('services.mercadopago.webhook_url'),
                         'external_reference' => 'participation_'.$participation->id.($isSandbox ? '_'.uniqid() : ''),
                         'additional_info' => [
                             'items' => [[
-                                'title' => (string) ($participation->event->name ?? 'Evento'),
+                                'id' => $itemId,
+                                'title' => $eventName,
+                                'description' => $itemDescription,
+                                'category_id' => $eventCategory ?: 'event',
                                 'quantity' => $quantity,
                                 'unit_price' => $unitPrice,
                             ]],
@@ -389,9 +412,11 @@ class CheckoutController extends Controller
                         $payment = $client->create($payload);
                         \Illuminate\Support\Facades\Log::info('MP Payment Created', ['id' => $payment->id]);
                     } else {
-                        $resp = Http::withToken($token)
-                            ->acceptJson()
-                            ->post('https://api.mercadopago.com/v1/payments', $payload);
+                        $http = Http::withToken($token)->acceptJson();
+                        if ($deviceId !== '') {
+                            $http = $http->withHeaders(['X-Meli-Session-Id' => $deviceId]);
+                        }
+                        $resp = $http->post('https://api.mercadopago.com/v1/payments', $payload);
                         if (! $resp->successful()) {
                             $this->mpThrowHttpError('Erro ao criar pagamento no Mercado Pago', $resp);
                         }

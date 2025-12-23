@@ -202,10 +202,14 @@ class AuthController extends Controller
         $participation = EventParticipation::with('event')
             ->where('ticket_uuid', $uuid)
             ->firstOrFail();
-
         abort_unless($participation->user_id === Auth::id(), 403);
 
         $path = Storage::disk('local')->path('tickets/ticket_'.$uuid.'.pdf');
+
+        if (! file_exists($path)) {
+            app(\App\Services\TicketService::class)->generateAndSend($participation);
+            $path = Storage::disk('local')->path('tickets/ticket_'.$participation->ticket_uuid.'.pdf');
+        }
 
         abort_unless(file_exists($path), 404);
 

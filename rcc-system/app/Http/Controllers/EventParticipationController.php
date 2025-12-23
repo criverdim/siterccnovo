@@ -78,11 +78,24 @@ class EventParticipationController extends Controller
                                     $participation->mp_payment_id = (string) ($payload['id'] ?? $participation->mp_payment_id);
                                     $participation->mp_payload_raw = $payload;
 
-                                    if (($newStatus === 'approved') && empty($participation->ticket_uuid) && ($participation->event?->generates_ticket)) {
+                                    $shouldGenerateTicket = ($newStatus === 'approved') && ($participation->event?->generates_ticket);
+
+                                    if ($shouldGenerateTicket && empty($participation->ticket_uuid)) {
                                         $participation->ticket_uuid = (string) Str::uuid();
                                     }
 
                                     $participation->save();
+
+                                    if ($shouldGenerateTicket && empty($participation->ticket_qr_hash) && ! app()->environment('testing')) {
+                                        try {
+                                            app(\App\Services\TicketService::class)->generateAndSend($participation);
+                                        } catch (\Throwable $e) {
+                                            Log::warning('Ticket generation failed after status refresh', [
+                                                'participation_id' => $participation->id,
+                                                'error' => $e->getMessage(),
+                                            ]);
+                                        }
+                                    }
                                 }
                             }
                         } else {

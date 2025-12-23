@@ -39,4 +39,9 @@ class TicketService
             'status' => 'pending',
         ]);
     }
+
+    public function generateAndSendTicket(EventParticipation $participation): void
+    {
+        $this->generateAndSend($participation);
+    }
 }
