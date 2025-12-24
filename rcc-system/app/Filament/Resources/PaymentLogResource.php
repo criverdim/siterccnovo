@@ -15,7 +15,7 @@ class PaymentLogResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?string $navigationGroup = 'Logs';
+    protected static ?string $navigationGroup = 'Registros';
 
     protected static ?string $navigationLabel = 'Pagamentos (Mercado Pago)';
 
@@ -32,23 +32,23 @@ class PaymentLogResource extends Resource
                     'danger' => 'rejected',
                 ]),
                 Tables\Columns\TextColumn::make('payment_method')->label('Método')->badge(),
-                Tables\Columns\TextColumn::make('mp_payment_id')->label('MP Payment ID')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('mp_payment_id')->label('ID do Pagamento MP')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->label('Criado em')->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('payment_status')->options([
+                Tables\Filters\SelectFilter::make('payment_status')->label('Status do pagamento')->options([
                     'pending' => 'Pendente',
                     'approved' => 'Aprovado',
                     'rejected' => 'Rejeitado',
                     'cancelled' => 'Cancelado',
                     'refunded' => 'Reembolsado',
                 ]),
-                Tables\Filters\SelectFilter::make('payment_method')->options([
+                Tables\Filters\SelectFilter::make('payment_method')->label('Método de pagamento')->options([
                     'pix' => 'PIX',
                     'card' => 'Cartão',
                     'boleto' => 'Boleto',
                 ]),
-                Tables\Filters\Filter::make('date_range')
+                Tables\Filters\Filter::make('date_range')->label('Período')
                     ->form([
                         Forms\Components\DatePicker::make('start')->label('Inicial'),
                         Forms\Components\DatePicker::make('end')->label('Final'),

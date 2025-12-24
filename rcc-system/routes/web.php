@@ -453,6 +453,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('/admin')->middleware('admin.access')->group(function () {
         Route::get('/users/{user}/profile', [\App\Http\Controllers\Admin\UserProfileController::class, 'show'])->name('admin.users.profile');
         Route::get('/users/{user}/profile/pdf', [\App\Http\Controllers\Admin\UserProfileController::class, 'pdf'])->name('admin.users.profile.pdf');
+        Route::post('/api/ticket/checkin', [\App\Http\Controllers\Event\PaymentController::class, 'checkin'])->name('admin.ticket.checkin');
     });
 });
 

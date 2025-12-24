@@ -201,13 +201,16 @@ class CheckoutController extends Controller
             'participation_id' => ['required', 'integer', 'exists:event_participations,id'],
             'payment_method' => ['required', 'in:pix,credit_card,boleto'],
             'payer' => ['required', 'array'],
-            'payer.email' => ['required', 'email'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:10'],
             'device_id' => ['nullable', 'string'],
         ];
         // Condicionais por método
+        if ($request->input('payment_method') === 'pix') {
+            $baseRules['payer.email'] = ['required', 'email'];
+        }
         if ($request->input('payment_method') === 'boleto') {
             $baseRules = array_merge($baseRules, [
+                'payer.email' => ['required', 'email'],
                 'payer.first_name' => ['required', 'string'],
                 'payer.last_name' => ['required', 'string'],
                 'payer.identification.type' => ['required', 'string'],
@@ -224,13 +227,22 @@ class CheckoutController extends Controller
             $baseRules = array_merge($baseRules, [
                 'token' => ['required', 'string'],
                 'installments' => ['required', 'integer', 'min:1'],
+                'payer.email' => ['nullable', 'email'],
                 'payer.identification.type' => ['required', 'string'],
                 'payer.identification.number' => ['required', 'string'],
                 'issuer_id' => ['nullable', 'integer'],
                 'payment_method_id' => ['nullable', 'string'],
             ]);
         }
-        $data = $request->validate($baseRules);
+        try {
+            $data = $request->validate($baseRules);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Illuminate\Support\Facades\Log::error('Checkout Validation Failed', [
+                'errors' => $e->errors(),
+                'input' => $request->all(),
+            ]);
+            throw $e;
+        }
 
         // LOGGING DEBUG
         \Illuminate\Support\Facades\Log::info('Checkout Request', [
@@ -241,6 +253,40 @@ class CheckoutController extends Controller
         ]);
 
         $participation = EventParticipation::findOrFail($data['participation_id']);
+
+        $existingStatus = (string) ($participation->payment_status ?? '');
+        $existingMethod = (string) ($participation->payment_method ?? '');
+        $recentSeconds = $participation->updated_at ? now()->diffInSeconds($participation->updated_at) : null;
+
+        if ($existingStatus === 'approved') {
+            $raw = $participation->mp_payload_raw;
+            $userMessage = $this->buildUserFriendlyMessage($existingStatus, $raw ?? null) ?? 'Pagamento já aprovado para esta inscrição.';
+
+            return response()->json([
+                'status' => $existingStatus,
+                'payment' => $raw,
+                'order' => is_array($raw) ? ($raw['order'] ?? null) : null,
+                'message' => $userMessage,
+            ]);
+        }
+
+        if (
+            $existingStatus === 'pending'
+            && $existingMethod === ($data['payment_method'] ?? null)
+            && $participation->mp_payment_id
+            && is_int($recentSeconds)
+            && $recentSeconds < 30
+        ) {
+            $raw = $participation->mp_payload_raw;
+            $userMessage = $this->buildUserFriendlyMessage($existingStatus, $raw ?? null) ?? 'Já existe um pagamento em processamento para esta inscrição. Aguarde alguns instantes.';
+
+            return response()->json([
+                'status' => $existingStatus,
+                'payment' => $raw,
+                'order' => is_array($raw) ? ($raw['order'] ?? null) : null,
+                'message' => $userMessage,
+            ]);
+        }
 
         if (app()->environment('testing')) {
             $payment = [
@@ -267,6 +313,10 @@ class CheckoutController extends Controller
                 $isSandbox = str_starts_with($token, 'TEST-');
                 $deviceId = trim($request->string('device_id')->toString());
                 $payer = $data['payer'];
+                if (empty($payer['email'])) {
+                    $fallbackEmail = auth()->user()->email ?? 'user@local';
+                    $payer['email'] = $fallbackEmail;
+                }
                 if ($isSandbox && isset($payer['email']) && is_string($payer['email'])) {
                     $email = $payer['email'];
                     if (! str_contains($email, '+')) {
@@ -380,7 +430,6 @@ class CheckoutController extends Controller
                     $payload = [
                         'transaction_amount' => $amount,
                         'description' => 'Pagamento de evento '.$eventName,
-                        'payment_method_id' => $request->string('payment_method_id')->toString() ?: $data['payment_method'],
                         'payer' => $payer,
                         'notification_url' => config('services.mercadopago.webhook_url'),
                         'external_reference' => 'participation_'.$participation->id.($isSandbox ? '_'.uniqid() : ''),
@@ -394,16 +443,17 @@ class CheckoutController extends Controller
                                 'unit_price' => $unitPrice,
                             ]],
                         ],
-                        'binary_mode' => false,
+                        'binary_mode' => true,
+                        'statement_descriptor' => 'RCC Miguelopolis',
                     ];
                     if ($data['payment_method'] === 'credit_card') {
                         $payload['token'] = $request->string('token')->toString();
                         $payload['installments'] = (int) $request->integer('installments') ?: 1;
-                        if ($request->filled('issuer_id')) {
-                            $payload['issuer_id'] = (int) $request->integer('issuer_id');
-                        }
                         if ($request->filled('payment_method_id')) {
                             $payload['payment_method_id'] = $request->string('payment_method_id')->toString();
+                        }
+                        if ($request->filled('issuer_id')) {
+                            $payload['issuer_id'] = (int) $request->integer('issuer_id');
                         }
                     }
 
@@ -424,6 +474,7 @@ class CheckoutController extends Controller
                         $payment = (object) [
                             'id' => $obj->id ?? null,
                             'status' => $obj->status ?? 'pending',
+                            'status_detail' => $obj->status_detail ?? null,
                             'point_of_interaction' => $obj->point_of_interaction ?? null,
                         ];
                     }
@@ -445,18 +496,62 @@ class CheckoutController extends Controller
             }
         }
 
+        $isArrayPayment = is_array($payment);
+        $isObjectPayment = is_object($payment);
+
+        $paymentId = null;
+        $paymentStatus = 'pending';
+        $rawPayload = null;
+        $orderData = null;
+
+        if ($isArrayPayment) {
+            $paymentId = $payment['id'] ?? null;
+            $paymentStatus = $payment['status'] ?? 'pending';
+            $rawPayload = $payment;
+            $orderData = $payment['order'] ?? null;
+        } elseif ($isObjectPayment) {
+            $paymentId = $payment->id ?? null;
+            $paymentStatus = $payment->status ?? 'pending';
+            if (method_exists($payment, 'toArray')) {
+                $rawPayload = $payment->toArray();
+            } else {
+                $rawPayload = json_decode(json_encode($payment), true);
+            }
+        }
+
         $participation->update([
             'payment_method' => $data['payment_method'],
-            'mp_payment_id' => (string) (is_array($payment) ? $payment['id'] : $payment->id),
-            'mp_payload_raw' => is_array($payment) ? $payment : $payment->toArray(),
-            'payment_status' => is_array($payment) ? ($payment['status'] ?? 'pending') : ($payment->status ?? 'pending'),
+            'mp_payment_id' => $paymentId !== null ? (string) $paymentId : null,
+            'mp_payload_raw' => $rawPayload,
+            'payment_status' => $paymentStatus,
             'quantity' => $quantity ?? ($participation->quantity ?? 1),
         ]);
+        $userMessage = $this->buildUserFriendlyMessage((string) $paymentStatus, $rawPayload ?? $payment);
 
         return response()->json([
-            'status' => is_array($payment) ? ($payment['status'] ?? 'pending') : ($payment->status ?? 'pending'),
-            'payment' => $payment,
-            'order' => is_array($payment) ? ($payment['order'] ?? null) : null,
+            'status' => $paymentStatus,
+            'payment' => $rawPayload ?? $payment,
+            'order' => $orderData,
+            'message' => $userMessage,
         ]);
+    }
+
+    private function buildUserFriendlyMessage(string $status, $payment): ?string
+    {
+        $detail = null;
+        if (is_array($payment)) {
+            $detail = $payment['status_detail'] ?? null;
+        } elseif (is_object($payment)) {
+            $detail = $payment->status_detail ?? null;
+        }
+
+        if ($status === 'rejected' && is_string($detail)) {
+            $d = $detail;
+            if (str_contains($d, 'high_risk') || str_contains($d, 'risk')) {
+                return 'Pagamento recusado por segurança do banco ou do Mercado Pago. Entre em contato com seu banco ou tente outro método de pagamento (Pix, boleto ou outro cartão).';
+            }
+        }
+
+        return null;
     }
 }

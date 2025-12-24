@@ -12,6 +12,9 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
+use App\Filament\Exports\EventParticipationExporter;
+use Filament\Actions\Exports\Enums\ExportFormat;
+
 class EventResource extends Resource
 {
     protected static ?string $model = Event::class;
@@ -231,7 +234,10 @@ class EventResource extends Resource
                     }),
             ])
             ->headerActions([
-                Tables\Actions\ExportAction::make()->label('Exportar CSV'),
+                Tables\Actions\ExportAction::make()
+                    ->exporter(EventParticipationExporter::class)
+                    ->label('Exportar CSV')
+                    ->formats([ExportFormat::Csv, ExportFormat::Xlsx]),
                 Tables\Actions\Action::make('reenviar_ingressos')
                     ->label('Reenviar ingressos')
                     ->action(function () {
@@ -244,12 +250,19 @@ class EventResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('dashboard')
+                    ->label('Dashboard')
+                    ->icon('heroicon-o-chart-bar')
+                    ->url(fn (Event $record): string => Pages\EventSingleDashboard::getUrl(['record' => $record])),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ExportBulkAction::make()->label('Exportar Selecionados'),
+                    Tables\Actions\ExportBulkAction::make()
+                        ->exporter(EventParticipationExporter::class)
+                        ->label('Exportar Selecionados')
+                        ->formats([ExportFormat::Csv, ExportFormat::Xlsx]),
                 ]),
             ]);
     }
@@ -267,6 +280,7 @@ class EventResource extends Resource
             'index' => Pages\ListEvents::route('/'),
             'create' => Pages\CreateEvent::route('/create'),
             'edit' => Pages\EditEvent::route('/{record}/edit'),
+            'dashboard' => Pages\EventSingleDashboard::route('/{record}/dashboard'),
         ];
     }
 }

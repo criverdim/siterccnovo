@@ -1,8 +1,48 @@
 {
     "base": "http://127.0.0.1:8000",
-    "visited_count": 22,
-    "broken_count": 30,
+    "visited_count": 26,
+    "broken_count": 38,
     "broken": [
+        {
+            "url": "https://fonts.googleapis.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.gstatic.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.googleapis.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.gstatic.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.googleapis.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.gstatic.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.googleapis.com",
+            "status": 404,
+            "external": true
+        },
+        {
+            "url": "https://fonts.gstatic.com",
+            "status": 404,
+            "external": true
+        },
         {
             "url": "https://fonts.googleapis.com",
             "status": 404,

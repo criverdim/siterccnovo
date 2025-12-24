@@ -187,6 +187,7 @@
                                 @endif
                                 @php($mpKey = config('services.mercadopago.public_key'))
                                 @if(!empty($mpKey))
+                                    <script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
                                     <script src="https://sdk.mercadopago.com/js/v2"></script>
                                     <div id="mp-bricks-loading" class="text-center py-4 text-gray-500">
                                         <svg class="animate-spin h-8 w-8 mx-auto mb-2 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -207,6 +208,7 @@
                                             <button id="pix-copy" type="button" class="px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors">Copiar</button>
                                         </div>
                                         <p class="text-xs text-center text-gray-500">Abra o app do seu banco e escaneie o QR Code ou copie o código.</p>
+                                        <p id="pix-timer" class="text-xs text-center text-gray-500"></p>
                                     </div>
                                     <div id="boleto-info" class="hidden space-y-2">
                                         <div class="p-3 bg-gray-100 rounded text-center break-all font-mono text-sm" id="boleto-barcode"></div>
@@ -215,12 +217,16 @@
                                             <a id="boleto-link" href="#" target="_blank" class="text-emerald-600 hover:underline text-sm">Visualizar Boleto PDF</a>
                                         </div>
                                     </div>
-                                    <div class="pt-4">
+                                    <div class="pt-4" id="confirm-payment-wrapper">
                                         <button id="confirm-payment" type="button" class="w-full px-4 py-3 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors inline-flex items-center justify-center gap-2 font-semibold shadow-md">
                                             Confirmar Pagamento
                                         </button>
                                     </div>
 
+                                @else
+                                    <p class="mt-4 text-sm text-red-600">
+                                        Pagamento com cartão está indisponível. Configure a MERCADOPAGO_PUBLIC_KEY no ambiente.
+                                    </p>
                                 @endif
                                 <div id="purchase-error" class="mt-3 hidden text-sm text-red-600"></div>
                                 <div id="purchase-success" class="mt-2 hidden text-sm text-emerald-700"></div>
@@ -256,6 +262,7 @@
                                 const boletoCopy = document.getElementById('boleto-copy');
                                 const boletoLink = document.getElementById('boleto-link');
                                 const confirmBtn = document.getElementById('confirm-payment');
+                                const confirmWrapper = document.getElementById('confirm-payment-wrapper');
                                 const boletoFields = document.getElementById('boleto-fields');
                                 const boletoCpf = document.getElementById('boleto-cpf');
                                 const boletoCep = document.getElementById('boleto-cep');
@@ -265,6 +272,19 @@
                                     const m = (document.querySelector('input[name=pay_method]:checked')?.value)||'pix';
                                     if (instBlock) instBlock.classList.toggle('hidden', m!=='credit_card');
                                     if (boletoFields) boletoFields.classList.toggle('hidden', m!=='boleto');
+                                    if (confirmWrapper) {
+                                        if (m === 'credit_card') {
+                                            confirmWrapper.classList.add('hidden');
+                                        } else {
+                                            confirmWrapper.classList.remove('hidden');
+                                        }
+                                    } else if (confirmBtn) {
+                                        if (m === 'credit_card') {
+                                            confirmBtn.classList.add('hidden');
+                                        } else if (!confirmBtn.disabled) {
+                                            confirmBtn.classList.remove('hidden');
+                                        }
+                                    }
                                 };
                                 methodInputs.forEach(el=>el.addEventListener('change', ()=>{ toggleInstallments(); renderBricks(); }));
                                 toggleInstallments();
@@ -309,6 +329,7 @@
                                 let participationId = null;
                                 let lastPaymentId = null;
                                 let pixPollInterval = null;
+                                let pixTimerInterval = null;
                                 let pixStartTime = null;
                                 const PIX_TTL_MS = 15 * 60 * 1000;
 
@@ -317,24 +338,51 @@
                                         clearInterval(pixPollInterval);
                                         pixPollInterval = null;
                                     }
+                                    if (pixTimerInterval) {
+                                        clearInterval(pixTimerInterval);
+                                        pixTimerInterval = null;
+                                    }
+                                }
+
+                                function updatePixTimer() {
+                                    const timerEl = document.getElementById('pix-timer');
+                                    if (!timerEl || !pixStartTime) {
+                                        return;
+                                    }
+                                    const elapsed = Date.now() - pixStartTime;
+                                    const remaining = Math.max(0, PIX_TTL_MS - elapsed);
+                                    const totalSeconds = Math.floor(remaining / 1000);
+                                    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                                    const seconds = String(totalSeconds % 60).padStart(2, '0');
+                                    if (remaining <= 0) {
+                                        timerEl.textContent = 'QR Code expirado';
+                                        clearInterval(pixTimerInterval);
+                                        pixTimerInterval = null;
+                                    } else {
+                                        timerEl.textContent = 'Tempo restante do QR Code: ' + minutes + ':' + seconds;
+                                    }
                                 }
 
                                 async function checkPixStatus() {
                                     if (!participationId) {
                                         return;
                                     }
-                                    if (pixStartTime && (Date.now() - pixStartTime) > PIX_TTL_MS) {
-                                        stopPixPolling();
-                                        if (pixInfo) pixInfo.classList.add('hidden');
-                                        if (pixQr) pixQr.src = '';
-                                        if (pixCode) pixCode.value = '';
-                                        if (ok) {
-                                            ok.textContent = 'O tempo do QR Code expirou. Clique em \"Confirmar Pagamento\" para gerar um novo código.';
-                                            ok.classList.remove('hidden');
-                                        }
-                                        confirmBtn.disabled = false;
-                                        confirmBtn.innerHTML = 'Confirmar Pagamento';
-                                        return;
+                                        if (pixStartTime && (Date.now() - pixStartTime) > PIX_TTL_MS) {
+                                            stopPixPolling();
+                                            if (pixInfo) pixInfo.classList.add('hidden');
+                                            if (pixQr) pixQr.src = '';
+                                            if (pixCode) pixCode.value = '';
+                                            if (ok) {
+                                                ok.textContent = 'O tempo do QR Code expirou. Clique em \"Confirmar Pagamento\" para gerar um novo código.';
+                                                ok.classList.remove('hidden');
+                                            }
+                                            const m = (document.querySelector('input[name=pay_method]:checked')?.value)||'pix';
+                                            if (m === 'pix' && confirmBtn) {
+                                                confirmBtn.disabled = false;
+                                                confirmBtn.innerHTML = 'Confirmar Pagamento';
+                                                confirmBtn.classList.remove('hidden');
+                                            }
+                                            return;
                                     }
                                     try {
                                         const res = await fetch('/area/api/participations/' + participationId, {
@@ -354,7 +402,7 @@
                                                 ok.classList.remove('hidden');
                                             }
                                             setTimeout(() => {
-                                                window.location.href = "{{ route('events.my-tickets') }}";
+                                                window.location.href = "{{ route('events.my-tickets') }}?from=pix";
                                             }, 2000);
                                         } else if (['rejected', 'cancelled', 'refunded'].includes(st)) {
                                             stopPixPolling();
@@ -371,6 +419,8 @@
                                     stopPixPolling();
                                     pixStartTime = Date.now();
                                     pixPollInterval = setInterval(checkPixStatus, 5000);
+                                    updatePixTimer();
+                                    pixTimerInterval = setInterval(updatePixTimer, 1000);
                                 }
                                 
                                 async function ensureParticipation(){
@@ -485,57 +535,106 @@
                                                     cardBrickController = await bricksBuilder.create('cardPayment', 'mp-card-brick', {
                                                         initialization: { amount },
                                                         callbacks: {
-                                                            onSubmit: async ({ formData }) => {
-                                                                const payload = { 
-                                                                    participation_id: participationId, 
-                                                                    payment_method: 'credit_card', 
-                                                                    payer: { 
-                                                                        email: formData.cardholderEmail, 
-                                                                        identification: formData.payer?.identification || { type: 'CPF', number: '' } 
-                                                                    }, 
-                                                                    quantity: parseInt(qtySel?.value || '1', 10) || 1,
-                                                                    token: formData.token, 
-                                                                    installments: (instSel?.value || 1), 
-                                                                    issuer_id: formData.issuerId, 
-                                                                    payment_method_id: formData.paymentMethodId 
-                                                                };
-                                                                
-                                                                const res = await fetch("{{ route('checkout') }}", { 
-                                                                    method: 'POST', 
-                                                                    headers: { 
-                                                                        'Content-Type': 'application/json',
-                                                                        'X-Requested-With': 'XMLHttpRequest',
-                                                                        'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content || '') 
-                                                                    }, 
-                                                                    body: JSON.stringify(payload) 
-                                                                });
-                                                                
-                                                                const j = await res.json();
-                                                                lastPaymentId = j?.payment?.id || lastPaymentId;
-                                                                
-                                                                if (!res.ok || j.status === 'error') {
-                                                                    let msg = j.message || j.error || 'Não foi possível processar o pagamento. Tente novamente em instantes.';
-                                                                    if (j.errors) msg += ': ' + Object.values(j.errors).flat().join(', ');
-                                                                    
-                                                                    if (msg.includes('Invalid users involved') || msg.includes('email forbidden') || msg.includes('UNAUTHORIZED')) {
-                                                                        msg += '\n\nDICA: No ambiente de testes (Sandbox), você não pode usar o mesmo e-mail da conta do vendedor (Mercado Pago). Tente usar um e-mail diferente no formulário.';
-                                                                    }
-                                                                    
-                                                                    err.textContent = msg;
-                                                                    err.classList.remove('hidden');
-                                                                } else {
-                                                                    if (ok) {
-                                                                        ok.textContent = 'Pagamento aprovado! Seus ingressos estarão em \"Meus Ingressos\" em instantes.';
-                                                                        ok.classList.remove('hidden');
-                                                                    }
-                                                                    setTimeout(() => {
-                                                                        window.location.href = "{{ route('events.my-tickets') }}";
-                                                                    }, 2000);
+                                                            onReady: () => {
+                                                                if (loading) {
+                                                                    loading.classList.add('hidden');
                                                                 }
+                                                            },
+                                                            onSubmit: (formData) => {
+                                                                return new Promise(async (resolve, reject) => {
+                                                                    try {
+                                                                        const deviceId = (window.MP_DEVICE_SESSION_ID || '') || formData.deviceId || formData.device_id || (formData.device && (formData.device.id || formData.device.fingerprint)) || '';
+                                                                        const payload = { 
+                                                                            participation_id: participationId, 
+                                                                            payment_method: 'credit_card', 
+                                                                            payer: { 
+                                                                                email: formData.cardholderEmail, 
+                                                                                identification: formData.payer?.identification || { type: 'CPF', number: '' } 
+                                                                            }, 
+                                                                            quantity: parseInt(qtySel?.value || '1', 10) || 1,
+                                                                            token: formData.token, 
+                                                                            installments: (instSel?.value || 1), 
+                                                                            issuer_id: formData.issuerId, 
+                                                                            payment_method_id: formData.paymentMethodId,
+                                                                            device_id: deviceId
+                                                                        };
+                                                                        
+                                                                        const res = await fetch("{{ route('checkout') }}", { 
+                                                                            method: 'POST', 
+                                                                            headers: { 
+                                                                                'Content-Type': 'application/json',
+                                                                                'X-Requested-With': 'XMLHttpRequest',
+                                                                                'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content || '') 
+                                                                            }, 
+                                                                            body: JSON.stringify(payload) 
+                                                                        });
+                                                                        
+                                                                        const j = await res.json();
+                                                                        lastPaymentId = j?.payment?.id || lastPaymentId;
+                                                                        
+                                                                        if (!res.ok || j.status === 'error') {
+                                                                            let msg = j.message || j.error || 'Não foi possível processar o pagamento. Tente novamente em instantes.';
+                                                                            if (j.errors) {
+                                                                                const rawErrors = Object.values(j.errors).flat().map(String);
+                                                                                if (rawErrors.some(e => e.includes('validation.'))) {
+                                                                                    msg = 'Alguns dados estão faltando ou inválidos. Confira os campos do cartão e tente novamente.';
+                                                                                } else {
+                                                                                    msg += ': ' + rawErrors.join(', ');
+                                                                                }
+                                                                            }
+                                                                            if (msg.includes('Invalid users involved') || msg.includes('email forbidden') || msg.includes('UNAUTHORIZED')) {
+                                                                                msg += '\n\nDICA: No ambiente de testes (Sandbox), você não pode usar o mesmo e-mail da conta do vendedor (Mercado Pago). Tente usar um e-mail diferente no formulário.';
+                                                                            }
+                                                                            
+                                                                            err.textContent = msg;
+                                                                            err.classList.remove('hidden');
+                                                                            reject(new Error(msg));
+                                                                            return;
+                                                                        }
+
+                                                                        const status = (j.status || j.payment?.status || '').toLowerCase();
+
+                                                                        if (status === 'approved') {
+                                                                            if (ok) {
+                                                                                ok.textContent = 'Pagamento aprovado! Seus ingressos estarão em "Meus Ingressos" em instantes.';
+                                                                                ok.classList.remove('hidden');
+                                                                            }
+                                                                            setTimeout(() => {
+                                                                                window.location.href = "{{ route('events.my-tickets') }}";
+                                                                            }, 2000);
+                                                                        } else if (['in_process', 'pending', 'in_mediation'].includes(status)) {
+                                                                            if (ok) {
+                                                                                ok.textContent = 'Seu pagamento está em análise pelo Mercado Pago. Assim que for aprovado, seu ingresso aparecerá em "Meus Ingressos".';
+                                                                                ok.classList.remove('hidden');
+                                                                            }
+                                                                        } else if (['rejected', 'cancelled', 'refunded', 'charged_back'].includes(status)) {
+                                                                            let msg = 'Pagamento não aprovado. Verifique os dados do cartão ou entre em contato com o seu banco.';
+                                                                            err.textContent = msg;
+                                                                            err.classList.remove('hidden');
+                                                                            reject(new Error(msg));
+                                                                            return;
+                                                                        } else {
+                                                                            if (ok) {
+                                                                                ok.textContent = 'Pagamento recebido. Caso não visualize o ingresso em "Meus Ingressos" em alguns minutos, entre em contato com o suporte.';
+                                                                                ok.classList.remove('hidden');
+                                                                            }
+                                                                        }
+                                                                        resolve();
+                                                                    } catch (submitError) {
+                                                                        console.error(submitError);
+                                                                        err.textContent = 'Não foi possível enviar o pagamento. Verifique sua conexão e tente novamente.';
+                                                                        err.classList.remove('hidden');
+                                                                        reject(submitError);
+                                                                    }
+                                                                });
                                                             },
                                                             onError: (error) => { 
                                                                 console.error(error);
-                                                                err.textContent = 'Falha ao processar cartão. Verifique os dados.'; 
+                                                                let msg = 'Falha ao carregar formulário de cartão.';
+                                                                if (error && error.cause === 'card_payment_brick_initialization_failed' && typeof error.message === 'string') {
+                                                                    msg = error.message + ' Ajuste o valor total (por exemplo, aumentando a quantidade) ou escolha outro método de pagamento.';
+                                                                }
+                                                                err.textContent = msg; 
                                                                 err.classList.remove('hidden'); 
                                                             }
                                                         }
@@ -568,6 +667,10 @@
                                 
                                 confirmBtn && confirmBtn.addEventListener('click', async ()=>{
                                     const method = (document.querySelector('input[name=pay_method]:checked')?.value)||'pix';
+                                    if (method === 'credit_card') {
+                                        return;
+                                    }
+                                    let pixGenerated = false;
                                     err.classList.add('hidden');
                                     
                                     try {
@@ -637,19 +740,19 @@
                                         });
                                         
                                         const j = await res.json();
-                                         lastPaymentId = j?.payment?.id || lastPaymentId;
-                                         
-                                         if (!res.ok || j.status === 'error') {
-                                             let msg = j.message || j.error || 'Não foi possível criar o pagamento. Tente novamente em instantes.';
-                                             if (j.errors) msg += ': ' + Object.values(j.errors).flat().join(', ');
-                                             
-                                             if (msg.includes('Invalid users involved') || msg.includes('email forbidden') || msg.includes('UNAUTHORIZED')) {
+                                        lastPaymentId = j?.payment?.id || lastPaymentId;
+                                        
+                                        if (!res.ok || j.status === 'error') {
+                                            let msg = j.message || j.error || 'Não foi possível criar o pagamento. Tente novamente em instantes.';
+                                            if (j.errors) msg += ': ' + Object.values(j.errors).flat().join(', ');
+                                            
+                                            if (msg.includes('Invalid users involved') || msg.includes('email forbidden') || msg.includes('UNAUTHORIZED')) {
                                                 msg += '\n\nDICA: No ambiente de testes (Sandbox), você NÃO PODE usar o mesmo e-mail da conta do vendedor (Mercado Pago). Tente usar um e-mail diferente (ex: test_user_123@test.com) no campo de e-mail acima.';
                                             }
-                                             
-                                             throw new Error(msg);
-                                         }
-                                         
+                                            
+                                            throw new Error(msg);
+                                        }
+                                        
                                         const tx = (j?.payment?.point_of_interaction?.transaction_data) || {};
                                        
                                         if (method === 'pix') {
@@ -661,17 +764,18 @@
                                                 if(pixQr && base64) pixQr.src = 'data:image/png;base64,' + base64;
                                                 pixInfo?.classList.remove('hidden');
                                                 startPixPolling();
+                                                pixGenerated = true;
+                                                confirmBtn?.classList.add('hidden');
                                             }
                                         } else if (method === 'boleto') {
                                             const barcode = (j?.payment?.barcode?.content) || (tx.ticket_url) || 'Código gerado';
                                             const url = tx.ticket_url;
                                             
-                                            if(boletoBarcode) boletoBarcode.textContent = barcode; // Or message
+                                            if(boletoBarcode) boletoBarcode.textContent = barcode;
                                             if(boletoLink && url) { boletoLink.href = url; boletoLink.classList.remove('hidden'); }
                                             
                                             boletoInfo?.classList.remove('hidden');
                                             
-                                            // Open boleto in new tab
                                             if(url) window.open(url, '_blank');
                                         }
                                         
@@ -680,8 +784,10 @@
                                         err.textContent = e.message || 'Não foi possível confirmar o pagamento. Verifique os dados e tente novamente.'; 
                                         err.classList.remove('hidden');
                                     } finally {
-                                        confirmBtn.disabled = false;
-                                        confirmBtn.innerHTML = 'Confirmar Pagamento';
+                                        if (!pixGenerated) {
+                                            confirmBtn.disabled = false;
+                                            confirmBtn.innerHTML = 'Confirmar Pagamento';
+                                        }
                                     }
                                 });
 

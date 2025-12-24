@@ -132,18 +132,10 @@ class AdminPanelProvider extends PanelProvider
         FilamentView::registerRenderHook(
             PanelsRenderHook::STYLES_AFTER,
             function () use ($p50Rgb, $p500Rgb, $p600Rgb, $p700Rgb, $a500Rgb, $a600Rgb, $a700Rgb, $s600Rgb, $s700Rgb, $s800Rgb): string {
-                static $cached = null;
-
-                if ($cached !== null) {
-                    return $cached;
-                }
-
                 $varsCss = ':root{--primary-50:'.$p50Rgb.';--primary-500:'.$p500Rgb.';--primary-600:'.$p600Rgb.';--primary-700:'.$p700Rgb.';--accent-500:'.$a500Rgb.';--accent-600:'.$a600Rgb.';--accent-700:'.$a700Rgb.';--secondary-600:'.$s600Rgb.';--secondary-700:'.$s700Rgb.';--secondary-800:'.$s800Rgb.'}';
 
                 try {
-                    $cached = '<style>'.$varsCss.'</style>'.Vite::toHtml(['resources/css/filament/admin.css']);
-
-                    return $cached;
+                    return '<style>'.$varsCss.'</style>'.Vite::toHtml(['resources/css/filament/admin.css']);
                 } catch (\Throwable $e) {
                     $candidates = glob(public_path('build/assets/admin-*.css')) ?: [];
 
@@ -155,14 +147,10 @@ class AdminPanelProvider extends PanelProvider
                         usort($candidates, fn ($a, $b) => filemtime($b) <=> filemtime($a));
                         $file = basename($candidates[0]);
 
-                        $cached = '<style>'.$varsCss.'</style><link rel="stylesheet" href="'.asset('build/assets/'.$file).'" />';
-
-                        return $cached;
+                        return '<style>'.$varsCss.'</style><link rel="stylesheet" href="'.asset('build/assets/'.$file).'" />';
                     }
 
-                    $cached = '';
-
-                    return $cached;
+                    return '<style>'.$varsCss.'</style>';
                 }
             }
         );
@@ -207,7 +195,7 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
                 'success' => Color::Emerald,
             ])
-            ->collapsibleNavigationGroups(false)
+            ->collapsibleNavigationGroups(true)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([

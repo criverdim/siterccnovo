@@ -15,27 +15,47 @@ class TicketService
         $qrData = 'TICKET:'.$uuid;
         $qr = (new Generator)->size(300)->format('png')->generate($qrData);
 
-        $qrPath = 'tickets/qr_'.$uuid.'.png';
-        Storage::disk('local')->put($qrPath, $qr);
+        $qrRelativePath = 'tickets/qr_'.$uuid.'.png';
+        Storage::disk('local')->put($qrRelativePath, $qr);
+        $qrAbsolutePath = Storage::disk('local')->path($qrRelativePath);
 
         $pdf = Pdf::loadView('tickets.pdf', [
             'participation' => $participation,
-            'qrPath' => storage_path('app/'.$qrPath),
+            'qrPath' => $qrAbsolutePath,
         ]);
-        $pdfPath = 'tickets/ticket_'.$uuid.'.pdf';
-        Storage::disk('local')->put($pdfPath, $pdf->output());
+        $pdfRelativePath = 'tickets/ticket_'.$uuid.'.pdf';
+        Storage::disk('local')->put($pdfRelativePath, $pdf->output());
+        $pdfAbsolutePath = Storage::disk('local')->path($pdfRelativePath);
 
         $participation->update([
             'ticket_uuid' => $uuid,
             'ticket_qr_hash' => hash('sha256', $qrData),
         ]);
 
-        \Mail::to($participation->user->email)->send(new \App\Mail\TicketMailable($participation, storage_path('app/'.$pdfPath)));
+        // Criar/atualizar registro de Ticket para uso no check-in
+        $payment = \App\Models\Payment::where('user_id', $participation->user_id)
+            ->where('event_id', $participation->event_id)
+            ->latest()
+            ->first();
+
+        $ticket = \App\Models\Ticket::updateOrCreate(
+            ['ticket_code' => $uuid],
+            [
+                'user_id' => $participation->user_id,
+                'event_id' => $participation->event_id,
+                'payment_id' => $payment?->id,
+                'qr_code' => $qrAbsolutePath,
+                'status' => 'active',
+                'pdf_path' => $pdfAbsolutePath,
+            ]
+        );
+
+        \Mail::to($participation->user->email)->send(new \App\Mail\TicketMailable($participation, $pdfAbsolutePath));
 
         \App\Models\WaMessage::create([
             'user_id' => $participation->user_id,
             'message' => 'Seu ingresso foi gerado.',
-            'payload' => ['ticket_pdf' => storage_path('app/'.$pdfPath)],
+            'payload' => ['ticket_pdf' => $pdfAbsolutePath],
             'status' => 'pending',
         ]);
     }

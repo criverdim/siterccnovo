@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Event;
 use App\Models\Payment;
 use App\Models\Ticket;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Client\Payment\PaymentClient;
@@ -98,8 +100,8 @@ class MercadoPagoService
                     "excluded_payment_types" => [],
                     "installments" => 12
                 ],
-                "statement_descriptor" => "RCC EVENTOS",
-                "binary_mode" => false
+                "statement_descriptor" => "RCC Miguelopolis",
+                "binary_mode" => true
             ]);
 
             // Atualizar pagamento com preference_id
@@ -264,6 +266,8 @@ class MercadoPagoService
 
                 // Gerar QR code
                 $this->generateQrCode($ticket);
+
+                $this->sendTicketEmail($ticket);
             }
 
             // Atualizar contador de ingressos vendidos
@@ -277,6 +281,48 @@ class MercadoPagoService
             ]);
 
             throw $e;
+        }
+    }
+
+    private function sendTicketEmail(Ticket $ticket): void
+    {
+        try {
+            if (app()->environment('testing')) {
+                return;
+            }
+
+            $user = $ticket->user;
+            $event = $ticket->event;
+
+            if (! $user || ! $user->email) {
+                return;
+            }
+
+            $pdf = Pdf::loadView('events.ticket-pdf', [
+                'ticket' => $ticket,
+            ]);
+
+            $pdfData = $pdf->output();
+
+            Mail::raw(
+                'Seu ingresso para '.$event?->name.' foi gerado. O PDF segue em anexo.',
+                function ($message) use ($user, $event, $pdfData, $ticket) {
+                    $subject = 'Seu ingresso para '.($event?->name ?? 'evento');
+
+                    $message->to($user->email, $user->name)
+                        ->subject($subject)
+                        ->attachData(
+                            $pdfData,
+                            'ingresso-'.$ticket->ticket_code.'.pdf',
+                            ['mime' => 'application/pdf']
+                        );
+                }
+            );
+        } catch (\Throwable $e) {
+            Log::error('Erro ao enviar ingresso por e-mail', [
+                'ticket_id' => $ticket->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

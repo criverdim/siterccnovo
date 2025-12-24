@@ -37,7 +37,11 @@
                                     })
                                 });
                                 const j = await res.json();
-                                alert('PIX status: '+(j?.status||'ok'));
+                                if (j && j.message) {
+                                    alert(j.message);
+                                } else {
+                                    alert('PIX status: '+(j?.status||'ok'));
+                                }
                             },
                             onError: (error) => { console.error(error); alert('Falha PIX'); },
                         }
@@ -81,7 +85,11 @@
                                     })
                                 });
                                 const j = await res.json();
-                                alert('Boleto status: '+(j?.status||'ok'));
+                                if (j && j.message) {
+                                    alert(j.message);
+                                } else {
+                                    alert('Boleto status: '+(j?.status||'ok'));
+                                }
                             },
                             onError: (error) => { console.error(error); alert('Falha Boleto'); },
                         }
@@ -111,7 +119,11 @@
                                     })
                                 });
                                 const j = await res.json();
-                                alert('Status: '+(j?.status||'ok'));
+                                if (j && j.message) {
+                                    alert(j.message);
+                                } else {
+                                    alert('Status: '+(j?.status||'ok'));
+                                }
                             },
                             onError: (error) => { console.error(error); alert('Falha ao processar cartão'); },
                         }

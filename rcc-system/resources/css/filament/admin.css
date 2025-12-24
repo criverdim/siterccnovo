@@ -37,15 +37,15 @@
 .fi-wi-chart canvas{max-height:260px!important}
 .fi-layout svg{width:20px!important;height:20px!important}
 
-.uc-card{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.75rem;background:linear-gradient(180deg,rgb(var(--primary-50)) 0%,#ffffff 50%);border:1px solid #e5e7eb;border-radius:var(--radius);padding:16px;box-shadow:0 6px 18px rgba(2,44,34,.06);width:100%;max-width:300px;height:465px;overflow:visible;margin:0 auto;box-sizing:border-box}
-.uc-card::before{content:"";position:absolute;top:0;left:0;right:0;height:20px;border-radius:var(--radius) var(--radius) 0 0;background:linear-gradient(90deg,rgb(var(--primary-500)),rgb(var(--primary-600)))}
+.uc-card{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.75rem;background:linear-gradient(180deg,#e9fff4 0%,#ffffff 65%);border:1px solid #e5e7eb;border-radius:24px;padding:22px 18px 26px;box-shadow:0 14px 30px rgba(15,118,110,.14);width:100%;max-width:310px;height:480px;overflow:visible;margin:0 auto;box-sizing:border-box}
+.uc-card::before{content:"";position:absolute;top:0;left:0;right:0;height:22px;border-radius:24px 24px 0 0;background:linear-gradient(90deg,#10b981,#059669)}
 .uc-card{transition:opacity .2s ease,transform .2s ease}
 .uc-card.uc-fade-out{opacity:0;transform:translateY(4px) scale(.98);pointer-events:none}
 .uc-card{padding-bottom:0}
-.uc-card-body{position:relative;flex:1 1 auto;width:100%;overflow-y:visible;overscroll-behavior:contain;padding-bottom:96px}
+.uc-card-body{position:relative;flex:1 1 auto;width:100%;overflow-y:visible;overscroll-behavior:contain;padding-bottom:96px;display:flex;flex-direction:column;align-items:center}
 .uc-card-media{position:relative;display:flex;align-items:center;justify-content:center;gap:.75rem}
 .uc-card-photo{width:96px;height:96px;border-radius:9999px;object-fit:cover;box-shadow:0 6px 18px rgba(0,0,0,.12);border:4px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(90deg,rgb(var(--primary-500)),rgb(var(--primary-600))) border-box;margin-top:36px}
-.uc-status-overlay{position:relative;margin-top:6px;display:flex;align-items:center;justify-content:center}
+.uc-status-overlay{position:absolute;top:10px;left:18px;display:flex;align-items:center;justify-content:flex-start}
 .status-badge{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:9999px;font-weight:600;font-size:.75rem;border:1px solid rgba(0,0,0,.08);box-shadow:0 1px 0 rgba(0,0,0,.04) inset}
 .status-active{background:#dcfce7;color:#166534;border-color:#bbf7d0}
 .status-inactive{background:#fee2e2;color:#991b1b;border-color:#fecaca}
@@ -63,17 +63,17 @@
 .uc-date{font-size:.75rem;color:#64748b}
 .uc-registered-by{font-size:.75rem;color:#64748b}
 .uc-line-ministry{margin-bottom:.75rem}
-.btn-details{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 12px;background:linear-gradient(90deg,rgb(var(--primary-500)),rgb(var(--primary-600)));color:#fff;border:none;border-radius:9999px;font-weight:700;letter-spacing:.2px;font-size:.85rem;transition:filter .2s ease,transform .05s ease}
-.btn-details:hover{filter:brightness(1.06)}
-.btn-details:active{transform:translateY(1px)}
+.btn-details{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 20px;background:linear-gradient(90deg,rgb(var(--primary-500)),rgb(var(--primary-600)));color:#fff;border:none;border-radius:9999px;font-weight:700;letter-spacing:.25px;font-size:.9rem;box-shadow:0 10px 20px rgba(16,185,129,.32);transition:filter .15s ease,transform .05s ease,box-shadow .15s ease}
+.btn-details:hover{filter:brightness(1.06);box-shadow:0 12px 24px rgba(16,185,129,.36)}
+.btn-details:active{transform:translateY(1px);box-shadow:0 6px 16px rgba(16,185,129,.28)}
 .uc-contact-btn svg{display:block}
 .uc-contact-label{font-size:.875rem}
 .uc-groups-badges .uc-group-badge{line-height:1.4;font-size:.7rem;white-space:nowrap;min-width:0;max-width:100%}
 .uc-group-name{display:inline-block;white-space:nowrap}
 .uc-groups-badges{min-height:36px}
-.uc-actions{position:absolute;bottom:24px;left:0;right:0;z-index:3;display:flex;justify-content:center}
+.uc-actions{position:absolute;bottom:18px;left:0;right:0;z-index:3;display:flex;justify-content:center}
 
-#users-grid{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+#users-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));justify-items:center}
  
 .header-section{padding:8px 0}
 .search-container{position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:540px;margin:0 auto;gap:.5rem}

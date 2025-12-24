@@ -64,7 +64,7 @@ class DebugPaymentPayload extends Command
                         "unit_price" => 10.0
                     ]]
                 ],
-                "binary_mode" => false
+                "binary_mode" => true
             ];
             
             $payment = $client->create($request);

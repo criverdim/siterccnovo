@@ -357,12 +357,30 @@
         function createUserCard(user) {
             const card = document.createElement('div');
             card.className = 'uc-card ' + getCardVariant(user.status);
+            card.style.position = 'relative';
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.alignItems = 'center';
+            card.style.textAlign = 'center';
+            card.style.gap = '.75rem';
+            card.style.background = 'linear-gradient(180deg,#e9fff4 0%,#ffffff 65%)';
+            card.style.border = '1px solid #e5e7eb';
+            card.style.borderRadius = '24px';
+            card.style.padding = '22px 18px 26px';
+            card.style.boxShadow = '0 14px 30px rgba(15,118,110,.14)';
+            card.style.width = '100%';
+            card.style.maxWidth = '310px';
+            card.style.height = '480px';
+            card.style.overflow = 'visible';
+            card.style.margin = '0 auto';
+            card.style.boxSizing = 'border-box';
             card.innerHTML = `
-                <div class="uc-card-media">
+                <div class="uc-card-media" style="width:100%;display:flex;align-items:center;justify-content:center;margin-top:4px">
                     <img 
                         src="${user.profile_photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&color=7F9CF5&background=EBF4FF'}" 
                         alt="${user.name}"
                         class="uc-card-photo"
+                        style="width:96px;height:96px;border-radius:9999px;object-fit:cover;box-shadow:0 6px 18px rgba(0,0,0,.12);border:4px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(90deg,#10b981,#059669) border-box;margin-top:10px"
                         loading="lazy" decoding="async" width="96" height="96" sizes="96px"
                     >
                 </div>
@@ -416,10 +434,19 @@
                         <span class="uc-date" style="text-align:center;width:100%">Cadastrado em ${formatDate(user.created_at)}</span>
                     </div>
                 </div>
-                <div class="uc-actions" style="display:flex;justify-content:center;width:100%">
-                    <a href="/admin/users/${user.id}/profile" class="btn-details">Visualizar Ficha Completa</a>
+                <div class="uc-actions" style="position:absolute;bottom:18px;left:0;right:0;z-index:3;display:flex;justify-content:center;width:100%">
+                    <a href="/admin/users/${user.id}/profile" class="btn-details" style="display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 20px;border-radius:9999px;font-weight:700;font-size:.9rem;letter-spacing:.25px;background:linear-gradient(90deg,#10b981,#059669);color:#ffffff;box-shadow:0 10px 20px rgba(16,185,129,.32);text-decoration:none">Visualizar Ficha Completa</a>
                 </div>
             `;
+            const statusOverlay = card.querySelector('.uc-status-overlay');
+            if (statusOverlay) {
+                statusOverlay.style.position = 'absolute';
+                statusOverlay.style.top = '10px';
+                statusOverlay.style.left = '18px';
+                statusOverlay.style.display = 'flex';
+                statusOverlay.style.alignItems = 'center';
+                statusOverlay.style.justifyContent = 'flex-start';
+            }
             enhanceContactActions(card);
             return card;
         }

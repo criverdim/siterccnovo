@@ -85,7 +85,7 @@ class ValidateMercadoPago extends Command
                         'payer' => ['email' => 'test_user_123@testuser.com'],
                         'external_reference' => 'cli_validate_'.uniqid(),
                         'notification_url' => $vals['webhook_url'] ?? null,
-                        'binary_mode' => false,
+                        'binary_mode' => true,
                     ]);
                     $status = $resp->status();
                     if ($status >= 200 && $status < 300) {

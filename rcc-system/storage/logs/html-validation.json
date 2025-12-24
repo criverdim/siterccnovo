@@ -17,7 +17,7 @@
             "lastColumn": 108,
             "firstColumn": 17,
             "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
-            "extract": "          <link rel=\"preload\" as=\"style\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-BiF6Rmsa.css\" \/><link ",
+            "extract": "          <link rel=\"preload\" as=\"style\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-DoxGquKR.css\" \/><link ",
             "hiliteStart": 10,
             "hiliteLength": 92
         },
@@ -27,7 +27,7 @@
             "lastColumn": 206,
             "firstColumn": 109,
             "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
-            "extract": "sa.css\" \/><link rel=\"modulepreload\" as=\"script\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-y3_sG6PN.js\" \/><link ",
+            "extract": "KR.css\" \/><link rel=\"modulepreload\" as=\"script\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-y3_sG6PN.js\" \/><link ",
             "hiliteStart": 10,
             "hiliteLength": 98
         },
@@ -37,7 +37,7 @@
             "lastColumn": 319,
             "firstColumn": 207,
             "message": "Trailing slash on void elements has no effect and interacts badly with unquoted attribute values.",
-            "extract": "6PN.js\" \/><link rel=\"stylesheet\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-BiF6Rmsa.css\" data-navigate-track=\"reload\" \/><scrip",
+            "extract": "6PN.js\" \/><link rel=\"stylesheet\" href=\"http:\/\/127.0.0.1:8000\/build\/assets\/app-DoxGquKR.css\" data-navigate-track=\"reload\" \/><scrip",
             "hiliteStart": 10,
             "hiliteLength": 113
         },

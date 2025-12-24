@@ -102,10 +102,39 @@ class MercadoPagoWebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        $p = EventParticipation::where('mp_payment_id', $paymentId)->first();
-        if (! $p) {
+        $participation = null;
+
+        if (! app()->environment('testing')) {
+            try {
+                $token = (string) config('services.mercadopago.access_token');
+                if ($token !== '' && class_exists(\MercadoPago\Client\Payment\PaymentClient::class) && class_exists(\MercadoPago\MercadoPagoConfig::class)) {
+                    \MercadoPago\MercadoPagoConfig::setAccessToken($token);
+                    $client = new \MercadoPago\Client\Payment\PaymentClient();
+                    $paymentObj = $client->get((int) $paymentId);
+                    $externalRef = $paymentObj->external_reference ?? null;
+                    if (is_string($externalRef) && $externalRef !== '') {
+                        if (preg_match('/^participation_(\d+)/', $externalRef, $m)) {
+                            $pid = (int) $m[1];
+                            $participation = EventParticipation::find($pid);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('MP Webhook: falha ao correlacionar por external_reference', [
+                    'payment_id' => $paymentId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if (! $participation) {
+            $participation = EventParticipation::where('mp_payment_id', $paymentId)->first();
+        }
+        if (! $participation) {
             return response()->json(['ok' => true]);
         }
+
+        $p = $participation;
 
         if ($status) {
             $normalizedStatus = $status;

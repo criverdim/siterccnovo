@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Event;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -228,7 +229,7 @@ class PaymentController extends Controller
         ]);
 
         $ticket = Ticket::with(['event', 'user'])
-            ->where('code', $request->input('ticket_code'))
+            ->where('ticket_code', $request->input('ticket_code'))
             ->first();
 
         if (! $ticket) {
@@ -252,14 +253,12 @@ class PaymentController extends Controller
             ], 400);
         }
 
-        // Realizar check-in
         $ticket->update([
             'status' => 'used',
-            'checkin_at' => now(),
+            'used_at' => now(),
         ]);
 
-        // Criar registro de check-in
-        $ticket->checkins()->create([
+        $ticket->checkin()->create([
             'checked_at' => now(),
             'checked_by' => auth()->id(),
             'location' => $request->input('location', 'Entrada Principal'),
@@ -269,10 +268,14 @@ class PaymentController extends Controller
             'success' => true,
             'message' => 'Check-in realizado com sucesso!',
             'ticket' => [
-                'code' => $ticket->code,
+                'code' => $ticket->ticket_code,
                 'event_name' => $ticket->event->name,
                 'user_name' => $ticket->user->name,
-                'checkin_at' => $ticket->checkin_at->format('d/m/Y H:i:s'),
+                'checkin_at' => $ticket->used_at->format('d/m/Y H:i:s'),
+                'event_date' => optional($ticket->event->start_date)->format('d/m/Y H:i'),
+                'ticket_type' => $ticket->additional_data['type'] ?? $ticket->additional_data['label'] ?? null,
+                'user_photo_url' => $ticket->user->profile_photo_url,
+                'checked_by_name' => auth()->user()->name,
             ],
         ]);
     }
