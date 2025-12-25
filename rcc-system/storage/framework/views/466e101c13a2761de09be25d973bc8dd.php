@@ -175,14 +175,9 @@
                                     </p>
                                 </div>
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($event->parceling_enabled): ?>
-                                <div id="installments-block" class="hidden">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Parcelamento (até <?php echo e((int) ($event->parceling_max ?? 12)); ?>x)</label>
-                                    <select id="installments" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500">
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php for($i=1; $i<=max(1,(int)($event->parceling_max ?? 12)); $i++): ?>
-                                            <option value="<?php echo e($i); ?>"><?php echo e($i); ?>x</option>
-                                        <?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                    </select>
-                                </div>
+                                <p class="text-xs text-gray-500">
+                                    Parcelamento disponível em até <?php echo e((int) ($event->parceling_max ?? 12)); ?>x no cartão.
+                                </p>
                                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 <?php ($mpKey = config('services.mercadopago.public_key')); ?>
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($mpKey)): ?>
@@ -250,8 +245,6 @@
                                 update();
                                 
                                 const methodInputs = document.querySelectorAll('input[name=pay_method]');
-                                const instBlock = document.getElementById('installments-block');
-                                const instSel = document.getElementById('installments');
                                 const pixInfo = document.getElementById('pix-info');
                                 const pixQr = document.getElementById('pix-qr');
                                 const pixCode = document.getElementById('pix-code');
@@ -269,7 +262,6 @@
 
                                 const toggleInstallments = ()=>{
                                     const m = (document.querySelector('input[name=pay_method]:checked')?.value)||'pix';
-                                    if (instBlock) instBlock.classList.toggle('hidden', m!=='credit_card');
                                     if (boletoFields) boletoFields.classList.toggle('hidden', m!=='boleto');
                                     if (confirmWrapper) {
                                         if (m === 'credit_card') {
@@ -422,6 +414,42 @@
                                     pixTimerInterval = setInterval(updatePixTimer, 1000);
                                 }
                                 
+                                async function waitForTicketAndRedirect() {
+                                    if (!participationId) {
+                                        window.location.href = "<?php echo e(route('events.my-tickets')); ?>";
+                                        return;
+                                    }
+                                    const start = Date.now();
+                                    const limitMs = 60000;
+                                    const stepMs = 4000;
+                                    async function delay(ms) {
+                                        return new Promise(function(resolve) {
+                                            setTimeout(resolve, ms);
+                                        });
+                                    }
+                                    while (Date.now() - start < limitMs) {
+                                        try {
+                                            const res = await fetch('/area/api/participations/' + participationId, {
+                                                headers: {
+                                                    'X-Requested-With': 'XMLHttpRequest'
+                                                }
+                                            });
+                                            if (res.ok) {
+                                                const data = await res.json();
+                                                const st = (data.payment_status || '').toLowerCase();
+                                                const hasTicket = !!data.ticket_uuid;
+                                                if (hasTicket && ['approved','completed','paid','processed'].includes(st)) {
+                                                    window.location.href = "<?php echo e(route('events.my-tickets')); ?>";
+                                                    return;
+                                                }
+                                            }
+                                        } catch (e) {
+                                        }
+                                        await delay(stepMs);
+                                    }
+                                    window.location.href = "<?php echo e(route('events.my-tickets')); ?>";
+                                }
+                                
                                 async function ensureParticipation(){
                                     try {
                                         const res = await fetch("<?php echo e(route('events.participate', $event)); ?>", { method:'POST', headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]')?.content || '') } });
@@ -543,18 +571,21 @@
                                                                 return new Promise(async (resolve, reject) => {
                                                                     try {
                                                                         const deviceId = (window.MP_DEVICE_SESSION_ID || '') || formData.deviceId || formData.device_id || (formData.device && (formData.device.id || formData.device.fingerprint)) || '';
+                                                                        const paymentMethodId = formData.payment_method_id || formData.paymentMethodId || '';
+                                                                        const issuerId = formData.issuer_id || formData.issuerId || null;
+                                                                        const selectedInstallments = parseInt((formData.installments || 1), 10) || 1;
                                                                         const payload = { 
                                                                             participation_id: participationId, 
                                                                             payment_method: 'credit_card', 
                                                                             payer: { 
                                                                                 email: formData.cardholderEmail, 
-                                                                                identification: formData.payer?.identification || { type: 'CPF', number: '' } 
+                                                                            identification: formData.payer?.identification || { type: 'CPF', number: '' } 
                                                                             }, 
                                                                             quantity: parseInt(qtySel?.value || '1', 10) || 1,
                                                                             token: formData.token, 
-                                                                            installments: (instSel?.value || 1), 
-                                                                            issuer_id: formData.issuerId, 
-                                                                            payment_method_id: formData.paymentMethodId,
+                                                                            installments: selectedInstallments, 
+                                                                            issuer_id: issuerId, 
+                                                                            payment_method_id: paymentMethodId,
                                                                             device_id: deviceId
                                                                         };
                                                                         
@@ -595,13 +626,11 @@
 
                                                                         if (status === 'approved') {
                                                                             if (ok) {
-                                                                                ok.textContent = 'Pagamento aprovado! Seus ingressos estarão em "Meus Ingressos" em instantes.';
+                                                                                ok.textContent = 'Pagamento aprovado! Estamos gerando seus ingressos... você será redirecionado em instantes.';
                                                                                 ok.classList.remove('hidden');
                                                                             }
-                                                                            setTimeout(() => {
-                                                                                window.location.href = "<?php echo e(route('events.my-tickets')); ?>";
-                                                                            }, 2000);
-                                                                        } else if (['in_process', 'pending', 'in_mediation'].includes(status)) {
+                                                                            waitForTicketAndRedirect();
+                                                                        } else if (['in_review', 'in_process', 'pending', 'in_mediation'].includes(status)) {
                                                                             if (ok) {
                                                                                 ok.textContent = 'Seu pagamento está em análise pelo Mercado Pago. Assim que for aprovado, seu ingresso aparecerá em "Meus Ingressos".';
                                                                                 ok.classList.remove('hidden');
@@ -670,6 +699,7 @@
                                         return;
                                     }
                                     let pixGenerated = false;
+                                    let boletoGenerated = false;
                                     err.classList.add('hidden');
                                     
                                     try {
@@ -774,6 +804,8 @@
                                             if(boletoLink && url) { boletoLink.href = url; boletoLink.classList.remove('hidden'); }
                                             
                                             boletoInfo?.classList.remove('hidden');
+                                            boletoGenerated = true;
+                                            confirmBtn?.classList.add('hidden');
                                             
                                             if(url) window.open(url, '_blank');
                                         }
@@ -783,7 +815,7 @@
                                         err.textContent = e.message || 'Não foi possível confirmar o pagamento. Verifique os dados e tente novamente.'; 
                                         err.classList.remove('hidden');
                                     } finally {
-                                        if (!pixGenerated) {
+                                        if (!pixGenerated && !boletoGenerated) {
                                             confirmBtn.disabled = false;
                                             confirmBtn.innerHTML = 'Confirmar Pagamento';
                                         }

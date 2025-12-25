@@ -153,12 +153,6 @@ class PaymentController extends Controller
 
     public function webhook(Request $request)
     {
-        Log::info('Webhook Mercado Pago recebido', [
-            'method' => $request->method(),
-            'data' => $request->all(),
-            'headers' => $request->headers->all(),
-        ]);
-
         try {
             $data = $request->all();
 
@@ -186,7 +180,7 @@ class PaymentController extends Controller
             Log::error('Erro ao processar webhook', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request' => $request->all(),
+                'route' => optional($request->route())->getName(),
             ]);
 
             return response()->json(['error' => 'Erro interno'], 500);
@@ -228,18 +222,64 @@ class PaymentController extends Controller
             'ticket_code' => 'required|string',
         ]);
 
+        $rawCode = (string) $request->input('ticket_code');
+        $normalizedCode = trim(str_replace('TICKET:', '', $rawCode));
+
+        Log::info('Ticket checkin attempt', [
+            'raw_code' => $rawCode,
+            'normalized_code' => $normalizedCode,
+            'user_id' => auth()->id(),
+            'ip' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+        ]);
+
         $ticket = Ticket::with(['event', 'user'])
-            ->where('ticket_code', $request->input('ticket_code'))
+            ->where('ticket_code', $normalizedCode)
             ->first();
 
         if (! $ticket) {
+            Log::warning('Ticket checkin failed: not found', [
+                'normalized_code' => $normalizedCode,
+            ]);
+
             return response()->json([
                 'success' => false,
                 'error' => 'Ingresso não encontrado.',
             ], 404);
         }
 
-        if ($ticket->status !== 'active') {
+        $alreadyUsed = ($ticket->status === 'used') || ($ticket->used_at !== null);
+
+        if ($alreadyUsed) {
+            Log::info('Ticket checkin rejected: already used', [
+                'ticket_id' => $ticket->id,
+                'status' => $ticket->status,
+                'used_at' => $ticket->used_at,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Ingresso já utilizado.',
+            ], 400);
+        }
+
+        if ($ticket->status === 'cancelled') {
+            Log::info('Ticket checkin rejected: cancelled', [
+                'ticket_id' => $ticket->id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Ingresso cancelado.',
+            ], 400);
+        }
+
+        if ($ticket->status !== null && $ticket->status !== 'active') {
+            Log::warning('Ticket checkin rejected: invalid status', [
+                'ticket_id' => $ticket->id,
+                'status' => $ticket->status,
+            ]);
+
             return response()->json([
                 'success' => false,
                 'error' => 'Ingresso inválido ou já utilizado.',
@@ -247,6 +287,12 @@ class PaymentController extends Controller
         }
 
         if ($ticket->event->start_date->isPast()) {
+            Log::info('Ticket checkin rejected: event finished', [
+                'ticket_id' => $ticket->id,
+                'event_id' => $ticket->event_id,
+                'event_start' => $ticket->event->start_date,
+            ]);
+
             return response()->json([
                 'success' => false,
                 'error' => 'Evento já finalizado.',
@@ -259,9 +305,22 @@ class PaymentController extends Controller
         ]);
 
         $ticket->checkin()->create([
-            'checked_at' => now(),
-            'checked_by' => auth()->id(),
-            'location' => $request->input('location', 'Entrada Principal'),
+            'validated_by' => auth()->id(),
+            'status' => 'valid',
+            'checkin_at' => now(),
+            'validation_method' => 'qr_code',
+            'additional_data' => [
+                'location' => $request->input('location', 'Entrada Principal'),
+                'ip' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            ],
+        ]);
+
+        Log::info('Ticket checkin success', [
+            'ticket_id' => $ticket->id,
+            'user_id' => $ticket->user_id,
+            'event_id' => $ticket->event_id,
+            'used_at' => $ticket->used_at,
         ]);
 
         return response()->json([

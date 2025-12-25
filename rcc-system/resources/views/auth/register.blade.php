@@ -207,20 +207,20 @@
                                 <div class="grid grid-cols-1 md:grid-cols-6 gap-5">
                                     <!-- CEP -->
                                     <div class="md:col-span-2 group">
-                                        <label for="cep" class="block text-sm font-medium text-gray-700 mb-1.5">CEP</label>
-                                        <input type="text" name="cep" id="cep" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="00000-000" value="{{ old('cep') }}">
+                                        <label for="cep" class="block text-sm font-medium text-gray-700 mb-1.5">CEP <span class="text-red-500">*</span></label>
+                                        <input type="text" name="cep" id="cep" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="00000-000" value="{{ old('cep') }}" required>
                                     </div>
 
                                     <!-- Endereço -->
                                     <div class="md:col-span-4 group">
-                                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1.5">Logradouro</label>
-                                        <input type="text" name="address" id="address" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="Rua, Av..." value="{{ old('address') }}">
+                                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1.5">Logradouro <span class="text-red-500">*</span></label>
+                                        <input type="text" name="address" id="address" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="Rua, Av..." value="{{ old('address') }}" required>
                                     </div>
 
                                     <!-- Número -->
                                     <div class="md:col-span-2 group">
-                                        <label for="number" class="block text-sm font-medium text-gray-700 mb-1.5">Número</label>
-                                        <input type="text" name="number" id="number" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="123" value="{{ old('number') }}">
+                                        <label for="number" class="block text-sm font-medium text-gray-700 mb-1.5">Número <span class="text-red-500">*</span></label>
+                                        <input type="text" name="number" id="number" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="123" value="{{ old('number') }}" required>
                                     </div>
 
                                     <!-- Complemento -->
@@ -231,20 +231,20 @@
 
                                     <!-- Bairro -->
                                     <div class="md:col-span-2 group">
-                                        <label for="district" class="block text-sm font-medium text-gray-700 mb-1.5">Bairro</label>
-                                        <input type="text" name="district" id="district" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="Bairro" value="{{ old('district') }}">
+                                        <label for="district" class="block text-sm font-medium text-gray-700 mb-1.5">Bairro <span class="text-red-500">*</span></label>
+                                        <input type="text" name="district" id="district" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="Bairro" value="{{ old('district') }}" required>
                                     </div>
 
                                     <!-- Cidade -->
                                     <div class="md:col-span-3 group">
-                                        <label for="city" class="block text-sm font-medium text-gray-700 mb-1.5">Cidade</label>
-                                        <input type="text" name="city" id="city" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="Cidade" value="{{ old('city') }}">
+                                        <label for="city" class="block text-sm font-medium text-gray-700 mb-1.5">Cidade <span class="text-red-500">*</span></label>
+                                        <input type="text" name="city" id="city" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="Cidade" value="{{ old('city') }}" required>
                                     </div>
 
                                     <!-- Estado -->
                                     <div class="md:col-span-1 group">
-                                        <label for="state" class="block text-sm font-medium text-gray-700 mb-1.5">UF</label>
-                                        <input type="text" name="state" id="state" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="SP" value="{{ old('state') }}" maxlength="2">
+                                        <label for="state" class="block text-sm font-medium text-gray-700 mb-1.5">UF <span class="text-red-500">*</span></label>
+                                        <input type="text" name="state" id="state" class="block w-full h-11 px-3 py-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50/50 focus:bg-white" placeholder="SP" value="{{ old('state') }}" maxlength="2" required>
                                     </div>
                                 </div>
                             </div>

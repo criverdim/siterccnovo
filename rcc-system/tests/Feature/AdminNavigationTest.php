@@ -35,7 +35,8 @@ class AdminNavigationTest extends TestCase
     public function test_unauthenticated_user_is_redirected_to_login(): void
     {
         $response = $this->get('/admin');
-        $response->assertRedirect('/admin/login');
+        $response->assertRedirect();
+        $this->assertStringStartsWith(url('/admin/login'), $response->headers->get('Location'));
     }
 
     /** @test */
@@ -138,7 +139,8 @@ class AdminNavigationTest extends TestCase
     public function test_admin_can_logout(): void
     {
         $response = $this->actingAs($this->user)->post('/admin/logout');
-        $response->assertRedirect('/admin/login');
+        $response->assertRedirect();
+        $this->assertStringStartsWith(url('/admin/login'), $response->headers->get('Location'));
 
         // Verify user is logged out
         $this->assertGuest();

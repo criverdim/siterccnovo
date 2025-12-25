@@ -100,19 +100,30 @@
                             onReady: ()=>{},
                             onSubmit: async ({ formData }) => {
                                 const deviceId = window.MP_DEVICE_SESSION_ID || null;
+                                const paymentMethodId = formData.payment_method_id || formData.paymentMethodId || '';
+                                const issuerId = formData.issuer_id || formData.issuerId || null;
+                                const payerIdentification = formData.payer?.identification || {
+                                    type: formData.identificationType || 'CPF',
+                                    number: formData.identificationNumber || ''
+                                };
                                 const res = await fetch("<?php echo e(route('checkout')); ?>", {
-                                    method:'POST', headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'') },
+                                    method:'POST',
+                                    headers:{
+                                        'Content-Type':'application/json',
+                                        'X-Requested-With':'XMLHttpRequest',
+                                        'X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')?.content??'')
+                                    },
                                     body: JSON.stringify({
                                         participation_id: <?php echo e((int)($participation_id ?? 0)); ?>,
                                         payment_method:'credit_card',
                                         payer: {
                                             email: formData.cardholderEmail,
-                                            identification: formData.payer?.identification || { type:'CPF', number:'' }
+                                            identification: payerIdentification
                                         },
                                         token: formData.token,
                                         installments: (formData.installments || <?php echo e($defaultInstallments); ?>),
-                                        issuer_id: formData.issuerId,
-                                        payment_method_id: formData.paymentMethodId,
+                                        issuer_id: issuerId,
+                                        payment_method_id: paymentMethodId,
                                         device_id: deviceId
                                     })
                                 });

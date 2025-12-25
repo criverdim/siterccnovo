@@ -162,50 +162,64 @@ class EventResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->heading(null)
+            ->contentGrid([
+                'sm' => 1,
+                'md' => 2,
+                'xl' => 3,
+            ])
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Nome do Evento')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('category')
-                    ->label('Categoria')
-                    ->badge(),
-                Tables\Columns\TextColumn::make('start_date')
-                    ->label('Data')
-                    ->date('d/m/Y')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('start_time')
-                    ->label('Horário')
-                    ->time(),
-                Tables\Columns\TextColumn::make('location')
-                    ->label('Local')
-                    ->searchable(),
-                Tables\Columns\IconColumn::make('is_paid')
-                    ->label('Pago?')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('price')
-                    ->label('Valor')
-                    ->money('BRL')
-                    ->visible(fn ($record) => $record && $record->is_paid),
-                Tables\Columns\TextColumn::make('capacity')
-                    ->label('Capacidade'),
-                Tables\Columns\TextColumn::make('participations_count')
-                    ->label('Inscritos')
-                    ->counts('participations')
-                    ->badge(),
-                Tables\Columns\IconColumn::make('show_on_homepage')
-                    ->label('Home?')
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->label('Ativo?')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\Layout\Panel::make([
+                    Tables\Columns\Layout\Stack::make([
+                        Tables\Columns\TextColumn::make('name')
+                            ->label('Nome do Evento')
+                            ->weight('bold')
+                            ->size('lg')
+                            ->extraAttributes(['class' => 'text-slate-800']),
+                        Tables\Columns\Layout\Split::make([
+                            Tables\Columns\TextColumn::make('start_date')
+                                ->label('Data')
+                                ->dateTime('d/m/Y H:i')
+                                ->icon('heroicon-o-calendar'),
+                            Tables\Columns\TextColumn::make('participations_count')
+                                ->label('Inscritos')
+                                ->counts('participations')
+                                ->badge()
+                                ->extraAttributes(['class' => 'font-semibold']),
+                        ]),
+                        Tables\Columns\Layout\Split::make([
+                            Tables\Columns\TextColumn::make('location')
+                                ->label('Local')
+                                ->icon('heroicon-o-map-pin')
+                                ->wrap(),
+                            Tables\Columns\TextColumn::make('price')
+                                ->label('Valor')
+                                ->money('BRL')
+                                ->visible(fn ($record) => $record && $record->is_paid)
+                                ->icon('heroicon-o-banknotes'),
+                        ]),
+                        Tables\Columns\TextColumn::make('detalhes')
+                            ->label('')
+                            ->state(fn (Event $record) => '<div class="uc-actions"><a class="btn-details" href="'.Pages\EventSingleDashboard::getUrl(['record' => $record]).'">Ver detalhes</a></div>')
+                            ->html(),
+                    ])
+                        ->extraAttributes(function (Event $record) {
+                            $palette = [
+                                '#1D4ED8', // azul
+                                '#16A34A', // verde
+                                '#F97316', // laranja
+                                '#F59E0B', // ouro
+                                '#DC2626', // vermelho
+                                '#7C3E0C', // marrom
+                            ];
+                            $color = $palette[$record->id % count($palette)];
+                            return [
+                                'class' => 'rounded-2xl border shadow-md p-4 relative pb-14',
+                                'style' => 'background: linear-gradient(180deg, '. $color .'22 0%, #ffffff 70%);',
+                            ];
+                        }),
+                ])
+                    ->collapsible(false),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_paid')
@@ -233,7 +247,10 @@ class EventResource extends Resource
                             );
                     }),
             ])
+            ->recordUrl(fn (Event $record): string => Pages\EventSingleDashboard::getUrl(['record' => $record]))
             ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('Novo Evento'),
                 Tables\Actions\ExportAction::make()
                     ->exporter(EventParticipationExporter::class)
                     ->label('Exportar CSV')
@@ -254,7 +271,7 @@ class EventResource extends Resource
                     ->label('Dashboard')
                     ->icon('heroicon-o-chart-bar')
                     ->url(fn (Event $record): string => Pages\EventSingleDashboard::getUrl(['record' => $record])),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()->color('danger'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -263,7 +280,7 @@ class EventResource extends Resource
                         ->exporter(EventParticipationExporter::class)
                         ->label('Exportar Selecionados')
                         ->formats([ExportFormat::Csv, ExportFormat::Xlsx]),
-                ]),
+                    ]),
             ]);
     }
 
@@ -277,7 +294,7 @@ class EventResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEvents::route('/'),
+            'index' => Pages\EventCardsList::route('/'),
             'create' => Pages\CreateEvent::route('/create'),
             'edit' => Pages\EditEvent::route('/{record}/edit'),
             'dashboard' => Pages\EventSingleDashboard::route('/{record}/dashboard'),

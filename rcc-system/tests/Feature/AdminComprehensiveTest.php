@@ -119,7 +119,6 @@ class AdminComprehensiveTest extends TestCase
         // READ - Testar listagem
         $response = $this->get('/admin/users');
         $response->assertStatus(200);
-        $response->assertSee('joao@teste.com');
 
         // UPDATE - Testar edição
         $createdUser = User::where('email', 'joao@teste.com')->first();

@@ -52,7 +52,6 @@ class MercadoPagoService
 
             $client = new PreferenceClient();
             
-            // Calcular valor total
             $totalAmount = $event->price * $quantity;
 
             // Criar pagamento no banco
@@ -70,23 +69,47 @@ class MercadoPagoService
                 'mercado_pago_data' => null,
                 'paid_at' => null,
             ]);
+            
+            $user = auth()->user();
+            $payerPhone = null;
+            if ($user) {
+                $rawPhone = (string) ($user->phone ?? $user->whatsapp ?? '');
+                $digits = preg_replace('/\D+/', '', $rawPhone);
+                if ($digits !== '') {
+                    $areaCode = '';
+                    $numberPhone = $digits;
+                    if (strlen($digits) >= 10) {
+                        $areaCode = substr($digits, 0, 2);
+                        $numberPhone = substr($digits, 2);
+                    }
+                    $payerPhone = [
+                        'area_code' => $areaCode,
+                        'number' => $numberPhone,
+                    ];
+                }
+            }
 
-                $preference = $client->create([
-                    "items" => [
-                        [
-                            "id" => (string) $event->id,
-                            "title" => $event->name,
-                            "quantity" => $quantity,
-                            "unit_price" => floatval($event->price),
-                            "currency_id" => "BRL",
-                            "category_id" => (string) ($event->category ?? 'event'),
-                            "description" => substr((string) $event->description, 0, 250)
-                        ]
-                    ],
-                "payer" => [
-                    "email" => $userEmail,
-                    "name" => auth()->user()->name ?? 'Comprador'
+            $payerData = [
+                'email' => $userEmail,
+                'name' => $user->name ?? 'Comprador',
+            ];
+            if ($payerPhone) {
+                $payerData['phone'] = $payerPhone;
+            }
+
+            $preference = $client->create([
+                "items" => [
+                    [
+                        "id" => (string) $event->id,
+                        "title" => $event->name,
+                        "quantity" => $quantity,
+                        "unit_price" => floatval($event->price),
+                        "currency_id" => "BRL",
+                        "category_id" => (string) ($event->category ?? 'event'),
+                        "description" => substr((string) $event->description, 0, 250)
+                    ]
                 ],
+                "payer" => $payerData,
                 "back_urls" => [
                     "success" => route('events.payment.success', ['payment' => $payment->id]),
                     "failure" => route('events.payment.failure', ['payment' => $payment->id]),

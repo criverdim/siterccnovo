@@ -1,64 +1,133 @@
 <x-filament::page>
-    <div class="max-w-4xl mx-auto space-y-6">
-        <div class="flex flex-col md:flex-row gap-4">
-            <div class="flex-1 space-y-3">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-800">Leitor de QR Code</h2>
-                    <div class="inline-flex items-center rounded-full bg-gray-100 p-1 text-xs md:text-sm">
-                        <button id="camera-back-btn" type="button" class="px-3 py-1 rounded-full bg-emerald-600 text-white font-medium">
-                            Traseira
-                        </button>
-                        <button id="camera-front-btn" type="button" class="px-3 py-1 rounded-full text-gray-700 font-medium">
-                            Frontal
-                        </button>
+    <div class="max-w-6xl mx-auto p-2 md:p-4 space-y-6">
+        
+        {{-- Header com Controles de Câmera --}}
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <div>
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <x-heroicon-o-qr-code class="w-6 h-6 text-primary-600"/>
+                    Scanner de Ingressos
+                </h2>
+                <p class="text-sm text-gray-500">Aponte a câmera para o QR Code do ingresso</p>
+            </div>
+            
+            <div class="flex bg-gray-100 p-1 rounded-xl">
+                <button id="camera-back-btn" type="button" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                    <x-heroicon-o-camera class="w-4 h-4"/>
+                    <span>Traseira</span>
+                </button>
+                <button id="camera-front-btn" type="button" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                    <x-heroicon-o-user class="w-4 h-4"/>
+                    <span>Frontal</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {{-- Coluna do Scanner --}}
+            <div class="lg:col-span-7 space-y-4">
+                <div class="relative overflow-hidden rounded-3xl shadow-xl border-4 border-white bg-black aspect-[3/4] md:aspect-video ring-1 ring-gray-200">
+                    <div id="reader" class="w-full h-full object-cover"></div>
+                    
+                    {{-- Overlay de Scan (apenas visual) --}}
+                    <div class="absolute inset-0 pointer-events-none border-[30px] border-black/30">
+                        <div class="w-full h-full border-2 border-white/50 relative">
+                            <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary-500 rounded-tl-lg"></div>
+                            <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary-500 rounded-tr-lg"></div>
+                            <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary-500 rounded-bl-lg"></div>
+                            <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary-500 rounded-br-lg"></div>
+                        </div>
                     </div>
                 </div>
-                <div id="reader" class="w-full aspect-[3/4] md:aspect-video rounded-xl overflow-hidden shadow-lg border-2 border-gray-300 bg-black"></div>
-                <div id="error-feedback" class="hidden p-3 bg-red-100 text-red-800 rounded-lg shadow-md text-center font-semibold text-sm"></div>
+
+                <div id="error-feedback" class="hidden transform transition-all duration-300">
+                    <div class="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 shadow-sm">
+                        <x-heroicon-s-x-circle class="w-6 h-6 shrink-0"/>
+                        <span class="font-medium text-sm md:text-base"></span>
+                    </div>
+                </div>
             </div>
 
-            <div class="w-full md:w-80 space-y-3">
-                <div id="scan-result-container" class="hidden rounded-xl shadow-md border border-gray-200 bg-white overflow-hidden transition-all duration-300">
-                    <div class="h-2 bg-gradient-to-r from-emerald-500 via-emerald-400 to-amber-400"></div>
-                    <div class="p-4 space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div id="status-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xl"></div>
-                            <div>
-                                <h3 id="status-title" class="text-lg font-bold"></h3>
-                                <p id="status-subtitle" class="text-xs text-gray-500"></p>
+            {{-- Coluna de Resultado e Histórico --}}
+            <div class="lg:col-span-5 space-y-6">
+                
+                {{-- Card de Resultado --}}
+                <div id="scan-result-container" class="hidden transform transition-all duration-500 ease-out translate-y-4 opacity-0">
+                    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 relative">
+                        {{-- Faixa de Status --}}
+                        <div id="status-header" class="p-6 text-center text-white relative overflow-hidden">
+                            <div class="relative z-10 flex flex-col items-center gap-2">
+                                <div id="status-icon" class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-3xl shadow-inner">
+                                    ✓
+                                </div>
+                                <h3 id="status-title" class="text-2xl font-bold tracking-tight"></h3>
+                                <p id="status-subtitle" class="text-white/90 text-sm font-medium"></p>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3">
-                            <div id="user-photo-wrapper" class="w-14 h-14 rounded-full overflow-hidden ring-2 ring-emerald-500 bg-gray-100 hidden">
-                                <img id="user-photo" src="" alt="Foto do participante" class="w-full h-full object-cover">
+                        <div class="p-6">
+                            {{-- Informações do Participante --}}
+                            <div class="flex flex-col items-center -mt-12 mb-6">
+                                <div id="user-photo-wrapper" class="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100 mb-3 hidden relative z-20">
+                                    <img id="user-photo" src="" alt="Participante" class="w-full h-full object-cover">
+                                </div>
+                                <h4 id="user-name" class="text-xl font-bold text-gray-900 text-center leading-tight"></h4>
+                                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-1">Participante</span>
                             </div>
-                            <div class="text-sm">
-                                <p class="text-gray-500 text-xs uppercase tracking-wide">Participante</p>
-                                <p id="user-name" class="text-base font-semibold text-gray-900"></p>
+
+                            {{-- Detalhes do Ingresso --}}
+                            <div class="bg-gray-50 rounded-2xl p-5 space-y-4 border border-gray-100">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-xs text-gray-500 font-medium uppercase">Evento</p>
+                                        <p id="event-name" class="text-sm font-bold text-gray-800 leading-snug"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 font-medium uppercase">Data</p>
+                                        <p id="event-date" class="text-sm font-bold text-gray-800"></p>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-gray-200 border-dashed my-2"></div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-xs text-gray-500 font-medium uppercase">Ingresso</p>
+                                        <p id="ticket-type" class="text-sm font-bold text-primary-600"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 font-medium uppercase">Código</p>
+                                        <p id="ticket-code" class="text-sm font-mono font-bold text-gray-600"></p>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                                    <span class="text-xs text-gray-500 font-medium">Check-in às</span>
+                                    <span id="checkin-time" class="text-sm font-bold text-gray-900"></span>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="text-xs text-gray-600 space-y-1">
-                            <p><span class="font-semibold text-gray-700">Evento:</span> <span id="event-name" class="text-gray-800"></span></p>
-                            <p><span class="font-semibold text-gray-700">Data:</span> <span id="event-date" class="text-gray-800"></span></p>
-                            <p><span class="font-semibold text-gray-700">Ingresso:</span> <span id="ticket-type" class="text-gray-800"></span></p>
-                            <p><span class="font-semibold text-gray-700">Código:</span> <span id="ticket-code" class="font-mono text-gray-900"></span></p>
-                            <p><span class="font-semibold text-gray-700">Check-in:</span> <span id="checkin-time" class="text-gray-800"></span></p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <button id="confirm-entry-btn" type="button" class="w-full py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-600 text-white font-semibold text-sm tracking-wide">
-                                Entrada confirmada – escanear próximo
-                            </button>
+                            {{-- Botão de Ação --}}
+                            <div class="mt-6">
+                                <button id="confirm-entry-btn" type="button" class="group w-full py-4 rounded-xl bg-gray-900 text-white font-bold text-sm hover:bg-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                                    <span>Próximo Ingresso</span>
+                                    <x-heroicon-m-arrow-right class="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="history-container" class="hidden rounded-xl border border-gray-200 bg-white shadow-sm p-3">
-                    <p class="text-xs font-semibold text-gray-700 mb-2">Últimos check-ins</p>
-                    <div id="history-list" class="space-y-1 text-xs text-gray-700"></div>
+                {{-- Histórico Recente --}}
+                <div id="history-container" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between">
+                        <h3 class="font-bold text-gray-700 text-sm">Últimos Acessos</h3>
+                        <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">Recentes</span>
+                    </div>
+                    <div id="history-list" class="divide-y divide-gray-50"></div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -76,6 +145,7 @@
         const userPhoto = document.getElementById('user-photo');
         const historyContainer = document.getElementById('history-container');
         const historyList = document.getElementById('history-list');
+        const statusHeader = document.getElementById('status-header');
 
         let html5QrCode = null;
         let isScanning = true;
@@ -91,12 +161,15 @@
             }
             historyContainer.classList.remove('hidden');
             historyList.innerHTML = history.map(function (item) {
-                return '<div class="flex items-center justify-between gap-2">' +
-                    '<div class="truncate">' +
-                    '<span class="font-semibold">' + item.user + '</span>' +
-                    '<span class="text-gray-500"> • ' + item.event + '</span>' +
+                return '<div class="p-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors">' +
+                    '<div class="flex-1 min-w-0">' +
+                    '<p class="text-sm font-bold text-gray-800 truncate">' + item.user + '</p>' +
+                    '<p class="text-xs text-gray-500 truncate">' + item.event + '</p>' +
                     '</div>' +
-                    '<span class="text-gray-500 whitespace-nowrap">' + item.time + '</span>' +
+                    '<div class="text-right">' +
+                    '<span class="text-xs font-mono font-medium text-gray-400 block">' + item.time + '</span>' +
+                    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800 mt-1">OK</span>' +
+                    '</div>' +
                 '</div>';
             }).join('');
         }
@@ -105,19 +178,19 @@
             isScanning = false;
             html5QrCode.pause();
             
-            resultContainer.classList.remove('hidden', 'bg-red-50', 'bg-green-50');
-            resultContainer.classList.add('bg-green-50', 'border', 'border-green-200');
+            // Configurar cores de sucesso
+            statusHeader.className = 'p-6 text-center text-white relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600';
+            document.getElementById('status-icon').className = 'w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-3xl shadow-inner mx-auto mb-2 text-white';
+            document.getElementById('status-icon').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>';
             
-            document.getElementById('status-icon').className = 'w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xl bg-green-600';
-            document.getElementById('status-icon').innerHTML = '✓';
-            document.getElementById('status-title').textContent = 'Entrada Confirmada';
-            document.getElementById('status-title').className = 'text-lg font-bold text-green-800';
-            document.getElementById('status-subtitle').textContent = data.ticket.checked_by_name ? 'Operador: ' + data.ticket.checked_by_name : '';
+            document.getElementById('status-title').textContent = 'Acesso Liberado';
+            document.getElementById('status-subtitle').textContent = data.ticket.checked_by_name ? 'Validado por: ' + data.ticket.checked_by_name : 'Ingresso válido';
 
+            // Preencher dados
             document.getElementById('user-name').textContent = data.ticket.user_name;
             document.getElementById('event-name').textContent = data.ticket.event_name;
-            document.getElementById('event-date').textContent = data.ticket.event_date || '';
-            document.getElementById('ticket-type').textContent = data.ticket.ticket_type || 'Entrada';
+            document.getElementById('event-date').textContent = data.ticket.event_date || 'Data não definida';
+            document.getElementById('ticket-type').textContent = data.ticket.ticket_type || 'Geral';
             document.getElementById('ticket-code').textContent = data.ticket.code;
             document.getElementById('checkin-time').textContent = data.ticket.checkin_at;
 
@@ -130,28 +203,43 @@
             }
 
             errorFeedback.classList.add('hidden');
+            
+            // Animação de entrada
             resultContainer.classList.remove('hidden');
+            // Pequeno delay para permitir que a classe hidden saia antes de animar opacidade
+            requestAnimationFrame(() => {
+                resultContainer.classList.remove('translate-y-4', 'opacity-0');
+            });
 
+            // Adicionar ao histórico
             history.unshift({
                 user: data.ticket.user_name,
                 event: data.ticket.event_name,
                 time: data.ticket.checkin_at
             });
-            if (history.length > 5) {
-                history.pop();
-            }
+            if (history.length > 5) history.pop();
             renderHistory();
         }
 
         function showError(msg){
-            // Não para o scanner, apenas mostra erro temporário
-            errorFeedback.textContent = msg;
+            const errorEl = errorFeedback.querySelector('span');
+            if(errorEl) errorEl.textContent = typeof msg === 'string' ? msg : 'Falha no check-in';
+            
             errorFeedback.classList.remove('hidden');
-            setTimeout(() => errorFeedback.classList.add('hidden'), 3000);
+            // Animação simples de shake poderia ser adicionada aqui
+            
+            setTimeout(() => errorFeedback.classList.add('hidden'), 4000);
         }
 
         window.resetScanner = function(){
             errorFeedback.classList.add('hidden');
+            
+            // Animação de saída
+            resultContainer.classList.add('translate-y-4', 'opacity-0');
+            setTimeout(() => {
+                resultContainer.classList.add('hidden');
+            }, 300);
+
             isScanning = true;
             if (html5QrCode) {
                 html5QrCode.resume().catch(function () {});
@@ -168,14 +256,22 @@
                 cameraFrontBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 return;
             }
+            
+            const activeClass = ['bg-white', 'text-primary-600', 'shadow-sm', 'ring-1', 'ring-gray-200'];
+            const inactiveClass = ['text-gray-500', 'hover:text-gray-700'];
+
             if (currentCameraIndex === getBackCameraIndex()) {
-                cameraBackBtn.classList.add('bg-emerald-600', 'text-white');
-                cameraFrontBtn.classList.remove('bg-emerald-600', 'text-white');
-                cameraFrontBtn.classList.add('text-gray-700');
+                cameraBackBtn.classList.add(...activeClass);
+                cameraBackBtn.classList.remove(...inactiveClass);
+                
+                cameraFrontBtn.classList.remove(...activeClass);
+                cameraFrontBtn.classList.add(...inactiveClass);
             } else {
-                cameraFrontBtn.classList.add('bg-emerald-600', 'text-white');
-                cameraBackBtn.classList.remove('bg-emerald-600', 'text-white');
-                cameraBackBtn.classList.add('text-gray-700');
+                cameraFrontBtn.classList.add(...activeClass);
+                cameraFrontBtn.classList.remove(...inactiveClass);
+                
+                cameraBackBtn.classList.remove(...activeClass);
+                cameraBackBtn.classList.add(...inactiveClass);
             }
         }
 
@@ -204,7 +300,7 @@
             const selected = cameras[currentCameraIndex];
             if (!selected || !selected.id) return;
 
-            readerEl.classList.add('opacity-50');
+            readerEl.parentElement.classList.add('ring-4', 'ring-primary-100'); // Indicador visual de carregamento
 
             html5QrCode.start(
                 selected.id,
@@ -213,11 +309,11 @@
                 function () {}
             ).then(function () {
                 isScanning = true;
-                readerEl.classList.remove('opacity-50');
+                readerEl.parentElement.classList.remove('ring-4', 'ring-primary-100');
                 updateCameraButtons();
             }).catch(function () {
-                readerEl.classList.remove('opacity-50');
-                showError('Falha ao iniciar câmera');
+                readerEl.parentElement.classList.remove('ring-4', 'ring-primary-100');
+                showError('Falha ao iniciar câmera. Verifique permissões.');
             });
         }
 
@@ -241,7 +337,7 @@
                 const uuid = code.startsWith('TICKET:') ? code.replace('TICKET:', '') : code;
                 
                 // Feedback visual de "processando"
-                readerEl.classList.add('opacity-50');
+                readerEl.style.opacity = "0.3";
 
                 fetch("{{ route('admin.ticket.checkin') }}",{
                     method:'POST',
@@ -253,21 +349,31 @@
                     body: JSON.stringify({ ticket_code: uuid })
                 }).then(async (res)=>{
                     const j = await res.json();
-                    readerEl.classList.remove('opacity-50');
+                    readerEl.style.opacity = "1";
                     
                     if(res.ok && j.success){
-                        // beepOk.play(); // Descomentar se tiver arquivo de audio real
                         showSuccess(j);
                     } else {
+                        // Se falhar, configurar cabeçalho de erro
+                        statusHeader.className = 'p-6 text-center text-white relative overflow-hidden bg-gradient-to-br from-red-500 to-rose-600';
+                         document.getElementById('status-icon').className = 'w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-3xl shadow-inner mx-auto mb-2 text-white';
+                        document.getElementById('status-icon').innerHTML = '✕';
+                        document.getElementById('status-title').textContent = 'Acesso Negado';
+                        document.getElementById('status-subtitle').textContent = j.error || 'Ingresso inválido ou já utilizado';
+                        
+                        // Esconder detalhes de sucesso se houver lixo residual
+                        userPhotoWrapper.classList.add('hidden');
+                        document.getElementById('user-name').textContent = '---';
+                        
                         showError(j.error || 'Falha no check-in');
                     }
                 }).catch(()=>{
-                    readerEl.classList.remove('opacity-50');
-                    showError('Erro de rede no check-in');
+                    readerEl.style.opacity = "1";
+                    showError('Erro de conexão. Tente novamente.');
                 });
             } catch(e){ 
-                readerEl.classList.remove('opacity-50');
-                showError('Erro ao processar QR'); 
+                readerEl.style.opacity = "1";
+                showError('Erro ao processar QR Code'); 
             }
         }
 
@@ -275,15 +381,16 @@
         Html5Qrcode.getCameras().then(function (cams) {
             cameras = cams || [];
             if (!cameras.length) {
-                showError('Nenhuma câmera disponível');
+                showError('Nenhuma câmera detectada neste dispositivo.');
                 updateCameraButtons();
                 return;
             }
             currentCameraIndex = getBackCameraIndex();
             updateCameraButtons();
             startCameraWithCurrent();
-        }).catch(function () {
-            showError('Falha ao acessar câmera');
+        }).catch(function (e) {
+            console.error(e);
+            showError('Por favor, permita o acesso à câmera para usar o scanner.');
         });
     })();
     </script>

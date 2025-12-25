@@ -26,6 +26,12 @@ class RegistrationGenderTest extends TestCase
             'consent' => '1',
             'groups' => [$group->id],
             'gender' => 'male',
+            'cep' => '14400000',
+            'address' => 'Rua Central',
+            'number' => '100',
+            'district' => 'Centro',
+            'city' => 'Miguelópolis',
+            'state' => 'SP',
         ];
 
         $res = $this->postJson('/register', $payload);
@@ -54,6 +60,12 @@ class RegistrationGenderTest extends TestCase
             'consent' => '1',
             'groups' => [$group->id],
             'gender' => 'other',
+            'cep' => '14400000',
+            'address' => 'Rua Exemplo',
+            'number' => '200',
+            'district' => 'Centro',
+            'city' => 'Miguelópolis',
+            'state' => 'SP',
         ];
 
         $res = $this->postJson('/register', $payload);

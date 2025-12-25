@@ -11,12 +11,6 @@ class MercadoPagoWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        Log::info('MP Webhook recebido', [
-            'method' => $request->method(),
-            'data' => $request->all(),
-            'headers' => $request->headers->all(),
-        ]);
-
         $type = $request->string('type')->toString();
         $topic = $request->string('topic')->toString();
         $action = $request->string('action')->toString();
@@ -36,7 +30,9 @@ class MercadoPagoWebhookController extends Controller
         $status = $data['status'] ?? $request->string('status')->toString();
 
         if (! $id) {
-            Log::warning('MP Webhook sem id em data', ['payload' => $request->all()]);
+            Log::warning('MP Webhook sem id em data', [
+                'route' => optional($request->route())->getName(),
+            ]);
             return response()->json(['ok' => true]);
         }
 

@@ -2,11 +2,10 @@
 
 namespace App\Filament\Resources\EventResource\Widgets;
 
+use App\Models\Event;
+use Carbon\CarbonPeriod;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Event;
-use App\Models\Payment;
-use Carbon\CarbonPeriod;
 
 class EventSingleSalesChart extends ChartWidget
 {
@@ -38,7 +37,7 @@ class EventSingleSalesChart extends ChartWidget
             $labels[] = $date->format('d/m');
             $values[] = (int) $event->payments()
                 ->where('status', 'approved')
-                ->whereDate('created_at', $date)
+                ->whereDate('paid_at', $date)
                 ->count();
         }
 
@@ -47,9 +46,16 @@ class EventSingleSalesChart extends ChartWidget
                 [
                     'label' => 'Vendas',
                     'data' => $values,
-                    'borderColor' => '#10b981',
-                    'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
+                    'borderColor' => '#006036',
+                    'backgroundColor' => 'rgba(0, 96, 54, 0.1)',
                     'fill' => true,
+                    'tension' => 0.35,
+                    'borderWidth' => 3,
+                    'pointRadius' => 3,
+                    'pointHoverRadius' => 5,
+                    'pointBackgroundColor' => '#006036',
+                    'pointBorderColor' => '#ffffff',
+                    'pointBorderWidth' => 2,
                 ],
             ],
             'labels' => $labels,
@@ -59,5 +65,31 @@ class EventSingleSalesChart extends ChartWidget
     protected function getType(): string
     {
         return 'line';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'display' => false,
+                ],
+            ],
+            'scales' => [
+                'x' => [
+                    'grid' => [
+                        'display' => false,
+                    ],
+                ],
+                'y' => [
+                    'grid' => [
+                        'color' => 'rgba(148, 163, 184, 0.25)',
+                    ],
+                    'ticks' => [
+                        'precision' => 0,
+                    ],
+                ],
+            ],
+        ];
     }
 }

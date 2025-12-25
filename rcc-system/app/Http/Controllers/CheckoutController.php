@@ -6,7 +6,8 @@ use App\Models\EventParticipation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use MercadoPago\Client\Payment\PaymentClient;
+use MercadoPago\Client\Common\RequestOptions;
+use MercadoPago\Client\Order\OrderClient;
 
 class CheckoutController extends Controller
 {
@@ -81,8 +82,9 @@ class CheckoutController extends Controller
         throw $ex;
     }
 
-    private function mpGetOrder(string $token, string $orderId): array
+    private function mpGetOrder(string $orderId): array
     {
+        $token = (string) config('services.mercadopago.access_token');
         $resp = Http::withToken($token)
             ->acceptJson()
             ->get('https://api.mercadopago.com/v1/orders/'.$orderId);
@@ -239,18 +241,21 @@ class CheckoutController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Illuminate\Support\Facades\Log::error('Checkout Validation Failed', [
                 'errors' => $e->errors(),
-                'input' => $request->all(),
+                'user_id' => auth()->id(),
+                'route' => optional($request->route())->getName(),
             ]);
             throw $e;
         }
 
-        // LOGGING DEBUG
-        \Illuminate\Support\Facades\Log::info('Checkout Request', [
-            'user_id' => auth()->id(),
-            'data' => $data,
-            'env' => app()->environment(),
-            'token_prefix' => substr(config('services.mercadopago.access_token'), 0, 10)
-        ]);
+        if (($data['payment_method'] ?? null) === 'credit_card') {
+            $reqData = $request->all();
+            unset($reqData['token']);
+            \Illuminate\Support\Facades\Log::info('Checkout credit_card request debug', [
+                'keys' => array_keys($reqData),
+                'payment_method_id' => $reqData['payment_method_id'] ?? null,
+                'paymentMethodId' => $reqData['paymentMethodId'] ?? null,
+            ]);
+        }
 
         $participation = EventParticipation::findOrFail($data['participation_id']);
 
@@ -303,29 +308,56 @@ class CheckoutController extends Controller
                 }
             } catch (\Throwable $e) {
             }
-            $client = null;
-            if (class_exists(\MercadoPago\Client\Payment\PaymentClient::class)) {
-                $client = new PaymentClient;
-            }
 
             try {
                 $token = (string) config('services.mercadopago.access_token');
-                $isSandbox = str_starts_with($token, 'TEST-');
+                $mode = (string) config('services.mercadopago.mode');
+                $isSandbox = str_starts_with($token, 'TEST-') || $mode === 'sandbox';
                 $deviceId = trim($request->string('device_id')->toString());
                 $payer = $data['payer'];
                 if (empty($payer['email'])) {
                     $fallbackEmail = auth()->user()->email ?? 'user@local';
                     $payer['email'] = $fallbackEmail;
                 }
-                if ($isSandbox && isset($payer['email']) && is_string($payer['email'])) {
-                    $email = $payer['email'];
-                    if (! str_contains($email, '+')) {
-                        $parts = explode('@', $email);
-                        if (count($parts) === 2) {
-                            $newEmail = $parts[0].'+sbx'.rand(1000, 9999).'@'.$parts[1];
-                            $payer['email'] = $newEmail;
-                            \Illuminate\Support\Facades\Log::info('Sandbox: Aliased email for MP', ['original' => $email, 'new' => $newEmail]);
+                if ($isSandbox) {
+                    $originalEmail = $payer['email'] ?? null;
+                    $payer['email'] = 'buyer_'.uniqid().'@testuser.com';
+                    \Illuminate\Support\Facades\Log::info('Sandbox: Forced test email for MP', ['original' => $originalEmail, 'new' => $payer['email']]);
+                }
+                $user = auth()->user();
+                if ($user && empty($payer['address'])) {
+                    $street = (string) ($user->address ?? '');
+                    $number = (string) ($user->number ?? '');
+                    $cep = preg_replace('/\D+/', '', (string) ($user->cep ?? ''));
+                    $neighborhood = (string) ($user->district ?? '');
+                    $city = (string) ($user->city ?? '');
+                    $state = (string) ($user->state ?? '');
+                    $hasAddress = $street !== '' || $number !== '' || $cep !== '' || $neighborhood !== '' || $city !== '' || $state !== '';
+                    if ($hasAddress) {
+                        $payer['address'] = [
+                            'street_name' => $street !== '' ? $street : 'Rua',
+                            'street_number' => $number !== '' ? $number : 'S/N',
+                            'zip_code' => $cep !== '' ? $cep : '00000000',
+                            'neighborhood' => $neighborhood !== '' ? $neighborhood : 'Centro',
+                            'state' => $state !== '' ? $state : 'SP',
+                            'city' => $city !== '' ? $city : 'São Paulo',
+                        ];
+                    }
+                }
+                if ($user && empty($payer['phone'])) {
+                    $rawPhone = (string) ($user->phone ?? $user->whatsapp ?? '');
+                    $digits = preg_replace('/\D+/', '', $rawPhone);
+                    if ($digits !== '') {
+                        $areaCode = '';
+                        $numberPhone = $digits;
+                        if (strlen($digits) >= 10) {
+                            $areaCode = substr($digits, 0, 2);
+                            $numberPhone = substr($digits, 2);
                         }
+                        $payer['phone'] = [
+                            'area_code' => $areaCode,
+                            'number' => $numberPhone,
+                        ];
                     }
                 }
 
@@ -341,143 +373,105 @@ class CheckoutController extends Controller
                 $itemId = 'event_'.$participation->id;
                 $itemDescription = 'Inscrição no evento '.$eventName;
 
-                if (in_array($data['payment_method'], ['pix', 'boleto'], true)) {
-                    $amount = $unitPrice * $quantity;
-                    if ($amount <= 0) {
-                        throw new \RuntimeException('Valor inválido para pagamento.');
-                    }
+                $amount = $unitPrice * $quantity;
+                if ($amount <= 0) {
+                    throw new \RuntimeException('Valor inválido para pagamento.');
+                }
 
-                    $paymentMethodType = $data['payment_method'] === 'pix' ? 'bank_transfer' : 'ticket';
-                    $orderPayload = [
-                        'type' => 'online',
-                        'total_amount' => number_format($amount, 2, '.', ''),
-                        'external_reference' => 'participation_'.$participation->id.($isSandbox ? '_'.uniqid() : ''),
-                        'processing_mode' => 'automatic',
-                        'transactions' => [
-                            'payments' => [[
-                                'amount' => number_format($amount, 2, '.', ''),
-                                'payment_method' => [
-                                    'id' => $data['payment_method'],
-                                    'type' => $paymentMethodType,
-                                ],
-                            ]],
-                        ],
-                        'payer' => $payer,
-                        'items' => [[
-                            'title' => $eventName,
-                            'description' => $itemDescription,
-                            'category_id' => $eventCategory ?: 'others',
-                            'quantity' => $quantity,
-                            'unit_price' => number_format($unitPrice, 2, '.', ''),
-                        ]],
+                $paymentMethod = [];
+                if ($data['payment_method'] === 'pix') {
+                    $paymentMethod = [
+                        'id' => 'pix',
+                        'type' => 'bank_transfer',
                     ];
-
-                    if ($data['payment_method'] === 'boleto') {
-                        $orderPayload['description'] = 'Pagamento de evento '.(string) ($participation->event->name ?? '');
-                    }
-
-                    \Illuminate\Support\Facades\Log::info('MP Creating Order Payload', $orderPayload);
-
-                    $orderHeaders = ['X-Idempotency-Key' => Str::uuid()->toString()];
-                    if ($deviceId !== '') {
-                        $orderHeaders['X-Meli-Session-Id'] = $deviceId;
-                    }
-
-                    $resp = Http::withToken($token)
-                        ->acceptJson()
-                        ->withHeaders($orderHeaders)
-                        ->post('https://api.mercadopago.com/v1/orders', $orderPayload);
-
-                    if (! $resp->successful()) {
-                        $this->mpThrowHttpError('Erro ao criar order no Mercado Pago', $resp);
-                    }
-
-                    $order = $resp->json();
-                    if (! is_array($order)) {
-                        $order = [];
-                    }
-
-                    $orderId = $order['id'] ?? null;
-                    if (is_string($orderId) || is_int($orderId)) {
-                        $orderId = (string) $orderId;
-                        $tries = 0;
-                        while ($tries < 8) {
-                            $hasId = $this->mpBuildPaymentFromOrder($order)['id'] ?? null;
-                            $hasData = $this->mpOrderHasPresentationData($data['payment_method'], $order);
-
-                            if (! empty($hasId) && $hasData) {
-                                break;
-                            }
-
-                            usleep(350000);
-                            $order = $this->mpGetOrder($token, $orderId);
-                            $tries++;
-                        }
-                    }
-
-                    $payment = $this->mpBuildPaymentFromOrder($order);
-
-                    if (empty($payment['id'])) {
-                        throw new \RuntimeException('Order criada, mas o pagamento ainda está em processamento. Tente novamente em instantes.');
-                    }
-                } else {
-                    $amount = $unitPrice * $quantity;
-
-                    if ($amount <= 0) {
-                        throw new \RuntimeException('Valor inválido para pagamento.');
-                    }
-
-                    $payload = [
-                        'transaction_amount' => $amount,
-                        'description' => 'Pagamento de evento '.$eventName,
-                        'payer' => $payer,
-                        'notification_url' => config('services.mercadopago.webhook_url'),
-                        'external_reference' => 'participation_'.$participation->id.($isSandbox ? '_'.uniqid() : ''),
-                        'additional_info' => [
-                            'items' => [[
-                                'id' => $itemId,
-                                'title' => $eventName,
-                                'description' => $itemDescription,
-                                'category_id' => $eventCategory ?: 'event',
-                                'quantity' => $quantity,
-                                'unit_price' => $unitPrice,
-                            ]],
-                        ],
-                        'binary_mode' => true,
+                } elseif ($data['payment_method'] === 'boleto') {
+                    $paymentMethod = [
+                        'id' => 'boleto',
+                        'type' => 'ticket',
+                    ];
+                } elseif ($data['payment_method'] === 'credit_card') {
+                    $cardMethodId = $request->string('payment_method_id')->toString();
+                    $installments = (int) $request->integer('installments') ?: 1;
+                    $cardToken = $request->string('token')->toString();
+                    $paymentMethod = [
+                        'type' => 'credit_card',
+                        'token' => $cardToken,
+                        'installments' => $installments,
                         'statement_descriptor' => 'RCC Miguelopolis',
                     ];
-                    if ($data['payment_method'] === 'credit_card') {
-                        $payload['token'] = $request->string('token')->toString();
-                        $payload['installments'] = (int) $request->integer('installments') ?: 1;
-                        if ($request->filled('payment_method_id')) {
-                            $payload['payment_method_id'] = $request->string('payment_method_id')->toString();
-                        }
-                        if ($request->filled('issuer_id')) {
-                            $payload['issuer_id'] = (int) $request->integer('issuer_id');
-                        }
+                    if ($cardMethodId !== '') {
+                        $paymentMethod['id'] = $cardMethodId;
                     }
+                }
 
-                    if ($client) {
-                        \Illuminate\Support\Facades\Log::info('MP Creating Payment Payload', $payload);
-                        $payment = $client->create($payload);
-                        \Illuminate\Support\Facades\Log::info('MP Payment Created', ['id' => $payment->id]);
-                    } else {
-                        $http = Http::withToken($token)->acceptJson();
-                        if ($deviceId !== '') {
-                            $http = $http->withHeaders(['X-Meli-Session-Id' => $deviceId]);
+                $orderPayload = [
+                    'type' => 'online',
+                    'total_amount' => number_format($amount, 2, '.', ''),
+                    'external_reference' => 'participation_'.$participation->id.($isSandbox ? '_'.uniqid() : ''),
+                    'processing_mode' => 'automatic',
+                    'transactions' => [
+                        'payments' => [[
+                            'amount' => number_format($amount, 2, '.', ''),
+                            'payment_method' => $paymentMethod,
+                        ]],
+                    ],
+                    'payer' => $payer,
+                    'items' => [[
+                        'title' => $eventName,
+                        'description' => $itemDescription,
+                        'category_id' => $eventCategory ?: 'others',
+                        'quantity' => $quantity,
+                        'unit_price' => number_format($unitPrice, 2, '.', ''),
+                    ]],
+                ];
+
+                if ($data['payment_method'] === 'boleto') {
+                    $orderPayload['description'] = 'Pagamento de evento '.(string) ($participation->event->name ?? '');
+                }
+
+                \Illuminate\Support\Facades\Log::info('MP Creating Order Payload', $orderPayload);
+
+                $orderHeaders = ['X-Idempotency-Key' => Str::uuid()->toString()];
+                if ($deviceId !== '') {
+                    $orderHeaders['X-Meli-Session-Id'] = $deviceId;
+                }
+
+                $resp = Http::withToken($token)
+                    ->acceptJson()
+                    ->withHeaders($orderHeaders)
+                    ->post('https://api.mercadopago.com/v1/orders', $orderPayload);
+
+                if (! $resp->successful()) {
+                    $this->mpThrowHttpError('Erro ao criar order no Mercado Pago', $resp);
+                }
+
+                $order = $resp->json();
+                if (! is_array($order)) {
+                    $order = [];
+                }
+
+                $orderId = $order['id'] ?? null;
+                if (is_string($orderId) || is_int($orderId)) {
+                    $orderId = (string) $orderId;
+                    $tries = 0;
+                    while ($tries < 8) {
+                        $hasId = $this->mpBuildPaymentFromOrder($order)['id'] ?? null;
+                        $hasData = $this->mpOrderHasPresentationData($data['payment_method'], $order);
+
+                        if (! empty($hasId) && $hasData) {
+                            break;
                         }
-                        $resp = $http->post('https://api.mercadopago.com/v1/payments', $payload);
-                        if (! $resp->successful()) {
-                            $this->mpThrowHttpError('Erro ao criar pagamento no Mercado Pago', $resp);
-                        }
-                        $obj = (object) $resp->json();
-                        $payment = (object) [
-                            'id' => $obj->id ?? null,
-                            'status' => $obj->status ?? 'pending',
-                            'status_detail' => $obj->status_detail ?? null,
-                            'point_of_interaction' => $obj->point_of_interaction ?? null,
-                        ];
+
+                        usleep(350000);
+                        $order = $this->mpGetOrder($orderId);
+                        $tries++;
                     }
+                }
+
+                $payment = $this->mpBuildPaymentFromOrder($order);
+
+                if (empty($payment['id'])) {
+                    throw new \RuntimeException('Order criada, mas o pagamento ainda está em processamento. Tente novamente em instantes.');
                 }
             } catch (\Throwable $e) {
                 [$msg, $details] = $this->mpExtractApiError($e);
@@ -486,11 +480,69 @@ class CheckoutController extends Controller
                     $details = $e->mp_details;
                 }
 
+                if (is_array($details)) {
+                    $statusDetail = null;
+                    if (isset($details['data']['transactions']['payments'][0]['status_detail'])) {
+                        $statusDetail = (string) $details['data']['transactions']['payments'][0]['status_detail'];
+                    } elseif (isset($details['errors']) && is_array($details['errors'])) {
+                        $joined = strtolower(implode(' ', array_map(function ($err) {
+                            if (is_array($err) && isset($err['details']) && is_array($err['details'])) {
+                                return implode(' ', $err['details']);
+                            }
+
+                            return '';
+                        }, $details['errors'])));
+                        if (str_contains($joined, 'high_risk')) {
+                            $statusDetail = 'high_risk';
+                        } elseif (str_contains($joined, 'rejected_by_issuer')) {
+                            $statusDetail = 'rejected_by_issuer';
+                        } elseif (str_contains($joined, 'invalid_transaction_amount')) {
+                            $statusDetail = 'invalid_transaction_amount';
+                        } elseif (str_contains($joined, 'processing_error')) {
+                            $statusDetail = 'processing_error';
+                        } elseif (str_contains($joined, 'insufficient_amount') || str_contains($joined, 'insufficient_funds')) {
+                            $statusDetail = 'insufficient_amount';
+                        }
+                    }
+
+                    if ($statusDetail !== null) {
+                        if (str_contains($statusDetail, 'high_risk')) {
+                            $msg = 'Pagamento recusado por segurança do banco ou do Mercado Pago. Entre em contato com seu banco ou tente outro método de pagamento (Pix, boleto ou outro cartão).';
+                        } elseif (str_contains($statusDetail, 'rejected_by_issuer')) {
+                            $msg = 'Pagamento recusado pelo emissor do cartão. Verifique com seu banco ou tente outro cartão ou método de pagamento (Pix ou boleto).';
+                        } elseif (str_contains($statusDetail, 'invalid_transaction_amount')) {
+                            $msg = 'Não foi possível processar o pagamento com este valor e parcelamento. Tente reduzir o número de parcelas ou usar outro valor/método de pagamento.';
+                        } elseif (str_contains($statusDetail, 'insufficient_amount') || str_contains($statusDetail, 'insufficient_funds') || str_contains($statusDetail, 'cc_rejected_insufficient_amount')) {
+                            $msg = 'Pagamento recusado por saldo ou limite insuficiente no cartão. Verifique o limite disponível ou tente outro cartão ou método de pagamento (Pix ou boleto).';
+                        } elseif (str_contains($statusDetail, 'processing_error')) {
+                            $msg = 'Ocorreu um erro ao processar o pagamento. Tente novamente em instantes ou utilize outro método de pagamento (Pix ou boleto).';
+                        } elseif (
+                            str_contains($statusDetail, 'bad_filled_card_data') ||
+                            str_contains($statusDetail, 'bad_filled_security_code') ||
+                            str_contains($statusDetail, 'cc_rejected_bad_filled_security_code') ||
+                            str_contains($statusDetail, 'bad_filled_date') ||
+                            str_contains($statusDetail, 'cc_rejected_bad_filled_date')
+                        ) {
+                            $msg = 'Pagamento recusado por dados do cartão inválidos. Confira número, validade e código de segurança ou tente outro cartão ou método de pagamento (Pix ou boleto).';
+                        }
+                    }
+                }
+
                 \Illuminate\Support\Facades\Log::error('MP API Error', ['msg' => $msg, 'details' => $details]);
+
+                $errorText = $msg;
+                if (! (
+                    str_starts_with($msg, 'Pagamento recusado')
+                    || str_starts_with($msg, 'Seu pagamento')
+                    || str_starts_with($msg, 'Não foi possível processar')
+                    || str_starts_with($msg, 'Ocorreu um erro ao processar')
+                )) {
+                    $errorText = 'Falha na comunicação com Mercado Pago: '.$msg;
+                }
                 
                 return response()->json([
                     'success' => false,
-                    'error' => 'Falha na comunicação com Mercado Pago: '.$msg,
+                    'error' => $errorText,
                     'details' => $details
                 ], 422);
             }
@@ -543,6 +595,10 @@ class CheckoutController extends Controller
             $detail = $payment['status_detail'] ?? null;
         } elseif (is_object($payment)) {
             $detail = $payment->status_detail ?? null;
+        }
+
+        if (in_array($status, ['in_review', 'in_process', 'pending', 'in_mediation'], true)) {
+            return 'Seu pagamento está em análise pelo Mercado Pago. Assim que for aprovado, seu ingresso será liberado.';
         }
 
         if ($status === 'rejected' && is_string($detail)) {

@@ -48,6 +48,12 @@ class DuplicateRegistrationTest extends TestCase
             'password_confirmation' => 'secret123',
             'consent' => '1',
             'gender' => 'male',
+            'cep' => '14400000',
+            'address' => 'Rua Teste',
+            'number' => '123',
+            'district' => 'Centro',
+            'city' => 'Miguelópolis',
+            'state' => 'SP',
         ];
 
         $res = $this->postJson('/register', $payload);
